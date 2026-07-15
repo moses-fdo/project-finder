@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(req: Request) {
+export async function PATCH() {
   try {
     const session = await auth();
     const currentUser = session?.user;

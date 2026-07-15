@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { auth, signOut } from "@/lib/auth";
-import { FiBell, FiPlus, FiUser, FiLogOut, FiMenu, FiBookOpen, FiGrid } from "react-icons/fi";
+import { auth } from "@/lib/auth";
+import { FiPlus, FiBookOpen, FiGrid } from "react-icons/fi";
 import NavbarClient from "./NavbarClient";
 import { prisma } from "@/lib/prisma";
 

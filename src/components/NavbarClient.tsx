@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { FiBell, FiUser, FiLogOut, FiGrid, FiPlus } from "react-icons/fi";
+import { FiBell, FiUser, FiLogOut, FiGrid } from "react-icons/fi";
+import Image from "next/image";
 
 interface NavbarClientProps {
   user: any;
@@ -48,7 +49,7 @@ export default function NavbarClient({ user, unreadNotifications }: NavbarClient
       >
         <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-ring flex items-center justify-center text-sm font-bold text-white uppercase overflow-hidden">
           {user.image ? (
-            <img src={user.image} alt={user.name || "Avatar"} className="h-full w-full object-cover" />
+            <Image src={user.image} alt={user.name || "Avatar"} width={32} height={32} unoptimized className="h-full w-full object-cover" />
           ) : (
             (user.name || "U")[0]
           )}

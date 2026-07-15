@@ -84,7 +84,7 @@ async function main() {
     }
   });
 
-  const admin = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: "Dr. Karunya Admin",
       email: "dmosesfernando@gmail.com",
@@ -116,7 +116,7 @@ async function main() {
     }
   });
 
-  const project2 = await prisma.project.create({
+  await prisma.project.create({
     data: {
       title: "AgriTech Crop Yield Predictor",
       description: "A Machine Learning model that predicts soil moisture and recommends ideal crops based on regional weather history and satellite imagery. We need a frontend designer to build the dashboard and someone to optimize the ML pipeline.",

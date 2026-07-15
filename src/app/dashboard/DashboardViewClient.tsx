@@ -5,18 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   FiGrid,
-  FiClock,
   FiCheck,
   FiX,
   FiUser,
-  FiMail,
   FiGithub,
   FiLinkedin,
   FiTrash2,
-  FiLock,
-  FiUnlock,
-  FiTag,
-  FiSliders,
 } from "react-icons/fi";
 
 interface DashboardViewClientProps {
@@ -42,7 +36,7 @@ export default function DashboardViewClient({
   adminData,
 }: DashboardViewClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   // Profile Form States
   const [profileName, setProfileName] = useState(profileData?.name || "");

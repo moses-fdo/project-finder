@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FiMail, FiLock } from "react-icons/fi";
 
@@ -11,7 +11,6 @@ function LoginFormContent() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const errorParam = searchParams.get("error");
@@ -45,7 +44,7 @@ function LoginFormContent() {
         password,
         redirectTo: "/dashboard",
       });
-    } catch (err: any) {
+    } catch {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }

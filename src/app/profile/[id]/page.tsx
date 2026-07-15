@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
-import { FiMail, FiUser, FiGithub, FiLinkedin, FiBookOpen } from "react-icons/fi";
+import { FiMail, FiGithub, FiLinkedin, FiBookOpen } from "react-icons/fi";
 import ProjectCard from "@/components/ProjectCard";
 import Link from "next/link";
 
