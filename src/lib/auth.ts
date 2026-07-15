@@ -1,7 +1,14 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+
+class CustomAuthError extends CredentialsSignin {
+  constructor(code: string) {
+    super();
+    this.code = code;
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -13,7 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Please enter your email and password.");
+          throw new CustomAuthError("missing_credentials");
         }
 
         const email = credentials.email as string;
@@ -26,16 +33,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!user) {
-          throw new Error("No user found with this email.");
+          throw new CustomAuthError("no_user");
         }
 
         if (!user.verified) {
-          throw new Error("Please verify your email before logging in.");
+          throw new CustomAuthError("not_verified");
         }
 
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
-          throw new Error("Invalid password.");
+          throw new CustomAuthError("invalid_password");
         }
 
         return {
@@ -77,4 +84,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  debug: true,
 });

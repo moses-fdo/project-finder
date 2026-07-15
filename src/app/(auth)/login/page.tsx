@@ -15,7 +15,24 @@ function LoginFormContent() {
   const searchParams = useSearchParams();
 
   const errorParam = searchParams.get("error");
-  const defaultError = errorParam === "CredentialsSignin" ? "Invalid email or password." : errorParam;
+  const codeParam = searchParams.get("code");
+
+  let defaultError = "";
+  if (errorParam === "CredentialsSignin") {
+    if (codeParam === "not_verified") {
+      defaultError = "Please verify your email before logging in.";
+    } else if (codeParam === "no_user") {
+      defaultError = "No user found with this email.";
+    } else if (codeParam === "invalid_password") {
+      defaultError = "Invalid password.";
+    } else if (codeParam === "missing_credentials") {
+      defaultError = "Please enter your email and password.";
+    } else {
+      defaultError = "Invalid email or password.";
+    }
+  } else if (errorParam) {
+    defaultError = errorParam;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +111,7 @@ function LoginFormContent() {
         </form>
 
         <p className="text-xs text-center text-muted-foreground mt-6">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-primary font-semibold hover:underline">
             Register here
           </Link>

@@ -171,7 +171,7 @@ export default async function ProjectPage({ params }: PageProps) {
 
               {project.owner.bio && (
                 <p className="text-xs text-muted-foreground/80 leading-relaxed mb-4 italic">
-                  "{project.owner.bio}"
+                  &quot;{project.owner.bio}&quot;
                 </p>
               )}
 

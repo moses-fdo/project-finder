@@ -157,7 +157,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 </div>
               ) : (
                 <div className="glass-panel p-8 rounded-xl border border-border text-center">
-                  <p className="text-sm text-muted-foreground">This student hasn't posted any projects yet.</p>
+                  <p className="text-sm text-muted-foreground">This student hasn&apos;t posted any projects yet.</p>
                 </div>
               )}
             </div>

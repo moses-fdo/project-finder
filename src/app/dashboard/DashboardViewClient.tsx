@@ -382,7 +382,7 @@ export default function DashboardViewClient({
             </div>
           ) : (
             <div className="glass-panel p-10 rounded-xl text-center border border-border">
-              <p className="text-sm text-muted-foreground">You haven't posted any projects yet.</p>
+              <p className="text-sm text-muted-foreground">You haven&apos;t posted any projects yet.</p>
             </div>
           )}
         </div>
@@ -409,7 +409,7 @@ export default function DashboardViewClient({
                     </p>
                     {app.message && (
                       <p className="text-xs text-muted-foreground bg-secondary/20 p-2.5 rounded-lg border border-border mt-2 leading-relaxed">
-                        Message: "{app.message}"
+                        Message: &quot;{app.message}&quot;
                       </p>
                     )}
                   </div>
@@ -422,7 +422,7 @@ export default function DashboardViewClient({
             </div>
           ) : (
             <div className="glass-panel p-10 rounded-xl text-center border border-border">
-              <p className="text-sm text-muted-foreground">You haven't applied to any projects yet.</p>
+              <p className="text-sm text-muted-foreground">You haven&apos;t applied to any projects yet.</p>
             </div>
           )}
         </div>

@@ -220,7 +220,7 @@ export default function SignupPage() {
               <FiClock className="mx-auto text-4xl text-primary mb-3 animate-pulse" />
               <h2 className="text-2xl font-bold text-white">Enter OTP</h2>
               <p className="text-xs text-muted-foreground mt-1">
-                We've sent a 6-digit OTP code to <strong className="text-foreground">{email}</strong>.
+                We&apos;ve sent a 6-digit OTP code to <strong className="text-foreground">{email}</strong>.
               </p>
               <div className="text-[10px] text-amber-400 bg-amber-950/20 border border-amber-500/10 p-3 rounded-lg mt-4 text-left">
                 <strong>Development mode notice:</strong> Since no mailer is configured, check your server console/terminal logs to grab the OTP code!
