@@ -51,51 +51,49 @@ function LoginFormContent() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 relative overflow-hidden bg-background">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(99,102,241,0.1),transparent_50%)]"></div>
-
-      <div className="w-full max-w-md glass-panel p-8 rounded-2xl shadow-2xl relative z-10 border border-border">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 relative bg-background">
+      <div className="w-full max-w-md glass-panel p-8 rounded-lg shadow-sm relative z-10 border border-border bg-card">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block h-10 w-10 rounded-lg bg-gradient-to-tr from-primary to-ring flex items-center justify-center font-bold text-white shadow-lg mb-4 text-lg">
+          <Link href="/" className="inline-block h-9 w-9 rounded bg-primary flex items-center justify-center font-bold text-primary-foreground shadow-sm mb-4 text-base">
             K
           </Link>
-          <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-          <p className="text-xs text-muted-foreground mt-1">Sign in with your @karunya.edu.in account</p>
+          <h2 className="text-2xl font-bold text-foreground">Welcome Back</h2>
+          <p className="text-xs text-muted-foreground mt-1.5">Sign in with your @karunya.edu.in account</p>
         </div>
 
         {(error || defaultError) && (
-          <div className="p-3 mb-6 text-xs bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400">
+          <div className="p-3 mb-6 text-xs notion-tag-red border border-rose-200/20 rounded-lg">
             {error || defaultError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Email Address</label>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Email Address</label>
             <div className="relative">
-              <FiMail className="absolute left-3 top-3 text-muted-foreground" />
+              <FiMail className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
               <input
                 type="email"
                 required
                 placeholder="student@karunya.edu.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Password</label>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Password</label>
             <div className="relative">
-              <FiLock className="absolute left-3 top-3 text-muted-foreground" />
+              <FiLock className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
               <input
                 type="password"
                 required
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
           </div>
@@ -103,7 +101,7 @@ function LoginFormContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 px-4 bg-primary hover:bg-opacity-95 text-white font-semibold rounded-lg shadow-lg shadow-indigo-500/20 transition-all text-sm cursor-pointer disabled:opacity-50"
+            className="w-full py-2 px-4 bg-primary hover:bg-opacity-90 text-primary-foreground font-semibold rounded-lg shadow-sm transition-colors text-xs cursor-pointer disabled:opacity-50"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
@@ -111,7 +109,7 @@ function LoginFormContent() {
 
         <p className="text-xs text-center text-muted-foreground mt-6">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary font-semibold hover:underline">
+          <Link href="/signup" className="text-foreground font-semibold hover:underline">
             Register here
           </Link>
         </p>

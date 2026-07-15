@@ -96,65 +96,63 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 relative overflow-hidden bg-background">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(99,102,241,0.1),transparent_50%)]"></div>
-
-      <div className="w-full max-w-md glass-panel p-8 rounded-2xl shadow-2xl relative z-10 border border-border">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 relative bg-background">
+      <div className="w-full max-w-md glass-panel p-8 rounded-lg shadow-sm relative z-10 border border-border bg-card">
         {step === 1 ? (
           <>
             <div className="text-center mb-8">
-              <Link href="/" className="inline-block h-10 w-10 rounded-lg bg-gradient-to-tr from-primary to-ring flex items-center justify-center font-bold text-white shadow-lg mb-4 text-lg">
+              <Link href="/" className="inline-block h-9 w-9 rounded bg-primary flex items-center justify-center font-bold text-primary-foreground shadow-sm mb-4 text-base">
                 K
               </Link>
-              <h2 className="text-2xl font-bold text-white">Create Account</h2>
-              <p className="text-xs text-muted-foreground mt-1">Sign up for verified Karunya student portal</p>
+              <h2 className="text-2xl font-bold text-foreground">Create Account</h2>
+              <p className="text-xs text-muted-foreground mt-1.5">Sign up for verified Karunya student portal</p>
             </div>
 
             {error && (
-              <div className="p-3 mb-6 text-xs bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400">
+              <div className="p-3 mb-6 text-xs notion-tag-red border border-rose-200/20 rounded-lg">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSignupSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Full Name</label>
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Full Name</label>
                 <div className="relative">
-                  <FiUser className="absolute left-3 top-3 text-muted-foreground" />
+                  <FiUser className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
                   <input
                     type="text"
                     required
                     placeholder="Moses Fernando"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Karunya Email Address</label>
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Karunya Email Address</label>
                 <div className="relative">
-                  <FiMail className="absolute left-3 top-3 text-muted-foreground" />
+                  <FiMail className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
                   <input
                     type="email"
                     required
                     placeholder="username@karunya.edu.in"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Department</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Department</label>
                   <select
                     required
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-secondary"
                   >
                     <option value="">Select...</option>
                     {departments.map((d) => (
@@ -166,12 +164,12 @@ export default function SignupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Year of Study</label>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Year of Study</label>
                   <select
                     required
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-secondary"
                   >
                     <option value="">Select...</option>
                     <option value="1">1st Year</option>
@@ -183,9 +181,9 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Password</label>
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Password</label>
                 <div className="relative">
-                  <FiLock className="absolute left-3 top-3 text-muted-foreground" />
+                  <FiLock className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
                   <input
                     type="password"
                     required
@@ -193,7 +191,7 @@ export default function SignupPage() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -201,7 +199,7 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-primary hover:bg-opacity-95 text-white font-semibold rounded-lg shadow-lg shadow-indigo-500/20 transition-all text-sm cursor-pointer disabled:opacity-50 mt-2"
+                className="w-full py-2 px-4 bg-primary hover:bg-opacity-90 text-primary-foreground font-semibold rounded-lg shadow-sm transition-colors text-xs cursor-pointer disabled:opacity-50 mt-2"
               >
                 {loading ? "Registering..." : "Send Verification OTP"}
               </button>
@@ -209,7 +207,7 @@ export default function SignupPage() {
 
             <p className="text-xs text-center text-muted-foreground mt-6">
               Already have an account?{" "}
-              <Link href="/login" className="text-primary font-semibold hover:underline">
+              <Link href="/login" className="text-foreground font-semibold hover:underline">
                 Sign in here
               </Link>
             </p>
@@ -217,31 +215,31 @@ export default function SignupPage() {
         ) : (
           <>
             <div className="text-center mb-6">
-              <FiClock className="mx-auto text-4xl text-primary mb-3 animate-pulse" />
-              <h2 className="text-2xl font-bold text-white">Enter OTP</h2>
-              <p className="text-xs text-muted-foreground mt-1">
+              <FiClock className="mx-auto text-3xl text-muted-foreground mb-3 animate-pulse" />
+              <h2 className="text-2xl font-bold text-foreground">Enter OTP</h2>
+              <p className="text-xs text-muted-foreground mt-1.5">
                 We&apos;ve sent a 6-digit OTP code to <strong className="text-foreground">{email}</strong>.
               </p>
-              <div className="text-[10px] text-amber-400 bg-amber-950/20 border border-amber-500/10 p-3 rounded-lg mt-4 text-left">
+              <div className="text-[10px] notion-tag-yellow border border-yellow-200/20 p-3 rounded-lg mt-4 text-left">
                 <strong>Development mode notice:</strong> Since no mailer is configured, check your server console/terminal logs to grab the OTP code!
               </div>
             </div>
 
             {successMsg && (
-              <div className="p-3 mb-4 text-xs bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+              <div className="p-3 mb-4 text-xs notion-tag-green border border-green-200/20 rounded-lg">
                 {successMsg}
               </div>
             )}
 
             {error && (
-              <div className="p-3 mb-4 text-xs bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400">
+              <div className="p-3 mb-4 text-xs notion-tag-red border border-rose-200/20 rounded-lg">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleVerifySubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Verification Code</label>
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Verification Code</label>
                 <input
                   type="text"
                   required
@@ -249,14 +247,14 @@ export default function SignupPage() {
                   maxLength={6}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-secondary border border-border rounded-lg text-center font-mono text-lg tracking-widest text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-center font-mono text-base tracking-widest text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-primary hover:bg-opacity-95 text-white font-semibold rounded-lg shadow-lg shadow-indigo-500/20 transition-all text-sm cursor-pointer disabled:opacity-50"
+                className="w-full py-2 px-4 bg-primary hover:bg-opacity-90 text-primary-foreground font-semibold rounded-lg shadow-sm transition-colors text-xs cursor-pointer disabled:opacity-50"
               >
                 {loading ? "Verifying..." : "Verify Code"}
               </button>
@@ -264,7 +262,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="w-full py-2 px-4 text-xs font-semibold text-muted-foreground hover:text-foreground text-center"
+                className="w-full py-2 px-4 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg border border-border mt-2 transition-colors cursor-pointer text-center"
               >
                 Back to Details
               </button>

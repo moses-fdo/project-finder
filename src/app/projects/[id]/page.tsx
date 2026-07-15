@@ -71,11 +71,11 @@ export default async function ProjectPage({ params }: PageProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "OPEN":
-        return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        return "notion-tag-green";
       case "FULL":
-        return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        return "notion-tag-yellow";
       default:
-        return "bg-rose-500/10 text-rose-400 border border-rose-500/20";
+        return "notion-tag-red";
     }
   };
 
@@ -86,17 +86,17 @@ export default async function ProjectPage({ params }: PageProps) {
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Link
           href="/projects"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
-          <FiBookOpen className="text-xs" />
+          <FiBookOpen className="text-[10px]" />
           Back to Discover
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="glass-panel p-8 rounded-xl border border-border">
+            <div className="glass-panel p-6 sm:p-8 rounded-lg border border-border bg-card">
               <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <span className={`px-3 py-1 text-xs font-semibold rounded-full uppercase ${getStatusColor(project.status)}`}>
+                <span className={`px-2 py-0.5 text-[10px] font-semibold rounded uppercase ${getStatusColor(project.status)}`}>
                   {project.status} Recruitment
                 </span>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -109,11 +109,11 @@ export default async function ProjectPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <h1 className="text-3xl font-extrabold text-white mb-6 leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-6 leading-tight tracking-tight">
                 {project.title}
               </h1>
 
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Project Description
               </h3>
               <div className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
@@ -121,18 +121,18 @@ export default async function ProjectPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="glass-panel p-8 rounded-xl border border-border">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-                <FiCpu className="text-primary text-base" />
+            <div className="glass-panel p-6 sm:p-8 rounded-lg border border-border bg-card">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                <FiCpu className="text-muted-foreground text-base" />
                 Required Skills & Tech Stack
               </h3>
               <div className="flex flex-wrap gap-2">
                 {project.skills.map((skill) => (
                   <span
                     key={skill.id}
-                    className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg bg-secondary border border-border text-foreground/90"
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded bg-secondary text-muted-foreground"
                   >
-                    <FiTag className="text-[10px] text-muted-foreground" />
+                    <FiTag className="text-[10px]" />
                     {skill.name}
                   </span>
                 ))}
@@ -150,17 +150,17 @@ export default async function ProjectPage({ params }: PageProps) {
               projectStatus={project.status}
             />
 
-            <div className="glass-panel p-6 rounded-xl border border-border">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase mb-4 flex items-center gap-1.5">
-                <FiUser className="text-primary" />
+            <div className="glass-panel p-6 rounded-lg border border-border bg-card">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-4 flex items-center gap-1.5">
+                <FiUser className="text-muted-foreground" />
                 Project Owner
               </h3>
               <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-ring flex items-center justify-center font-bold text-white uppercase text-base">
+                <div className="h-10 w-10 rounded-md bg-secondary border border-border flex items-center justify-center font-bold text-foreground uppercase text-base shrink-0">
                   {project.owner.name[0]}
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-white hover:text-primary transition-colors">
+                  <h4 className="font-bold text-sm text-foreground hover:underline">
                     <Link href={`/profile/${project.owner.id}`}>{project.owner.name}</Link>
                   </h4>
                   <p className="text-xs text-muted-foreground">
@@ -178,7 +178,7 @@ export default async function ProjectPage({ params }: PageProps) {
               {isLoggedIn && (
                 <a
                   href={`mailto:${project.owner.email}`}
-                  className="flex items-center justify-center gap-2 w-full py-2 px-4 text-xs font-semibold bg-secondary text-foreground hover:bg-muted border border-border hover:border-muted-foreground rounded-lg transition-all"
+                  className="flex items-center justify-center gap-2 w-full py-2 px-4 text-xs font-semibold bg-secondary text-foreground hover:bg-muted border border-border hover:border-muted-foreground rounded-lg transition-colors"
                 >
                   <FiMail />
                   Contact Owner

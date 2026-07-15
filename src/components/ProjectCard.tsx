@@ -30,25 +30,25 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "OPEN":
-        return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        return "notion-tag-green";
       case "FULL":
-        return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        return "notion-tag-yellow";
       case "CLOSED":
-        return "bg-rose-500/10 text-rose-400 border border-rose-500/20";
+        return "notion-tag-red";
       default:
-        return "bg-secondary text-muted-foreground";
+        return "notion-tag-gray";
     }
   };
 
   return (
-    <article className="glass-panel rounded-xl p-5 hover:border-primary/30 hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between h-full">
+    <article className="glass-panel rounded-lg p-5 hover:border-muted-foreground/30 transition-all duration-200 flex flex-col justify-between h-full bg-card">
       <div>
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-3">
-          <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full uppercase ${getStatusColor(project.status)}`}>
+          <span className={`px-2 py-0.5 text-[10px] font-semibold rounded uppercase ${getStatusColor(project.status)}`}>
             {project.status}
           </span>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <FiClock />
             {new Date(project.createdAt).toLocaleDateString(undefined, {
               month: "short",
@@ -59,12 +59,12 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-1 hover:text-primary transition-colors">
+        <h3 className="text-base font-bold text-foreground mb-2 line-clamp-1 hover:text-muted-foreground transition-colors">
           <Link href={`/projects/${project.id}`}>{project.title}</Link>
         </h3>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+        <p className="text-xs text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
           {truncatedDesc}
         </p>
 
@@ -73,7 +73,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           {project.skills.map((skill) => (
             <span
               key={skill.id}
-              className="text-[11px] font-medium px-2 py-0.5 rounded bg-secondary border border-border text-foreground/80"
+              className="text-[10px] font-medium px-2 py-0.5 rounded bg-secondary text-muted-foreground"
             >
               {skill.name}
             </span>
@@ -84,11 +84,11 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       {/* Footer */}
       <div className="pt-4 border-t border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase">
+          <div className="h-7 w-7 rounded-md bg-secondary border border-border flex items-center justify-center text-xs font-bold text-foreground uppercase">
             {project.owner.name[0]}
           </div>
           <div>
-            <p className="text-xs font-semibold text-foreground leading-none hover:text-primary transition-colors">
+            <p className="text-xs font-semibold text-foreground leading-none hover:underline">
               <Link href={`/profile/${project.owner.id}`}>{project.owner.name}</Link>
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -99,10 +99,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
         <Link
           href={`/projects/${project.id}`}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-primary hover:text-white hover:bg-primary rounded-md border border-primary/20 hover:border-transparent transition-all duration-200"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary border border-border rounded-lg transition-colors cursor-pointer"
         >
           Details
-          <FiBookOpen className="text-xs" />
+          <FiBookOpen className="text-[11px] text-muted-foreground" />
         </Link>
       </div>
     </article>

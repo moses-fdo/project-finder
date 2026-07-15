@@ -86,10 +86,10 @@ export default async function ProjectsPage({
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
             Discover Projects
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Explore ongoing student and faculty initiatives, and apply to join teams.
           </p>
         </div>
@@ -103,11 +103,11 @@ export default async function ProjectsPage({
             ))}
           </div>
         ) : (
-          <div className="glass-panel p-12 rounded-xl text-center border border-border">
-            <p className="text-lg font-semibold text-muted-foreground mb-1">
+          <div className="glass-panel p-12 rounded-lg text-center border border-border bg-card">
+            <p className="text-base font-semibold text-foreground mb-1">
               No projects found.
             </p>
-            <p className="text-sm text-muted-foreground/80">
+            <p className="text-xs text-muted-foreground/80">
               Try adjusting your search criteria or clear active filters.
             </p>
           </div>

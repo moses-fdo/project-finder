@@ -29,14 +29,14 @@ export default function ProjectDetailClient({
 
   if (isOwner) {
     return (
-      <div className="glass-panel p-6 rounded-xl border border-border">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase mb-2">Project Control</h3>
+      <div className="glass-panel p-6 rounded-lg border border-border bg-card">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Project Control</h3>
         <p className="text-xs text-muted-foreground mb-4">
           You are the owner of this project. Go to the dashboard to review applications and update status.
         </p>
         <button
           onClick={() => router.push("/dashboard?tab=projects")}
-          className="w-full py-2.5 px-4 text-sm font-semibold bg-secondary text-foreground hover:bg-muted rounded-lg transition-all cursor-pointer text-center"
+          className="w-full py-2 px-4 text-xs font-semibold bg-secondary text-foreground hover:bg-muted border border-border rounded-lg transition-colors cursor-pointer text-center"
         >
           Manage Applications
         </button>
@@ -46,14 +46,14 @@ export default function ProjectDetailClient({
 
   if (!isLoggedIn) {
     return (
-      <div className="glass-panel p-6 rounded-xl border border-border">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase mb-2">Join Project</h3>
+      <div className="glass-panel p-6 rounded-lg border border-border bg-card">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Join Project</h3>
         <p className="text-xs text-muted-foreground mb-4">
           Sign in with your verified Karunya account to apply for collaboration.
         </p>
         <button
           onClick={() => router.push("/login")}
-          className="w-full py-2.5 px-4 text-sm font-semibold bg-primary text-white hover:bg-opacity-90 rounded-lg shadow-md transition-all cursor-pointer text-center"
+          className="w-full py-2 px-4 text-xs font-semibold bg-primary text-primary-foreground hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer text-center"
         >
           Login to Apply
         </button>
@@ -66,21 +66,21 @@ export default function ProjectDetailClient({
       switch (applicationStatus) {
         case "ACCEPTED":
           return {
-            color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+            color: "notion-tag-green border border-green-200/20",
             label: "Application Approved",
             desc: "Congratulations! The project owner accepted your request. You are now a team member.",
             icon: FiCheck,
           };
         case "REJECTED":
           return {
-            color: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+            color: "notion-tag-red border border-rose-200/20",
             label: "Application Declined",
             desc: "The project owner decided not to proceed with your request. Keep searching!",
             icon: FiX,
           };
         default:
           return {
-            color: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+            color: "notion-tag-yellow border border-yellow-200/20",
             label: "Application Pending",
             desc: "Your request is currently being reviewed by the project owner. Check back later.",
             icon: FiClock,
@@ -92,21 +92,21 @@ export default function ProjectDetailClient({
     const Icon = statusCard.icon;
 
     return (
-      <div className={`p-6 rounded-xl border ${statusCard.color} flex flex-col gap-3`}>
-        <div className="flex items-center gap-2 font-bold text-sm">
-          <Icon className="text-lg" />
+      <div className={`p-5 rounded-lg ${statusCard.color} flex flex-col gap-2.5`}>
+        <div className="flex items-center gap-1.5 font-bold text-xs">
+          <Icon className="text-sm shrink-0" />
           {statusCard.label}
         </div>
-        <p className="text-xs opacity-90">{statusCard.desc}</p>
+        <p className="text-xs opacity-90 leading-relaxed">{statusCard.desc}</p>
       </div>
     );
   }
 
   if (projectStatus !== "OPEN") {
     return (
-      <div className="p-6 rounded-xl border border-border bg-secondary text-muted-foreground">
-        <p className="text-sm font-semibold">Recruitment Closed</p>
-        <p className="text-xs mt-1">This project is currently full or closed for new applications.</p>
+      <div className="p-5 rounded-lg border border-border bg-secondary text-muted-foreground">
+        <p className="text-xs font-semibold">Recruitment Closed</p>
+        <p className="text-[11px] mt-1">This project is currently full or closed for new applications.</p>
       </div>
     );
   }
@@ -139,14 +139,14 @@ export default function ProjectDetailClient({
 
   return (
     <>
-      <div className="glass-panel p-6 rounded-xl border border-border">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase mb-2">Join Project</h3>
+      <div className="glass-panel p-6 rounded-lg border border-border bg-card">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Join Project</h3>
         <p className="text-xs text-muted-foreground mb-4">
           Send a request to collaborate on this project. Specify your skills and how you can contribute.
         </p>
         <button
           onClick={() => setModalOpen(true)}
-          className="w-full py-2.5 px-4 text-sm font-semibold bg-primary text-white hover:bg-opacity-90 rounded-lg shadow-md transition-all cursor-pointer text-center"
+          className="w-full py-2 px-4 text-xs font-semibold bg-primary text-primary-foreground hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer text-center"
         >
           Apply to Collaborate
         </button>
@@ -154,10 +154,10 @@ export default function ProjectDetailClient({
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-foreground mb-2 flex items-center gap-2">
-              <FiMessageSquare className="text-primary" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+          <div className="w-full max-w-md bg-card border border-border rounded-lg shadow-xl p-6 relative animate-in zoom-in-95 duration-150">
+            <h3 className="text-base font-bold text-foreground mb-2 flex items-center gap-2">
+              <FiMessageSquare className="text-muted-foreground" />
               Apply to Collaborate
             </h3>
             <p className="text-xs text-muted-foreground mb-4">
@@ -178,7 +178,7 @@ export default function ProjectDetailClient({
                 required
                 maxLength={500}
                 placeholder="Hi, I would love to help with this project because..."
-                className="w-full p-3 bg-secondary border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring mb-4"
+                className="w-full p-3 bg-secondary border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring mb-4"
               />
 
               <div className="flex gap-2 justify-end">
@@ -186,14 +186,14 @@ export default function ProjectDetailClient({
                   type="button"
                   onClick={() => setModalOpen(false)}
                   disabled={submitting}
-                  className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg border border-border transition-colors cursor-pointer"
+                  className="px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg border border-border transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-opacity-90 rounded-lg shadow-md transition-colors cursor-pointer"
+                  className="px-3.5 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer"
                 >
                   {submitting ? "Sending..." : "Submit Application"}
                 </button>

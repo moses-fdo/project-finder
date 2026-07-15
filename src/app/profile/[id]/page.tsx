@@ -58,22 +58,22 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Left Column: User info */}
           <div className="md:col-span-1 space-y-6">
-            <div className="glass-panel p-6 rounded-xl border border-border text-center">
-              <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-primary to-ring flex items-center justify-center font-bold text-white uppercase text-3xl mx-auto mb-4">
+            <div className="glass-panel p-6 rounded-lg border border-border text-center bg-card">
+              <div className="h-20 w-20 rounded-md bg-secondary border border-border flex items-center justify-center font-bold text-foreground uppercase text-3xl mx-auto mb-4">
                 {user.name[0]}
               </div>
-              <h1 className="text-xl font-bold text-white mb-1">{user.name}</h1>
+              <h1 className="text-xl font-bold text-foreground mb-1">{user.name}</h1>
               <p className="text-xs text-muted-foreground mb-4">
                 {user.department} • Year {user.year}
               </p>
 
-              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full uppercase bg-secondary text-primary border border-border">
+              <span className="inline-block px-2.5 py-0.5 text-[10px] font-semibold rounded bg-secondary text-muted-foreground border border-border uppercase">
                 {user.role}
               </span>
             </div>
 
             {/* Contact & Links */}
-            <div className="glass-panel p-6 rounded-xl border border-border space-y-4">
+            <div className="glass-panel p-6 rounded-lg border border-border bg-card space-y-4">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Contact & Portfolios</h3>
 
               <div className="space-y-3 text-sm">
@@ -115,10 +115,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           {/* Right Column: Bio, Skills & Projects */}
           <div className="md:col-span-2 space-y-6">
             {/* Bio & Skills */}
-            <div className="glass-panel p-6 rounded-xl border border-border space-y-6">
+            <div className="glass-panel p-6 rounded-lg border border-border bg-card space-y-6">
               <div>
                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">About Me</h3>
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap">
                   {user.bio || "This student hasn't completed their bio yet."}
                 </p>
               </div>
@@ -130,7 +130,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     user.skills.map((skill) => (
                       <span
                         key={skill.id}
-                        className="text-xs font-medium px-2.5 py-1 rounded bg-secondary border border-border text-foreground/80"
+                        className="text-[10px] font-medium px-2 py-0.5 rounded bg-secondary text-muted-foreground"
                       >
                         {skill.name}
                       </span>
@@ -144,8 +144,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
             {/* User Projects */}
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <FiBookOpen className="text-primary" />
+              <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
+                <FiBookOpen className="text-muted-foreground" />
                 Projects Posted by {user.name.split(" ")[0]}
               </h3>
 
@@ -156,7 +156,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   ))}
                 </div>
               ) : (
-                <div className="glass-panel p-8 rounded-xl border border-border text-center">
+                <div className="glass-panel p-8 rounded-lg border border-border text-center bg-card">
                   <p className="text-sm text-muted-foreground">This student hasn&apos;t posted any projects yet.</p>
                 </div>
               )}

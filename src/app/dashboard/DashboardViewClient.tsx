@@ -258,8 +258,14 @@ export default function DashboardViewClient({
         </div>
       )}
 
+      {actionError && (
+        <div className="p-3.5 notion-tag-red border border-rose-200/20 rounded-lg text-xs">
+          {actionError}
+        </div>
+      )}
+
       {actionSuccess && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm">
+        <div className="p-3.5 notion-tag-green border border-green-200/20 rounded-lg text-xs">
           {actionSuccess}
         </div>
       )}
@@ -268,23 +274,25 @@ export default function DashboardViewClient({
       {activeTab === "projects" && (
         <div className="space-y-8">
           <div>
-            <h2 className="text-xl font-extrabold text-white mb-1">My Managed Projects</h2>
-            <p className="text-sm text-muted-foreground">Manage recruitment status and accept student applications.</p>
+            <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">My Managed Projects</h2>
+            <p className="text-xs text-muted-foreground">Manage recruitment status and accept student applications.</p>
           </div>
 
           {projects.length > 0 ? (
             <div className="space-y-6">
               {projects.map((project) => (
-                <div key={project.id} className="glass-panel rounded-xl border border-border overflow-hidden">
+                <div key={project.id} className="glass-panel rounded-lg border border-border overflow-hidden bg-card">
                   {/* Project Header */}
-                  <div className="p-5 border-b border-border bg-card/40 sm:flex sm:items-center sm:justify-between gap-4">
+                  <div className="p-5 border-b border-border bg-muted/20 sm:flex sm:items-center sm:justify-between gap-4">
                     <div>
-                      <h3 className="text-base font-bold text-white mb-1">{project.title}</h3>
+                      <h3 className="text-base font-bold text-foreground mb-1 hover:underline">
+                        <Link href={`/projects/${project.id}`}>{project.title}</Link>
+                      </h3>
                       <div className="flex flex-wrap gap-2 items-center text-xs text-muted-foreground">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
                           project.status === "OPEN"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            ? "notion-tag-green"
+                            : "notion-tag-red"
                         }`}>
                           {project.status}
                         </span>
@@ -318,7 +326,7 @@ export default function DashboardViewClient({
 
                   {/* Applications received for this project */}
                   <div className="p-5 space-y-4">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Applications Received
                     </h4>
 
@@ -328,12 +336,12 @@ export default function DashboardViewClient({
                           <div key={app.id} className="py-4 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div className="space-y-2 max-w-xl">
                               <div className="flex items-center gap-2">
-                                <Link href={`/profile/${app.user.id}`} className="font-bold text-sm text-white hover:text-primary transition-colors">{app.user.name}</Link>
+                                <Link href={`/profile/${app.user.id}`} className="font-bold text-sm text-foreground hover:underline">{app.user.name}</Link>
                                 <span className="text-xs text-muted-foreground">
                                   ({app.user.department} • Yr {app.user.year})
                                 </span>
                               </div>
-                              <p className="text-xs text-muted-foreground whitespace-pre-wrap bg-secondary/30 border border-border/55 p-3 rounded-lg leading-relaxed">
+                              <p className="text-xs text-foreground whitespace-pre-wrap bg-secondary p-3 rounded-lg leading-relaxed border border-border/40">
                                 {app.message || "No motivation message provided."}
                               </p>
                             </div>
@@ -344,7 +352,7 @@ export default function DashboardViewClient({
                                   <button
                                     onClick={() => handleApplicationAction(app.id, "ACCEPTED")}
                                     disabled={loadingId !== null}
-                                    className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-md transition-colors cursor-pointer flex items-center gap-1"
+                                    className="px-3 py-1.5 text-xs font-semibold text-primary-foreground bg-primary hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
                                   >
                                     <FiCheck /> Accept
                                   </button>
@@ -357,7 +365,7 @@ export default function DashboardViewClient({
                                   </button>
                                 </>
                               ) : (
-                                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full uppercase ${getApplicationStatusColor(app.status)}`}>
+                                <span className={`px-2.5 py-0.5 text-[10px] font-semibold rounded uppercase ${getApplicationStatusColor(app.status)}`}>
                                   {app.status}
                                 </span>
                               )}
@@ -375,7 +383,7 @@ export default function DashboardViewClient({
               ))}
             </div>
           ) : (
-            <div className="glass-panel p-10 rounded-xl text-center border border-border">
+            <div className="glass-panel p-10 rounded-lg text-center border border-border bg-card">
               <p className="text-sm text-muted-foreground">You haven&apos;t posted any projects yet.</p>
             </div>
           )}
@@ -386,36 +394,36 @@ export default function DashboardViewClient({
       {activeTab === "applications" && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-extrabold text-white mb-1">My Collaboration Requests</h2>
-            <p className="text-sm text-muted-foreground">Track the status of your applications to join other projects.</p>
+            <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">My Collaboration Requests</h2>
+            <p className="text-xs text-muted-foreground">Track the status of your applications to join other projects.</p>
           </div>
 
           {applications.length > 0 ? (
             <div className="space-y-4">
               {applications.map((app) => (
-                <div key={app.id} className="glass-panel p-5 rounded-xl border border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div key={app.id} className="glass-panel p-5 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-card">
                   <div className="space-y-1">
-                    <h3 className="text-base font-bold text-white hover:text-primary transition-colors">
+                    <h3 className="text-base font-bold text-foreground hover:underline">
                       <a href={`/projects/${app.project.id}`}>{app.project.title}</a>
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Owner: <Link href={`/profile/${app.project.owner.id}`} className="hover:text-primary transition-colors font-semibold">{app.project.owner.name}</Link> • Applied on {new Date(app.createdAt).toLocaleDateString()}
+                      Owner: <Link href={`/profile/${app.project.owner.id}`} className="hover:underline text-foreground font-semibold">{app.project.owner.name}</Link> • Applied on {new Date(app.createdAt).toLocaleDateString()}
                     </p>
                     {app.message && (
-                      <p className="text-xs text-muted-foreground bg-secondary/20 p-2.5 rounded-lg border border-border mt-2 leading-relaxed">
+                      <p className="text-xs text-foreground bg-secondary p-2.5 rounded-lg border border-border/40 mt-2 leading-relaxed">
                         Message: &quot;{app.message}&quot;
                       </p>
                     )}
                   </div>
 
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full uppercase shrink-0 self-start sm:self-center ${getApplicationStatusColor(app.status)}`}>
+                  <span className={`px-2.5 py-0.5 text-[10px] font-semibold rounded uppercase shrink-0 self-start sm:self-center ${getApplicationStatusColor(app.status)}`}>
                     {app.status}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="glass-panel p-10 rounded-xl text-center border border-border">
+            <div className="glass-panel p-10 rounded-lg text-center border border-border bg-card">
               <p className="text-sm text-muted-foreground">You haven&apos;t applied to any projects yet.</p>
             </div>
           )}
@@ -427,14 +435,14 @@ export default function DashboardViewClient({
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-extrabold text-white mb-1">Inbox & Notifications</h2>
-              <p className="text-sm text-muted-foreground">Stay updated on your application status changes.</p>
+              <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">Inbox & Notifications</h2>
+              <p className="text-xs text-muted-foreground">Stay updated on your application status changes.</p>
             </div>
 
             {notifications.some((n) => !n.read) && (
               <button
                 onClick={handleMarkAllNotificationsRead}
-                className="text-xs font-semibold text-primary hover:text-white transition-colors cursor-pointer"
+                className="text-xs font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors cursor-pointer"
               >
                 Mark all read
               </button>
@@ -447,14 +455,14 @@ export default function DashboardViewClient({
                 <div
                   key={notif.id}
                   onClick={() => !notif.read && handleMarkNotificationRead(notif.id)}
-                  className={`p-4 rounded-xl border transition-all ${
+                  className={`p-4 rounded-lg border transition-all bg-card ${
                     notif.read
-                      ? "bg-card/30 border-border/50 opacity-60"
-                      : "bg-card border-border hover:border-primary/50 cursor-pointer shadow-md"
+                      ? "border-border/50 opacity-60"
+                      : "border-border hover:border-muted-foreground/30 cursor-pointer shadow-sm"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-foreground leading-relaxed">{notif.message}</p>
+                    <p className="text-xs text-foreground leading-relaxed">{notif.message}</p>
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap pt-0.5">
                       {new Date(notif.createdAt).toLocaleDateString()}
                     </span>
@@ -463,7 +471,7 @@ export default function DashboardViewClient({
               ))}
             </div>
           ) : (
-            <div className="glass-panel p-10 rounded-xl text-center border border-border">
+            <div className="glass-panel p-10 rounded-lg text-center border border-border bg-card">
               <p className="text-sm text-muted-foreground">No notifications received.</p>
             </div>
           )}
@@ -474,11 +482,11 @@ export default function DashboardViewClient({
       {activeTab === "profile" && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-extrabold text-white mb-1">Profile Settings</h2>
-            <p className="text-sm text-muted-foreground">Manage your student metadata and technical portfolio.</p>
+            <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">Profile Settings</h2>
+            <p className="text-xs text-muted-foreground">Manage your student metadata and technical portfolio.</p>
           </div>
 
-          <div className="glass-panel p-8 rounded-xl border border-border">
+          <div className="glass-panel p-6 sm:p-8 rounded-lg border border-border bg-card">
             <form onSubmit={handleProfileSave} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -488,7 +496,7 @@ export default function DashboardViewClient({
                     required
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
@@ -498,7 +506,7 @@ export default function DashboardViewClient({
                     type="text"
                     disabled
                     value={profileData?.email || ""}
-                    className="w-full px-4 py-2.5 bg-zinc-900 border border-border rounded-lg text-sm text-muted-foreground/70 cursor-not-allowed"
+                    className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-xs text-muted-foreground/70 cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -510,7 +518,7 @@ export default function DashboardViewClient({
                     required
                     value={profileDept}
                     onChange={(e) => setProfileDept(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-secondary"
                   >
                     {departmentsList.map((d) => (
                       <option key={d} value={d}>
@@ -526,7 +534,7 @@ export default function DashboardViewClient({
                     required
                     value={profileYear}
                     onChange={(e) => setProfileYear(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-secondary"
                   >
                     <option value="1">1st Year</option>
                     <option value="2">2nd Year</option>
@@ -543,7 +551,7 @@ export default function DashboardViewClient({
                   value={profileBio}
                   onChange={(e) => setProfileBio(e.target.value)}
                   placeholder="I am passionate about IoT sensors..."
-                  className="w-full p-3 bg-secondary border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full p-2.5 bg-card border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -554,7 +562,7 @@ export default function DashboardViewClient({
                   value={profileSkills}
                   onChange={(e) => setProfileSkills(e.target.value)}
                   placeholder="React, Next.js, Node.js, Python, Arduino"
-                  className="w-full px-4 py-2.5 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -568,7 +576,7 @@ export default function DashboardViewClient({
                     value={profileGithub}
                     onChange={(e) => setProfileGithub(e.target.value)}
                     placeholder="https://github.com/username"
-                    className="w-full px-4 py-2.5 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
@@ -581,7 +589,7 @@ export default function DashboardViewClient({
                     value={profileLinkedin}
                     onChange={(e) => setProfileLinkedin(e.target.value)}
                     placeholder="https://linkedin.com/in/username"
-                    className="w-full px-4 py-2.5 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -589,7 +597,7 @@ export default function DashboardViewClient({
               <button
                 type="submit"
                 disabled={loadingId !== null}
-                className="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-opacity-95 rounded-lg shadow-md transition-all cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold text-primary-foreground bg-primary hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer"
               >
                 {loadingId === "profile-save" ? "Saving..." : "Save Settings"}
               </button>
@@ -602,14 +610,14 @@ export default function DashboardViewClient({
       {activeTab === "admin" && currentUser.role === "ADMIN" && adminData && (
         <div className="space-y-10">
           <div>
-            <h2 className="text-xl font-extrabold text-white mb-1">Admin Management Center</h2>
-            <p className="text-sm text-muted-foreground font-medium">Moderate student listings and delete flagged content.</p>
+            <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">Admin Management Center</h2>
+            <p className="text-xs text-muted-foreground font-medium">Moderate student listings and delete flagged content.</p>
           </div>
 
           {/* User management */}
-          <div className="glass-panel p-6 rounded-xl border border-border space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <FiUser className="text-primary" />
+          <div className="glass-panel p-5 rounded-lg border border-border bg-card space-y-4">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+              <FiUser className="text-muted-foreground" />
               Registered Accounts ({adminData.users.length})
             </h3>
             <div className="overflow-x-auto">
@@ -626,30 +634,30 @@ export default function DashboardViewClient({
                 <tbody className="divide-y divide-border text-xs">
                   {adminData.users.map((u) => (
                     <tr key={u.id}>
-                      <td className="py-3 px-2 font-bold text-white hover:text-primary transition-colors"><Link href={`/profile/${u.id}`}>{u.name}</Link></td>
+                      <td className="py-3 px-2 font-bold text-foreground hover:underline"><Link href={`/profile/${u.id}`}>{u.name}</Link></td>
                       <td className="py-3 px-2 text-muted-foreground">{u.email}</td>
                       <td className="py-3 px-2">
-                        <span className={`px-2 py-0.5 rounded font-bold text-[9px] uppercase border ${
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
                           u.role === "ADMIN"
-                            ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
-                            : "bg-secondary text-foreground/80 border-border"
+                            ? "notion-tag-yellow"
+                            : "notion-tag-gray"
                         }`}>
                           {u.role}
                         </span>
                       </td>
                       <td className="py-3 px-2">
-                        <span className={`px-2 py-0.5 rounded font-semibold text-[9px] uppercase ${
-                          u.verified ? "text-emerald-400 bg-emerald-500/10" : "text-amber-400 bg-amber-500/10"
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-semibold uppercase ${
+                          u.verified ? "notion-tag-green" : "notion-tag-yellow"
                         }`}>
                           {u.verified ? "Verified" : "Unverified"}
                         </span>
                       </td>
                       <td className="py-3 px-2 text-right">
                         {u.role !== "ADMIN" && (
-                          <button
+                           <button
                             onClick={() => handleAdminDeleteUser(u.id)}
                             disabled={loadingId !== null}
-                            className="text-rose-400 hover:text-red-400 font-semibold cursor-pointer"
+                            className="text-destructive hover:text-red-400 font-semibold cursor-pointer text-[11px]"
                           >
                             {loadingId === `user-delete-${u.id}` ? "Deleting..." : "Ban / Delete"}
                           </button>
@@ -663,9 +671,9 @@ export default function DashboardViewClient({
           </div>
 
           {/* Project moderation */}
-          <div className="glass-panel p-6 rounded-xl border border-border space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <FiGrid className="text-primary" />
+          <div className="glass-panel p-5 rounded-lg border border-border bg-card space-y-4">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+              <FiGrid className="text-muted-foreground" />
               Published Projects ({adminData.projects.length})
             </h3>
             <div className="overflow-x-auto">
@@ -681,15 +689,15 @@ export default function DashboardViewClient({
                 <tbody className="divide-y divide-border text-xs">
                   {adminData.projects.map((p) => (
                     <tr key={p.id}>
-                      <td className="py-3 px-2 font-bold text-white hover:text-primary">
+                      <td className="py-3 px-2 font-bold text-foreground hover:underline">
                         <a href={`/projects/${p.id}`}>{p.title}</a>
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">{p.owner.name}</td>
                       <td className="py-3 px-2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-semibold uppercase border ${
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-semibold uppercase ${
                           p.status === "OPEN"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            ? "notion-tag-green"
+                            : "notion-tag-red"
                         }`}>
                           {p.status}
                         </span>
@@ -698,7 +706,7 @@ export default function DashboardViewClient({
                         <button
                           onClick={() => handleProjectDelete(p.id)}
                           disabled={loadingId !== null}
-                          className="text-rose-400 hover:text-red-400 font-semibold cursor-pointer"
+                          className="text-destructive hover:text-red-400 font-semibold cursor-pointer text-[11px]"
                         >
                           {loadingId === `delete-${p.id}` ? "Deleting..." : "Force Delete"}
                         </button>
