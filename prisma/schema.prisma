@@ -1,0 +1,87 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique
+  password       String
+  department     String
+  year           Int
+  role           String          @default("USER") // "USER" | "ADMIN"
+  verified       Boolean         @default(false)
+  otpCode        String?
+  otpExpires     DateTime?
+  bio            String?
+  profileImage   String?
+  githubUrl      String?
+  linkedinUrl    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  projects       Project[]       @relation("UserProjects")
+  applications   Application[]
+  notifications  Notification[]
+  bookmarks      Bookmark[]
+  skills         Skill[]         @relation("UserSkills")
+}
+
+model Project {
+  id             Int             @id @default(autoincrement())
+  title          String
+  description    String
+  status         String          @default("OPEN") // "OPEN" | "FULL" | "CLOSED"
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  owner          User            @relation("UserProjects", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId        Int
+  skills         Skill[]         @relation("ProjectSkills")
+  applications   Application[]
+  bookmarks      Bookmark[]
+}
+
+model Skill {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  projects Project[] @relation("ProjectSkills")
+  users    User[]    @relation("UserSkills")
+}
+
+model Application {
+  id        Int      @id @default(autoincrement())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  message   String?
+  status    String   @default("PENDING") // "PENDING" | "ACCEPTED" | "REJECTED"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, userId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  type      String   // "APPLICATION_RECEIVED" | "APPLICATION_ACCEPTED" | "APPLICATION_REJECTED" | "SYSTEM"
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Bookmark {
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId Int
+  createdAt DateTime @default(now())
+
+  @@id([userId, projectId])
+}
