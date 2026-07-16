@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar";
+import AppShell from "@/components/AppShell";
 import ProjectCard from "@/components/ProjectCard";
 import ProjectFilters from "@/components/ProjectFilters";
 import { prisma } from "@/lib/prisma";
@@ -29,38 +29,24 @@ export default async function ProjectsPage({
 
   if (params.search) {
     where.OR = [
-      { title: { contains: params.search } },
+      { title:       { contains: params.search } },
       { description: { contains: params.search } },
     ];
   }
-
   if (params.department) {
-    where.owner = {
-      department: params.department,
-    };
+    where.owner = { department: params.department };
   }
-
   if (params.status) {
     where.status = params.status;
   }
-
   if (params.skill) {
-    where.skills = {
-      some: {
-        name: params.skill,
-      },
-    };
+    where.skills = { some: { name: params.skill } };
   }
 
   const projects = await prisma.project.findMany({
     where,
-    include: {
-      owner: true,
-      skills: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+    include: { owner: true, skills: true },
+    orderBy: { createdAt: "desc" },
   });
 
   const skillsData = await prisma.skill.findMany({
@@ -77,42 +63,51 @@ export default async function ProjectsPage({
     "Mechanical Engineering",
     "Civil Engineering",
     "Biotechnology",
-    "Food Processing Technology"
+    "Food Processing Technology",
   ];
 
-  return (
-    <>
-      <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
-            Discover Projects
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Explore ongoing student and faculty initiatives, and apply to join teams.
-          </p>
+
+  const unreadNotificationsCount = await prisma.notification.count({
+    where: {
+      userId: Number((session.user as any).id),
+      read: false,
+    },
+  });
+
+  return (
+    <AppShell user={session.user} unreadNotifications={unreadNotificationsCount}>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Page header */}
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-[20px] font-bold tracking-tight text-foreground mb-0.5">
+              Discover
+            </h1>
+            <p className="text-[12px] text-muted-foreground">
+              {projects.length} project{projects.length !== 1 ? "s" : ""} found
+            </p>
+          </div>
         </div>
 
         <ProjectFilters skills={skills} departments={departments} />
 
+        {/* Results */}
         {projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project as any} />
             ))}
           </div>
         ) : (
-          <div className="glass-panel p-12 rounded-lg text-center border border-border bg-card">
-            <p className="text-base font-semibold text-foreground mb-1">
-              No projects found.
-            </p>
-            <p className="text-xs text-muted-foreground/80">
-              Try adjusting your search criteria or clear active filters.
+          <div className="card p-16 text-center">
+            <p className="text-[14px] font-medium text-foreground mb-1">No projects found</p>
+            <p className="text-[12px] text-muted-foreground">
+              Try clearing your filters or check back later.
             </p>
           </div>
         )}
       </main>
-    </>
+    </AppShell>
   );
 }

@@ -2,200 +2,274 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiMessageSquare, FiCheck, FiX, FiClock } from "react-icons/fi";
+import { MessageSquare, Check, X, Clock, Settings, Bookmark, Copy, CheckCheck } from "lucide-react";
 
 interface ProjectDetailClientProps {
   projectId: number;
-  isLoggedIn: boolean;
   isOwner: boolean;
   hasApplied: boolean;
   applicationStatus?: string;
   projectStatus: string;
+  initialBookmarked: boolean;
+  ownerEmail: string;
 }
 
 export default function ProjectDetailClient({
   projectId,
-  isLoggedIn,
   isOwner,
   hasApplied,
   applicationStatus,
   projectStatus,
+  initialBookmarked,
+  ownerEmail,
 }: ProjectDetailClientProps) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [modalOpen, setModalOpen]     = useState(false);
+  const [message, setMessage]         = useState("");
+  const [submitting, setSubmitting]   = useState(false);
+  const [applyError, setApplyError]   = useState("");
+
+  const [bookmarked, setBookmarked]   = useState(initialBookmarked);
+  const [bmLoading, setBmLoading]     = useState(false);
+
+  const [copied, setCopied]           = useState(false);
+
   const router = useRouter();
 
-  if (isOwner) {
-    return (
-      <div className="glass-panel p-6 rounded-lg border border-border bg-card">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Project Control</h3>
-        <p className="text-xs text-muted-foreground mb-4">
-          You are the owner of this project. Go to the dashboard to review applications and update status.
-        </p>
-        <button
-          onClick={() => router.push("/dashboard?tab=projects")}
-          className="w-full py-2 px-4 text-xs font-semibold bg-secondary text-foreground hover:bg-muted border border-border rounded-lg transition-colors cursor-pointer text-center"
-        >
-          Manage Applications
-        </button>
-      </div>
-    );
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div className="glass-panel p-6 rounded-lg border border-border bg-card">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Join Project</h3>
-        <p className="text-xs text-muted-foreground mb-4">
-          Sign in with your verified Karunya account to apply for collaboration.
-        </p>
-        <button
-          onClick={() => router.push("/login")}
-          className="w-full py-2 px-4 text-xs font-semibold bg-primary text-primary-foreground hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer text-center"
-        >
-          Login to Apply
-        </button>
-      </div>
-    );
-  }
-
-  if (hasApplied) {
-    const getStatusCard = () => {
-      switch (applicationStatus) {
-        case "ACCEPTED":
-          return {
-            color: "notion-tag-green border border-green-200/20",
-            label: "Application Approved",
-            desc: "Congratulations! The project owner accepted your request. You are now a team member.",
-            icon: FiCheck,
-          };
-        case "REJECTED":
-          return {
-            color: "notion-tag-red border border-rose-200/20",
-            label: "Application Declined",
-            desc: "The project owner decided not to proceed with your request. Keep searching!",
-            icon: FiX,
-          };
-        default:
-          return {
-            color: "notion-tag-yellow border border-yellow-200/20",
-            label: "Application Pending",
-            desc: "Your request is currently being reviewed by the project owner. Check back later.",
-            icon: FiClock,
-          };
+  /* ── Bookmark toggle ─────────────────────────────────────── */
+  const toggleBookmark = async () => {
+    if (bmLoading) return;
+    setBmLoading(true);
+    try {
+      const method = bookmarked ? "DELETE" : "POST";
+      const res = await fetch(`/api/projects/${projectId}/bookmark`, { method });
+      if (res.ok) {
+        setBookmarked(!bookmarked);
+        router.refresh(); // refresh sidebar bookmark panel
       }
-    };
+    } finally {
+      setBmLoading(false);
+    }
+  };
 
-    const statusCard = getStatusCard();
-    const Icon = statusCard.icon;
+  /* ── Copy email ──────────────────────────────────────────── */
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(ownerEmail);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback for browsers that block clipboard without HTTPS
+      const el = document.createElement("textarea");
+      el.value = ownerEmail;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
-    return (
-      <div className={`p-5 rounded-lg ${statusCard.color} flex flex-col gap-2.5`}>
-        <div className="flex items-center gap-1.5 font-bold text-xs">
-          <Icon className="text-sm shrink-0" />
-          {statusCard.label}
-        </div>
-        <p className="text-xs opacity-90 leading-relaxed">{statusCard.desc}</p>
-      </div>
-    );
-  }
-
-  if (projectStatus !== "OPEN") {
-    return (
-      <div className="p-5 rounded-lg border border-border bg-secondary text-muted-foreground">
-        <p className="text-xs font-semibold">Recruitment Closed</p>
-        <p className="text-[11px] mt-1">This project is currently full or closed for new applications.</p>
-      </div>
-    );
-  }
-
-  const handleApplySubmit = async (e: React.FormEvent) => {
+  /* ── Apply submit ────────────────────────────────────────── */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setError("");
-
+    setApplyError("");
     try {
-      const response = await fetch(`/api/projects/${projectId}/apply`, {
+      const res = await fetch(`/api/projects/${projectId}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to submit application.");
-      }
-
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit application.");
       setModalOpen(false);
+      setMessage("");
       router.refresh();
     } catch (err: any) {
-      setError(err.message);
+      setApplyError(err.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <>
-      <div className="glass-panel p-6 rounded-lg border border-border bg-card">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Join Project</h3>
-        <p className="text-xs text-muted-foreground mb-4">
-          Send a request to collaborate on this project. Specify your skills and how you can contribute.
+  /* ── Shared contact button (used by both owner + non-owner) ─ */
+  const renderContactButton = () => (
+    <button
+      type="button"
+      onClick={copyEmail}
+      className="btn-secondary w-full justify-center text-[12px] py-2 flex items-center gap-1.5 transition-all"
+    >
+      {copied ? (
+        <>
+          <CheckCheck size={13} strokeWidth={2} className="text-success" />
+          <span className="text-success">Email copied!</span>
+        </>
+      ) : (
+        <>
+          <Copy size={13} strokeWidth={1.75} />
+          Copy owner&apos;s email
+        </>
+      )}
+    </button>
+  );
+
+  /* ── Owner view ──────────────────────────────────────────── */
+  if (isOwner) {
+    return (
+      <div className="card p-5 space-y-3">
+        <p className="section-label flex items-center gap-1.5">
+          <Settings size={12} strokeWidth={1.75} />
+          Your project
+        </p>
+        <p className="text-[12px] text-muted-foreground leading-relaxed">
+          Review applications and manage recruitment from your dashboard.
         </p>
         <button
-          onClick={() => setModalOpen(true)}
-          className="w-full py-2 px-4 text-xs font-semibold bg-primary text-primary-foreground hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer text-center"
+          onClick={() => router.push("/dashboard?tab=projects")}
+          className="btn-secondary w-full justify-center text-[12px] py-2"
         >
-          Apply to Collaborate
+          Manage applications
         </button>
       </div>
+    );
+  }
 
-      {/* Modal */}
+  /* ── Already applied ─────────────────────────────────────── */
+  if (hasApplied) {
+    const statusMap = {
+      ACCEPTED: { cls: "badge-green", icon: Check,  label: "Application accepted",  desc: "The project owner accepted your request — you're now part of the team." },
+      REJECTED: { cls: "badge-red",   icon: X,      label: "Application declined",   desc: "The owner decided not to proceed. Keep exploring other projects." },
+    } as Record<string, { cls: string; icon: any; label: string; desc: string }>;
+
+    const info = statusMap[applicationStatus ?? ""] ?? {
+      cls: "badge-yellow", icon: Clock,
+      label: "Application pending",
+      desc: "Your request is being reviewed by the project owner.",
+    };
+    const Icon = info.icon;
+
+    return (
+      <div className="card p-5 space-y-4">
+        <div className={`badge ${info.cls}`}>
+          <Icon size={11} strokeWidth={2} />
+          {info.label}
+        </div>
+        <p className="text-[12px] text-muted-foreground leading-relaxed">{info.desc}</p>
+        {renderContactButton()}
+      </div>
+    );
+  }
+
+  /* ── Recruitment closed ──────────────────────────────────── */
+  if (projectStatus !== "OPEN") {
+    return (
+      <div className="card p-5 space-y-3">
+        <p className="text-[13px] font-semibold text-foreground">Recruitment closed</p>
+        <p className="text-[12px] text-muted-foreground leading-relaxed">
+          This project is no longer accepting new applications.
+        </p>
+        {renderContactButton()}
+      </div>
+    );
+  }
+
+  /* ── Open — show apply + bookmark + contact ──────────────── */
+  return (
+    <>
+      <div className="card p-5 space-y-3">
+        <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Join this project</h3>
+        <p className="text-[12px] text-muted-foreground leading-relaxed">
+          Send a short message explaining how you can contribute.
+        </p>
+
+        <div className="flex flex-col gap-2 pt-1">
+          {/* Apply */}
+          <button
+            onClick={() => setModalOpen(true)}
+            className="btn-primary w-full justify-center text-[13px] py-2"
+          >
+            Apply to join
+          </button>
+
+          {/* Bookmark toggle */}
+          <button
+            type="button"
+            onClick={toggleBookmark}
+            disabled={bmLoading}
+            className={`btn-secondary w-full justify-center text-[13px] py-2 gap-1.5 transition-all ${
+              bookmarked ? "text-foreground border-foreground/30" : ""
+            }`}
+          >
+            <Bookmark
+              size={14}
+              strokeWidth={1.75}
+              className={bookmarked ? "fill-foreground" : ""}
+            />
+            {bookmarked ? "Bookmarked" : "Save project"}
+          </button>
+
+          {/* Contact */}
+          {renderContactButton()}
+        </div>
+      </div>
+
+      {/* Apply modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-lg shadow-xl p-6 relative animate-in zoom-in-95 duration-150">
-            <h3 className="text-base font-bold text-foreground mb-2 flex items-center gap-2">
-              <FiMessageSquare className="text-muted-foreground" />
-              Apply to Collaborate
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              Write a short message to the project owner explaining why you are interested and what you can bring to the team.
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
+        >
+          <div className="w-full max-w-md card p-6 shadow-2xl animate-fade-up">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <MessageSquare size={16} strokeWidth={1.75} className="text-muted-foreground" />
+                <h3 className="text-[15px] font-semibold text-foreground">Apply to collaborate</h3>
+              </div>
+              <button onClick={() => setModalOpen(false)} className="btn-ghost p-1.5" aria-label="Close">
+                <X size={15} strokeWidth={1.75} />
+              </button>
+            </div>
+
+            <p className="text-[12px] text-muted-foreground mb-4 leading-relaxed">
+              Explain why you&apos;re interested and what skills you bring to the team.
             </p>
 
-            {error && (
-              <div className="p-3 mb-4 text-xs bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
-                {error}
+            {applyError && (
+              <div className="p-3 mb-4 text-[12px] rounded-md bg-destructive/10 text-destructive border border-destructive/20">
+                {applyError}
               </div>
             )}
 
-            <form onSubmit={handleApplySubmit}>
+            <form onSubmit={handleSubmit}>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                rows={4}
+                rows={5}
                 required
+                minLength={10}
                 maxLength={500}
-                placeholder="Hi, I would love to help with this project because..."
-                className="w-full p-3 bg-secondary border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring mb-4"
+                placeholder="Hi, I'd love to help with this project because…"
+                className="forge-input resize-none mb-1 w-full"
               />
-
+              <p className="text-[10px] text-muted-foreground text-right mb-4">
+                {message.length}/500
+              </p>
               <div className="flex gap-2 justify-end">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
                   disabled={submitting}
-                  className="px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg border border-border transition-colors cursor-pointer"
+                  className="btn-secondary text-[13px] py-2 px-4"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="px-3.5 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer"
+                  disabled={submitting || message.trim().length < 10}
+                  className="btn-primary text-[13px] py-2 px-4"
                 >
-                  {submitting ? "Sending..." : "Submit Application"}
+                  {submitting ? "Sending…" : "Submit application"}
                 </button>
               </div>
             </form>

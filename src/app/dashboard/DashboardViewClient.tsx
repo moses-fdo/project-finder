@@ -4,14 +4,25 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  FiGrid,
-  FiCheck,
-  FiX,
-  FiUser,
-  FiGithub,
-  FiLinkedin,
-  FiTrash2,
-} from "react-icons/fi";
+  Check,
+  X,
+  Trash2,
+  GitBranch,
+  Link2,
+  Sprout,
+  Brain,
+  Dumbbell,
+  Folder,
+  Bookmark,
+  Users,
+  Trophy,
+  Plus,
+  Search,
+  Copy,
+  CheckCheck,
+  MapPin,
+  LucideIcon
+} from "lucide-react";
 
 interface DashboardViewClientProps {
   activeTab: string;
@@ -20,10 +31,46 @@ interface DashboardViewClientProps {
   applications: any[];
   notifications: any[];
   profileData: any;
-  adminData?: {
-    users: any[];
-    projects: any[];
-  };
+  collaborations?: any[];
+  bookmarks?: any[];
+  recommendedProjects?: any[];
+  myProjectsSidebar?: any[];
+  myApplicationsSidebar?: any[];
+  myBookmarksSidebar?: any[];
+  recentNotifications?: any[];
+}
+
+function getProjectIcon(title: string): { icon: LucideIcon; bg: string; text: string } {
+  const t = title.toLowerCase();
+  if (
+    t.includes("eco") ||
+    t.includes("track") ||
+    t.includes("waste") ||
+    t.includes("green") ||
+    t.includes("environ")
+  ) {
+    return { icon: Sprout, bg: "bg-green-500/10", text: "text-green-600 dark:text-green-400" };
+  }
+  if (
+    t.includes("study") ||
+    t.includes("buddy") ||
+    t.includes("learn") ||
+    t.includes("book") ||
+    t.includes("ai") ||
+    t.includes("companion")
+  ) {
+    return { icon: Brain, bg: "bg-purple-500/10", text: "text-purple-600 dark:text-purple-400" };
+  }
+  if (
+    t.includes("fit") ||
+    t.includes("forge") ||
+    t.includes("gym") ||
+    t.includes("health") ||
+    t.includes("workout")
+  ) {
+    return { icon: Dumbbell, bg: "bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400" };
+  }
+  return { icon: Folder, bg: "bg-secondary", text: "text-foreground" };
 }
 
 export default function DashboardViewClient({
@@ -33,139 +80,96 @@ export default function DashboardViewClient({
   applications,
   notifications,
   profileData,
-  adminData,
+  collaborations = [],
+  bookmarks = [],
+  recommendedProjects = [],
+  myProjectsSidebar = [],
+  myApplicationsSidebar = [],
+  myBookmarksSidebar = [],
+  recentNotifications = [],
 }: DashboardViewClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  // Profile Form States
-  const [profileName, setProfileName] = useState(profileData?.name || "");
-  const [profileDept, setProfileDept] = useState(profileData?.department || "");
-  const [profileYear, setProfileYear] = useState(profileData?.year?.toString() || "");
-  const [profileBio, setProfileBio] = useState(profileData?.bio || "");
-  const [profileGithub, setProfileGithub] = useState(profileData?.githubUrl || "");
-  const [profileLinkedin, setProfileLinkedin] = useState(profileData?.linkedinUrl || "");
-  const [profileSkills, setProfileSkills] = useState(
+  const [profileName,     setProfileName]     = useState(profileData?.name         || "");
+  const [profileDept,     setProfileDept]     = useState(profileData?.department   || "");
+  const [profileYear,     setProfileYear]     = useState(profileData?.year?.toString() || "");
+  const [profileBio,      setProfileBio]      = useState(profileData?.bio          || "");
+  const [profileGithub,   setProfileGithub]   = useState(profileData?.githubUrl    || "");
+  const [profileLinkedin, setProfileLinkedin] = useState(profileData?.linkedinUrl  || "");
+  const [profileSkills,   setProfileSkills]   = useState(
     profileData?.skills?.map((s: any) => s.name).join(", ") || ""
   );
 
-  const [actionError, setActionError] = useState("");
+  const [collabSearch,  setCollabSearch]  = useState("");
+  const [collabDept,    setCollabDept]    = useState("");
+  const [collabSkill,   setCollabSkill]   = useState("");
+  const [collabStatus,  setCollabStatus]  = useState<"all" | "open" | "busy">("all");
+  const [actionError,   setActionError]   = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
-  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [loadingId,     setLoadingId]     = useState<string | null>(null);
 
-  const handleStatusToggle = async (projectId: number, currentStatus: string) => {
-    setActionError("");
-    setActionSuccess("");
-    const nextStatus = currentStatus === "OPEN" ? "CLOSED" : "OPEN";
+  const refresh = () => startTransition(() => router.refresh());
+
+  /* ── Helpers ─────────────────────────────────────────────── */
+
+  const statusToggle = async (projectId: number, current: string) => {
+    setActionError(""); setActionSuccess("");
+    const next = current === "OPEN" ? "CLOSED" : "OPEN";
     setLoadingId(`status-${projectId}`);
-
     try {
       const res = await fetch(`/api/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
+        body: JSON.stringify({ status: next }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to update project status.");
-      }
-
-      setActionSuccess(`Project status updated to ${nextStatus}.`);
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (err: any) {
-      setActionError(err.message);
-    } finally {
-      setLoadingId(null);
-    }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      setActionSuccess(`Status set to ${next}.`);
+      refresh();
+    } catch (e: any) { setActionError(e.message); }
+    finally { setLoadingId(null); }
   };
 
-  const handleProjectDelete = async (projectId: number) => {
-    if (!confirm("Are you sure you want to delete this project? This action is irreversible.")) return;
-
-    setActionError("");
-    setActionSuccess("");
-    setLoadingId(`delete-${projectId}`);
-
+  const deleteProject = async (projectId: number) => {
+    if (!confirm("Delete this project? This cannot be undone.")) return;
+    setActionError(""); setActionSuccess(""); setLoadingId(`del-${projectId}`);
     try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to delete project.");
-      }
-
-      setActionSuccess("Project deleted successfully.");
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (err: any) {
-      setActionError(err.message);
-    } finally {
-      setLoadingId(null);
-    }
+      const res = await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      setActionSuccess("Project deleted.");
+      refresh();
+    } catch (e: any) { setActionError(e.message); }
+    finally { setLoadingId(null); }
   };
 
-  const handleApplicationAction = async (applicationId: number, status: "ACCEPTED" | "REJECTED") => {
-    setActionError("");
-    setActionSuccess("");
-    setLoadingId(`app-${applicationId}`);
-
+  const applicationAction = async (appId: number, status: "ACCEPTED" | "REJECTED") => {
+    setActionError(""); setActionSuccess(""); setLoadingId(`app-${appId}`);
     try {
-      const res = await fetch(`/api/applications/${applicationId}`, {
+      const res = await fetch(`/api/applications/${appId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to update application.");
-      }
-
-      setActionSuccess(`Application ${status.toLowerCase()} successfully.`);
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (err: any) {
-      setActionError(err.message);
-    } finally {
-      setLoadingId(null);
-    }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      setActionSuccess(`Application ${status.toLowerCase()}.`);
+      refresh();
+    } catch (e: any) { setActionError(e.message); }
+    finally { setLoadingId(null); }
   };
 
-  const handleMarkNotificationRead = async (notificationId: number) => {
-    try {
-      await fetch(`/api/notifications/${notificationId}`, {
-        method: "PATCH",
-      });
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-    }
+  const markNotifRead = async (id: number) => {
+    await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+    refresh();
   };
 
-  const handleMarkAllNotificationsRead = async () => {
-    try {
-      await fetch("/api/notifications", {
-        method: "PATCH",
-      });
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-    }
+  const markAllRead = async () => {
+    await fetch("/api/notifications", { method: "PATCH" });
+    refresh();
   };
 
-  const handleProfileSave = async (e: React.FormEvent) => {
+  const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setActionError("");
-    setActionSuccess("");
-    setLoadingId("profile-save");
-
+    setActionError(""); setActionSuccess(""); setLoadingId("profile");
     try {
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
@@ -177,272 +181,703 @@ export default function DashboardViewClient({
           bio: profileBio,
           githubUrl: profileGithub,
           linkedinUrl: profileLinkedin,
-          skills: profileSkills
-            .split(",")
-            .map((s: string) => s.trim())
-            .filter((s: string) => s.length > 0),
+          skills: profileSkills.split(",").map((s: string) => s.trim()).filter(Boolean),
         }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to update profile.");
-      }
-
-      setActionSuccess("Profile updated successfully.");
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (err: any) {
-      setActionError(err.message);
-    } finally {
-      setLoadingId(null);
-    }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      setActionSuccess("Profile saved.");
+      refresh();
+    } catch (e: any) { setActionError(e.message); }
+    finally { setLoadingId(null); }
   };
 
-  const handleAdminDeleteUser = async (userId: number) => {
-    if (!confirm("Are you sure you want to ban/delete this user? All their projects and applications will be deleted.")) return;
 
-    setActionError("");
-    setActionSuccess("");
-    setLoadingId(`user-delete-${userId}`);
-
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to delete user.");
-      }
-
-      setActionSuccess("User account deleted successfully.");
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (err: any) {
-      setActionError(err.message);
-    } finally {
-      setLoadingId(null);
-    }
+  const appStatusStyle = (s: string) => {
+    if (s === "ACCEPTED") return "badge badge-green";
+    if (s === "REJECTED") return "badge badge-red";
+    return "badge badge-yellow";
   };
 
-  const getApplicationStatusColor = (status: string) => {
-    switch (status) {
-      case "ACCEPTED":
-        return "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20";
-      case "REJECTED":
-        return "text-rose-400 bg-rose-500/10 border border-rose-500/20";
-      default:
-        return "text-amber-400 bg-amber-500/10 border border-amber-500/20";
-    }
-  };
-
-  const departmentsList = [
-    "Computer Science",
-    "Information Technology",
-    "Electronics & Communication",
-    "Electrical & Electronics",
-    "Mechanical Engineering",
-    "Civil Engineering",
-    "Biotechnology",
-    "Food Processing Technology"
+  const departments = [
+    "Computer Science", "Information Technology", "Electronics & Communication",
+    "Electrical & Electronics", "Mechanical Engineering", "Civil Engineering",
+    "Biotechnology", "Food Processing Technology",
   ];
 
+  /* ══════════════════════════════════════════════════════════ */
   return (
-    <div className="flex-1 p-6 md:p-8 space-y-6">
+    <div className="flex-1 p-5 md:p-8 space-y-5">
       {actionError && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm">
+        <div className="p-3 text-[12px] rounded-md bg-destructive/10 text-destructive border border-destructive/20">
           {actionError}
         </div>
       )}
-
-      {actionError && (
-        <div className="p-3.5 notion-tag-red border border-rose-200/20 rounded-lg text-xs">
-          {actionError}
-        </div>
-      )}
-
       {actionSuccess && (
-        <div className="p-3.5 notion-tag-green border border-green-200/20 rounded-lg text-xs">
+        <div className="p-3 text-[12px] rounded-md notion-tag-green border border-green-200/20">
           {actionSuccess}
         </div>
       )}
 
-      {/* 1. MY PROJECTS TAB */}
-      {activeTab === "projects" && (
-        <div className="space-y-8">
+      {/* ── HOME VIEW ─────────────────────────────────────── */}
+      {activeTab === "home" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left / Middle Column (lg:col-span-8): Main Content */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Header Greeting */}
+            <div className="space-y-1">
+              <h1 className="text-[22px] font-bold tracking-tight text-foreground md:text-[24px]">
+                Good morning, {currentUser?.name?.split(" ")[0] || "Moses"} <span className="md:inline hidden">👋</span>
+              </h1>
+              <p className="text-[13px] text-muted-foreground">
+                Let&apos;s build something amazing today.
+              </p>
+            </div>
+
+            {/* Mobile Search Bar (Only shown on mobile) */}
+            <div className="md:hidden relative w-full">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={14} className="text-muted-foreground" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search projects, skills, people..."
+                onClick={() => router.push("/projects")}
+                className="w-full pl-9 py-2 bg-secondary/50 border border-border rounded-lg text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none"
+                readOnly
+              />
+            </div>
+
+            {/* Mobile Quick Actions (Only shown on mobile) */}
+            <div className="md:hidden space-y-2.5">
+              <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Quick Actions</h3>
+              <div className="grid grid-cols-4 gap-2">
+                <Link href="/projects/create" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
+                  <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5 font-bold">
+                    <Plus size={16} className="text-foreground" />
+                  </div>
+                  <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">New Project</span>
+                </Link>
+                <Link href="/projects" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
+                  <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5">
+                    <Search size={16} className="text-foreground" />
+                  </div>
+                  <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">Discover</span>
+                </Link>
+                <Link href="/dashboard?tab=collaborations" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
+                  <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5">
+                    <Users size={16} className="text-foreground" />
+                  </div>
+                  <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">Collabs</span>
+                </Link>
+                <Link href="/dashboard?tab=hackathons" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
+                  <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5">
+                    <Trophy size={16} className="text-foreground" />
+                  </div>
+                  <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">Hackathons</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Recommended For You Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[15px] font-bold text-foreground tracking-tight">Recommended for you</h2>
+                <Link href="/projects" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                  View all <span className="text-[13px] leading-none">→</span>
+                </Link>
+              </div>
+
+              {/* Recommended list - Grid on PC, list on Mobile */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {recommendedProjects && recommendedProjects.length > 0 ? (
+                  recommendedProjects.map((project) => {
+                    const iconInfo = getProjectIcon(project.title);
+                    const Icon = iconInfo.icon;
+                    return (
+                      <article key={project.id} className="card p-5 flex flex-col justify-between h-full hover:border-muted-foreground/30 hover:shadow-[0_4px_16px_rgba(0,0,0,0.02)] transition-all relative group">
+                        <div>
+                          {/* Top Card Bar */}
+                          <div className="flex items-center justify-between gap-2 mb-4">
+                            <div className={`h-8 w-8 rounded-lg ${iconInfo.bg} flex items-center justify-center border border-border shrink-0`}>
+                              <Icon size={16} className={iconInfo.text} />
+                            </div>
+                            <button className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors cursor-pointer">
+                              <Bookmark size={14} />
+                            </button>
+                          </div>
+
+                          {/* Status Badge */}
+                          <div className="mb-2">
+                            {project.status === "OPEN" ? (
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">Looking for team</span>
+                            ) : project.status === "FULL" ? (
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">In Progress</span>
+                            ) : (
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">Closed</span>
+                            )}
+                          </div>
+
+                          {/* Title */}
+                          <h3 className="text-[14px] font-bold text-foreground leading-snug group-hover:underline decoration-1 underline-offset-2">
+                            <Link href={`/projects/${project.id}`}>{project.title}</Link>
+                          </h3>
+
+                          {/* Description */}
+                          <p className="text-[11px] text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+                            {project.description}
+                          </p>
+
+                          {/* Tags */}
+                          {project.skills && project.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-3">
+                              {project.skills.slice(0, 3).map((skill: any) => (
+                                <span key={skill.id} className="text-[9px] font-medium px-2 py-0.5 rounded bg-secondary border border-border text-muted-foreground">{skill.name}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Footer (Avatars + member fraction) */}
+                        <div className="flex items-center justify-between border-t border-border mt-4 pt-3">
+                          <div className="flex items-center -space-x-1.5 overflow-hidden">
+                            <span className="h-5 w-5 rounded-full bg-blue-500 border border-card flex items-center justify-center text-[7px] text-white font-bold">JD</span>
+                            <span className="h-5 w-5 rounded-full bg-green-500 border border-card flex items-center justify-center text-[7px] text-white font-bold">MK</span>
+                            {project.applications.length > 2 && (
+                              <span className="h-5 w-5 rounded-full bg-secondary border border-card flex items-center justify-center text-[7px] text-muted-foreground font-semibold">+{project.applications.length - 2}</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-medium">3/5 members</span>
+                        </div>
+                      </article>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-3 card p-8 text-center text-[12px] text-muted-foreground">
+                    No recommended projects at the moment.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Upcoming Hackathons Banner */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[15px] font-bold text-foreground tracking-tight">Upcoming Hackathons</h2>
+                <Link href="/dashboard?tab=hackathons" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                  View all <span className="text-[13px] leading-none">→</span>
+                </Link>
+              </div>
+
+              <div className="card p-4 flex flex-col sm:flex-row items-center justify-between gap-4 overflow-hidden relative">
+                <div className="flex items-start gap-4">
+                  <div className="h-16 w-16 bg-black text-white shrink-0 rounded-lg flex flex-col items-center justify-center border border-neutral-850 p-2 text-center select-none font-bold">
+                    <span className="text-[8px] tracking-wider text-muted-foreground leading-none">AI IMPACT</span>
+                    <span className="text-[10px] font-extrabold leading-tight mt-0.5">HACKATHON</span>
+                    <span className="text-[8px] text-purple-400 mt-0.5">&apos;25</span>
+                  </div>
+                  <div>
+                    <h3 className="text-[13px] font-bold text-foreground">AI Impact Hackathon 2025</h3>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Build AI solutions for real world problems.</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5 text-[10px] text-muted-foreground font-medium">
+                      <span className="flex items-center gap-1">📅 24 May 2025</span>
+                      <span className="flex items-center gap-1">📍 KIDS, Karunya</span>
+                      <span className="flex items-center gap-1">👥 3 - 5 Members</span>
+                    </div>
+                  </div>
+                </div>
+                <button className="btn-secondary text-[11px] py-1.5 px-4 rounded-lg font-bold shrink-0 shadow-sm border-border hover:bg-secondary select-none">
+                  Register Now
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="space-y-4 hidden md:block">
+              <h2 className="text-[15px] font-bold text-foreground tracking-tight">Recent Activity</h2>
+              <div className="card divide-y divide-border">
+                {recentNotifications && recentNotifications.length > 0 ? (
+                  recentNotifications.slice(0, 3).map((notif) => (
+                    <div key={notif.id} className="p-3.5 flex items-center justify-between text-[12px] hover:bg-secondary/15 transition-all">
+                      <div className="flex items-center gap-2.5">
+                        <span className="h-2 w-2 rounded-full bg-purple-500 shrink-0" />
+                        <span className="text-foreground">{notif.message}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="p-3.5 flex items-center justify-between text-[11px] hover:bg-secondary/15 transition-all">
+                      <div className="flex items-center gap-2.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />
+                        <span className="text-foreground">You applied to <span className="font-semibold text-foreground">AI Study Companion</span></span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium">2h ago</span>
+                    </div>
+                    <div className="p-3.5 flex items-center justify-between text-[11px] hover:bg-secondary/15 transition-all">
+                      <div className="flex items-center gap-2.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
+                        <span className="text-foreground">Sarah accepted your application to <span className="font-semibold text-foreground">EcoTrack</span></span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium">5h ago</span>
+                    </div>
+                    <div className="p-3.5 flex items-center justify-between text-[11px] hover:bg-secondary/15 transition-all">
+                      <div className="flex items-center gap-2.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                        <span className="text-foreground">New project recommendation available</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium">1d ago</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Column (lg:col-span-4): Sidebars & Widgets (PC only) */}
+          <div className="lg:col-span-4 space-y-6 hidden lg:block">
+            
+            {/* My Projects Panel */}
+            <div className="card p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] font-bold text-foreground tracking-tight">My Projects</h3>
+                <Link href="/projects/create" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">+ New</Link>
+              </div>
+              <div className="space-y-3">
+                {myProjectsSidebar && myProjectsSidebar.length > 0 ? (
+                  myProjectsSidebar.map((proj) => (
+                    <div key={proj.id} className="flex items-center justify-between text-[12px]">
+                      <Link href={`/projects/${proj.id}`} className="font-medium text-foreground hover:underline line-clamp-1">{proj.title}</Link>
+                      <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-semibold">
+                        <span className={`h-1.5 w-1.5 rounded-full ${
+                          proj.status === "OPEN" ? "bg-green-500" : proj.status === "FULL" ? "bg-blue-500" : "bg-red-500"
+                        }`} />
+                        {proj.status === "OPEN" ? "Looking for team" : proj.status === "FULL" ? "In Progress" : "Completed"}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[11px] text-muted-foreground italic">No projects yet.</p>
+                )}
+              </div>
+              <div className="border-t border-border pt-3">
+                <Link href="/dashboard?tab=projects" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                  View all projects <span className="text-[13px] leading-none">→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Applications Panel */}
+            <div className="card p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] font-bold text-foreground tracking-tight">Applications</h3>
+                <Link href="/dashboard?tab=applications" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">View all</Link>
+              </div>
+              <div className="space-y-3">
+                {myApplicationsSidebar && myApplicationsSidebar.length > 0 ? (
+                  myApplicationsSidebar.map((app) => (
+                    <div key={app.id} className="flex items-center justify-between text-[12px] gap-2">
+                      <div className="min-w-0">
+                        <Link href={`/projects/${app.project.id}`} className="font-medium text-foreground hover:underline line-clamp-1">{app.project.title}</Link>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Applied recently</p>
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
+                        app.status === "ACCEPTED" ? "bg-green-500/10 text-green-600" : app.status === "REJECTED" ? "bg-red-500/10 text-red-600" : "bg-yellow-500/10 text-yellow-600"
+                      }`}>{app.status === "ACCEPTED" ? "Accepted" : app.status === "REJECTED" ? "Rejected" : "Pending"}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between text-[11px] gap-2">
+                      <div>
+                        <span className="font-medium text-foreground">EcoTrack</span>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Applied 2h ago</p>
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full">Pending</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] gap-2">
+                      <div>
+                        <span className="font-medium text-foreground">StudyBuddy</span>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Applied 1d ago</p>
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full">Pending</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] gap-2">
+                      <div>
+                        <span className="font-medium text-foreground">FitForge</span>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Applied 2d ago</p>
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 px-2 py-0.5 rounded-full">Rejected</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Bookmarks Panel */}
+            <div className="card p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] font-bold text-foreground tracking-tight">Bookmarks</h3>
+                <Link href="/dashboard?tab=bookmarks" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">View all</Link>
+              </div>
+              <div className="space-y-2.5">
+                {myBookmarksSidebar && myBookmarksSidebar.length > 0 ? (
+                  myBookmarksSidebar.map((bm) => (
+                    <div key={bm.project.id} className="flex items-center gap-2 text-[12px]">
+                      <Bookmark size={13} className="text-purple-500 shrink-0" />
+                      <Link href={`/projects/${bm.project.id}`} className="font-medium text-foreground hover:underline line-clamp-1">{bm.project.title}</Link>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <Bookmark size={12} className="text-muted-foreground shrink-0" />
+                      <span className="font-medium text-foreground">AI-Powered Career Guidance</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <Bookmark size={12} className="text-muted-foreground shrink-0" />
+                      <span className="font-medium text-foreground">Open Source for Beginners</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <Bookmark size={12} className="text-muted-foreground shrink-0" />
+                      <span className="font-medium text-foreground">Campus Safety App</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Quote widget */}
+            <div className="card p-5 bg-secondary/25 border border-border/80 relative space-y-3">
+              <span className="text-[28px] font-serif text-muted-foreground/30 absolute top-2 left-3 leading-none select-none">&ldquo;</span>
+              <p className="text-[12px] text-muted-foreground font-medium italic leading-relaxed pt-2 pl-2">
+                Great things are never done by one person. They&apos;re done by a team.
+              </p>
+              <p className="text-[10px] text-foreground font-bold tracking-tight text-right pr-2">
+                — Steve Jobs
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ── COLLABORATIONS — people finder ────────────────── */}
+      {activeTab === "collaborations" && (
+        <CollaborationsFinder
+          people={collaborations}
+          collabSearch={collabSearch}
+          setCollabSearch={setCollabSearch}
+          collabDept={collabDept}
+          setCollabDept={setCollabDept}
+          collabSkill={collabSkill}
+          setCollabSkill={setCollabSkill}
+          collabStatus={collabStatus}
+          setCollabStatus={setCollabStatus}
+        />
+      )}
+
+      {/* ── HACKATHONS VIEW ────────────────────────────────── */}
+      {activeTab === "hackathons" && (
+        <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">My Managed Projects</h2>
-            <p className="text-xs text-muted-foreground">Manage recruitment status and accept student applications.</p>
+            <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Hackathons</h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Participate in campus and student-led hackathons.</p>
+          </div>
+          
+          <div className="card p-5 flex flex-col sm:flex-row items-center justify-between gap-4 overflow-hidden relative">
+            <div className="flex items-start gap-4">
+              <div className="h-16 w-16 bg-black text-white shrink-0 rounded-lg flex flex-col items-center justify-center border border-neutral-800 p-2 text-center select-none font-bold">
+                <span className="text-[8px] tracking-wider text-muted-foreground leading-none">AI IMPACT</span>
+                <span className="text-[10px] font-extrabold leading-tight mt-0.5">HACKATHON</span>
+                <span className="text-[8px] text-purple-400 mt-0.5">&apos;25</span>
+              </div>
+              <div>
+                <h3 className="text-[14px] font-bold text-foreground">AI Impact Hackathon 2025</h3>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Build AI solutions for real world problems.</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5 text-[11px] text-muted-foreground font-medium">
+                  <span className="flex items-center gap-1">📅 24 May 2025</span>
+                  <span className="flex items-center gap-1">📍 KIDS, Karunya</span>
+                  <span className="flex items-center gap-1 font-semibold text-purple-500">🏆 Cash prizes up to ₹50,000</span>
+                </div>
+              </div>
+            </div>
+            <button className="btn-primary text-[12px] py-2 px-5 rounded-lg font-bold shrink-0 shadow-sm hover:opacity-90 transition-all select-none">
+              Register Now
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── BOOKMARKS ─────────────────────────────────────── */}
+      {activeTab === "bookmarks" && (
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Bookmarks</h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Projects you saved for later.</p>
+          </div>
+
+          {bookmarks.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {bookmarks.map((bm) => {
+                const p = bm.project;
+                const iconInfo = getProjectIcon(p.title);
+                const Icon = iconInfo.icon;
+                return (
+                  <div key={p.id} className="card p-5 flex flex-col gap-3 hover:border-muted-foreground/25 transition-all group">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className={`h-9 w-9 rounded-lg ${iconInfo.bg} border border-border flex items-center justify-center shrink-0`}>
+                        <Icon size={16} className={iconInfo.text} />
+                      </div>
+                      {p.status === "OPEN" ? (
+                        <span className="badge badge-green mt-0.5">Open</span>
+                      ) : p.status === "FULL" ? (
+                        <span className="badge badge-yellow mt-0.5">Full</span>
+                      ) : (
+                        <span className="badge badge-red mt-0.5">Closed</span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-[13px] font-semibold text-foreground group-hover:underline underline-offset-2">
+                        <Link href={`/projects/${p.id}`}>{p.title}</Link>
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        by{" "}
+                        <Link href={`/profile/${p.owner.id}`} className="hover:underline">
+                          {p.owner.name}
+                        </Link>
+                        {" · "}{p.owner.department}
+                      </p>
+                    </div>
+                    {p.skills?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {p.skills.slice(0, 3).map((s: any) => (
+                          <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                            {s.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between border-t border-border pt-3 mt-auto">
+                      <span className="text-[10px] text-muted-foreground">
+                        Saved {new Date(bm.createdAt).toLocaleDateString()}
+                      </span>
+                      <Link href={`/projects/${p.id}`} className="btn-ghost text-[11px] px-2 py-1">
+                        View →
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="card p-14 text-center">
+              <div className="flex justify-center mb-3">
+                <Bookmark size={28} strokeWidth={1.5} className="text-muted-foreground/40" />
+              </div>
+              <p className="text-[14px] font-medium text-foreground mb-1">No bookmarks yet</p>
+              <p className="text-[12px] text-muted-foreground mb-5">
+                Hit &ldquo;Save project&rdquo; on any project page to bookmark it here.
+              </p>
+              <Link href="/projects" className="btn-secondary text-[13px] py-2 px-4 inline-flex">
+                Browse projects
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MY PROJECTS ───────────────────────────────────── */}
+      {activeTab === "projects" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-[17px] font-semibold text-foreground tracking-tight">My projects</h2>
+              <p className="text-[12px] text-muted-foreground mt-0.5">Manage recruitment and review applications.</p>
+            </div>
+            <Link href="/projects/create" className="btn-primary text-[12px] py-1.5 px-3">
+              New project
+            </Link>
           </div>
 
           {projects.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {projects.map((project) => (
-                <div key={project.id} className="glass-panel rounded-lg border border-border overflow-hidden bg-card">
-                  {/* Project Header */}
-                  <div className="p-5 border-b border-border bg-muted/20 sm:flex sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <h3 className="text-base font-bold text-foreground mb-1 hover:underline">
-                        <Link href={`/projects/${project.id}`}>{project.title}</Link>
-                      </h3>
-                      <div className="flex flex-wrap gap-2 items-center text-xs text-muted-foreground">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                          project.status === "OPEN"
-                            ? "notion-tag-green"
-                            : "notion-tag-red"
-                        }`}>
-                          {project.status}
-                        </span>
-                        <span>•</span>
-                        <span>{project.applications.length} applications received</span>
+                <div key={project.id} className="card overflow-hidden">
+                  {/* Project header */}
+                  <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h3 className="text-[14px] font-semibold text-foreground">
+                          <Link href={`/projects/${project.id}`} className="hover:underline underline-offset-2">
+                            {project.title}
+                          </Link>
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={project.status === "OPEN" ? "badge badge-green" : "badge badge-red"}>
+                            {project.status}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {project.applications.length} application{project.applications.length !== 1 ? "s" : ""}
+                          </span>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex gap-2 mt-4 sm:mt-0">
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleStatusToggle(project.id, project.status)}
+                        onClick={() => statusToggle(project.id, project.status)}
                         disabled={loadingId !== null}
-                        className="px-3 py-1.5 text-xs font-semibold bg-secondary text-foreground hover:bg-muted border border-border rounded-lg transition-colors cursor-pointer"
+                        className="btn-secondary text-[12px] py-1.5 px-3"
                       >
-                        {loadingId === `status-${project.id}`
-                          ? "Updating..."
-                          : project.status === "OPEN"
-                          ? "Close recruitment"
-                          : "Open recruitment"}
+                        {loadingId === `status-${project.id}` ? "…" : project.status === "OPEN" ? "Close" : "Reopen"}
                       </button>
                       <button
-                        onClick={() => handleProjectDelete(project.id)}
+                        onClick={() => deleteProject(project.id)}
                         disabled={loadingId !== null}
-                        className="p-1.5 text-xs font-semibold text-destructive hover:bg-rose-950/20 border border-transparent rounded-lg transition-colors cursor-pointer"
+                        className="btn-ghost p-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                         title="Delete project"
+                        aria-label="Delete project"
                       >
-                        <FiTrash2 className="text-base" />
+                        <Trash2 size={14} strokeWidth={1.75} />
                       </button>
                     </div>
                   </div>
 
-                  {/* Applications received for this project */}
-                  <div className="p-5 space-y-4">
-                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Applications Received
-                    </h4>
-
+                  {/* Applications list */}
+                  <div className="px-5 py-4">
+                    <p className="section-label mb-3">Applications</p>
                     {project.applications.length > 0 ? (
                       <div className="divide-y divide-border">
                         {project.applications.map((app: any) => (
                           <div key={app.id} className="py-4 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div className="space-y-2 max-w-xl">
-                              <div className="flex items-center gap-2">
-                                <Link href={`/profile/${app.user.id}`} className="font-bold text-sm text-foreground hover:underline">{app.user.name}</Link>
-                                <span className="text-xs text-muted-foreground">
-                                  ({app.user.department} • Yr {app.user.year})
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Link
+                                  href={`/profile/${app.user.id}`}
+                                  className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2"
+                                >
+                                  {app.user.name}
+                                </Link>
+                                <span className="text-[11px] text-muted-foreground">
+                                  {app.user.department} · Year {app.user.year}
                                 </span>
                               </div>
-                              <p className="text-xs text-foreground whitespace-pre-wrap bg-secondary p-3 rounded-lg leading-relaxed border border-border/40">
-                                {app.message || "No motivation message provided."}
-                              </p>
+                              {app.message && (
+                                <p className="text-[12px] text-foreground leading-relaxed bg-secondary rounded-md p-3 border border-border">
+                                  {app.message}
+                                </p>
+                              )}
                             </div>
-
-                            <div className="flex items-center gap-2 shrink-0 self-end md:self-start">
+                            <div className="flex items-center gap-2 shrink-0 self-start">
                               {app.status === "PENDING" ? (
                                 <>
                                   <button
-                                    onClick={() => handleApplicationAction(app.id, "ACCEPTED")}
+                                    onClick={() => applicationAction(app.id, "ACCEPTED")}
                                     disabled={loadingId !== null}
-                                    className="px-3 py-1.5 text-xs font-semibold text-primary-foreground bg-primary hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                                    className="btn-primary text-[12px] py-1.5 px-3 gap-1"
                                   >
-                                    <FiCheck /> Accept
+                                    <Check size={12} strokeWidth={2} /> Accept
                                   </button>
                                   <button
-                                    onClick={() => handleApplicationAction(app.id, "REJECTED")}
+                                    onClick={() => applicationAction(app.id, "REJECTED")}
                                     disabled={loadingId !== null}
-                                    className="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg border border-border transition-colors cursor-pointer flex items-center gap-1"
+                                    className="btn-secondary text-[12px] py-1.5 px-3 gap-1"
                                   >
-                                    <FiX /> Decline
+                                    <X size={12} strokeWidth={2} /> Decline
                                   </button>
                                 </>
                               ) : (
-                                <span className={`px-2.5 py-0.5 text-[10px] font-semibold rounded uppercase ${getApplicationStatusColor(app.status)}`}>
-                                  {app.status}
-                                </span>
+                                <span className={appStatusStyle(app.status)}>{app.status}</span>
                               )}
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground/80 italic py-2">
-                        No applications received yet for this project.
-                      </p>
+                      <p className="text-[12px] text-muted-foreground italic">No applications yet.</p>
                     )}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="glass-panel p-10 rounded-lg text-center border border-border bg-card">
-              <p className="text-sm text-muted-foreground">You haven&apos;t posted any projects yet.</p>
+            <div className="card p-12 text-center">
+              <p className="text-[14px] font-medium text-foreground mb-1">No projects yet</p>
+              <p className="text-[12px] text-muted-foreground mb-4">Post your first project to start finding collaborators.</p>
+              <Link href="/projects/create" className="btn-primary text-[13px] py-2 px-4 inline-flex">
+                Create a project
+              </Link>
             </div>
           )}
         </div>
       )}
 
-      {/* 2. MY APPLICATIONS TAB */}
+      {/* ── MY APPLICATIONS ───────────────────────────────── */}
       {activeTab === "applications" && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">My Collaboration Requests</h2>
-            <p className="text-xs text-muted-foreground">Track the status of your applications to join other projects.</p>
+            <h2 className="text-[17px] font-semibold text-foreground tracking-tight">My applications</h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Track your collaboration requests.</p>
           </div>
 
           {applications.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {applications.map((app) => (
-                <div key={app.id} className="glass-panel p-5 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-card">
-                  <div className="space-y-1">
-                    <h3 className="text-base font-bold text-foreground hover:underline">
-                      <a href={`/projects/${app.project.id}`}>{app.project.title}</a>
+                <div key={app.id} className="card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h3 className="text-[14px] font-semibold text-foreground mb-0.5">
+                      <Link href={`/projects/${app.project.id}`} className="hover:underline underline-offset-2">
+                        {app.project.title}
+                      </Link>
                     </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Owner: <Link href={`/profile/${app.project.owner.id}`} className="hover:underline text-foreground font-semibold">{app.project.owner.name}</Link> • Applied on {new Date(app.createdAt).toLocaleDateString()}
+                    <p className="text-[11px] text-muted-foreground">
+                      by{" "}
+                      <Link href={`/profile/${app.project.owner?.id}`} className="hover:underline">
+                        {app.project.owner?.name}
+                      </Link>
+                      {" · "}
+                      {new Date(app.createdAt).toLocaleDateString()}
                     </p>
                     {app.message && (
-                      <p className="text-xs text-foreground bg-secondary p-2.5 rounded-lg border border-border/40 mt-2 leading-relaxed">
-                        Message: &quot;{app.message}&quot;
+                      <p className="text-[12px] text-muted-foreground mt-2 italic line-clamp-2">
+                        &ldquo;{app.message}&rdquo;
                       </p>
                     )}
                   </div>
-
-                  <span className={`px-2.5 py-0.5 text-[10px] font-semibold rounded uppercase shrink-0 self-start sm:self-center ${getApplicationStatusColor(app.status)}`}>
+                  <span className={`${appStatusStyle(app.status)} shrink-0 self-start sm:self-center`}>
                     {app.status}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="glass-panel p-10 rounded-lg text-center border border-border bg-card">
-              <p className="text-sm text-muted-foreground">You haven&apos;t applied to any projects yet.</p>
+            <div className="card p-12 text-center">
+              <p className="text-[14px] font-medium text-foreground mb-1">No applications yet</p>
+              <p className="text-[12px] text-muted-foreground mb-4">Find a project you like and apply to join the team.</p>
+              <Link href="/projects" className="btn-secondary text-[13px] py-2 px-4 inline-flex">
+                Browse projects
+              </Link>
             </div>
           )}
         </div>
       )}
 
-      {/* 3. NOTIFICATIONS TAB */}
+      {/* ── NOTIFICATIONS ─────────────────────────────────── */}
       {activeTab === "notifications" && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">Inbox & Notifications</h2>
-              <p className="text-xs text-muted-foreground">Stay updated on your application status changes.</p>
+              <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Notifications</h2>
+              <p className="text-[12px] text-muted-foreground mt-0.5">Application status updates and alerts.</p>
             </div>
-
             {notifications.some((n) => !n.read) && (
               <button
-                onClick={handleMarkAllNotificationsRead}
-                className="text-xs font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors cursor-pointer"
+                onClick={markAllRead}
+                className="btn-ghost text-[12px]"
               >
                 Mark all read
               </button>
@@ -450,20 +885,24 @@ export default function DashboardViewClient({
           </div>
 
           {notifications.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  onClick={() => !notif.read && handleMarkNotificationRead(notif.id)}
-                  className={`p-4 rounded-lg border transition-all bg-card ${
-                    notif.read
-                      ? "border-border/50 opacity-60"
-                      : "border-border hover:border-muted-foreground/30 cursor-pointer shadow-sm"
-                  }`}
+                  onClick={() => !notif.read && markNotifRead(notif.id)}
+                  className={[
+                    "card p-4 transition-all",
+                    notif.read ? "opacity-50" : "cursor-pointer hover:border-muted-foreground/30",
+                  ].join(" ")}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <p className="text-xs text-foreground leading-relaxed">{notif.message}</p>
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap pt-0.5">
+                    <div className="flex items-start gap-2.5">
+                      {!notif.read && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-foreground mt-1.5 shrink-0" aria-hidden="true" />
+                      )}
+                      <p className="text-[13px] text-foreground leading-relaxed">{notif.message}</p>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0 pt-0.5">
                       {new Date(notif.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -471,252 +910,434 @@ export default function DashboardViewClient({
               ))}
             </div>
           ) : (
-            <div className="glass-panel p-10 rounded-lg text-center border border-border bg-card">
-              <p className="text-sm text-muted-foreground">No notifications received.</p>
+            <div className="card p-12 text-center">
+              <p className="text-[13px] text-muted-foreground">You&apos;re all caught up.</p>
             </div>
           )}
         </div>
       )}
 
-      {/* 4. PROFILE SETTINGS TAB */}
+      {/* ── PROFILE SETTINGS ──────────────────────────────── */}
       {activeTab === "profile" && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">Profile Settings</h2>
-            <p className="text-xs text-muted-foreground">Manage your student metadata and technical portfolio.</p>
+            <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Profile settings</h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Manage your account details and public profile.</p>
           </div>
 
-          <div className="glass-panel p-6 sm:p-8 rounded-lg border border-border bg-card">
-            <form onSubmit={handleProfileSave} className="space-y-5">
+          <div className="card p-6">
+            <form onSubmit={saveProfile} className="space-y-5">
+              {/* Name + Year */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Full Name</label>
+                  <label className="block section-label mb-1.5">Full name</label>
                   <input
                     type="text"
                     required
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="forge-input"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5 font-mono">Verified Email</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={profileData?.email || ""}
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-xs text-muted-foreground/70 cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Department</label>
-                  <select
-                    required
-                    value={profileDept}
-                    onChange={(e) => setProfileDept(e.target.value)}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-secondary"
-                  >
-                    {departmentsList.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Year of Study</label>
+                  <label className="block section-label mb-1.5">Year of study</label>
                   <select
                     required
                     value={profileYear}
                     onChange={(e) => setProfileYear(e.target.value)}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-secondary"
+                    className="forge-input cursor-pointer"
                   >
-                    <option value="1">1st Year</option>
-                    <option value="2">2nd Year</option>
-                    <option value="3">3rd Year</option>
-                    <option value="4">4th Year</option>
+                    <option value="">Select…</option>
+                    {[1, 2, 3, 4].map((y) => (
+                      <option key={y} value={y}>{y}{["st","nd","rd","th"][y-1]} Year</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
+              {/* Department */}
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Short Bio</label>
+                <label className="block section-label mb-1.5">Department</label>
+                <select
+                  required
+                  value={profileDept}
+                  onChange={(e) => setProfileDept(e.target.value)}
+                  className="forge-input cursor-pointer"
+                >
+                  <option value="">Select…</option>
+                  {departments.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label className="block section-label mb-1.5">Bio</label>
                 <textarea
                   rows={3}
                   value={profileBio}
                   onChange={(e) => setProfileBio(e.target.value)}
-                  placeholder="I am passionate about IoT sensors..."
-                  className="w-full p-2.5 bg-card border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                  placeholder="A short intro about yourself and your interests…"
+                  className="forge-input resize-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5">Technical Skills (Comma Separated)</label>
-                <input
-                  type="text"
-                  value={profileSkills}
-                  onChange={(e) => setProfileSkills(e.target.value)}
-                  placeholder="React, Next.js, Node.js, Python, Arduino"
-                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                />
-              </div>
-
+              {/* Links */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
-                    <FiGithub /> Github Link
+                  <label className="block section-label mb-1.5 flex items-center gap-1.5">
+                    <GitBranch size={11} strokeWidth={1.75} />
+                    GitHub URL
                   </label>
                   <input
                     type="url"
                     value={profileGithub}
                     onChange={(e) => setProfileGithub(e.target.value)}
                     placeholder="https://github.com/username"
-                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="forge-input"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
-                    <FiLinkedin /> LinkedIn Link
+                  <label className="block section-label mb-1.5 flex items-center gap-1.5">
+                    <Link2 size={11} strokeWidth={1.75} />
+                    LinkedIn URL
                   </label>
                   <input
                     type="url"
                     value={profileLinkedin}
                     onChange={(e) => setProfileLinkedin(e.target.value)}
                     placeholder="https://linkedin.com/in/username"
-                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="forge-input"
                   />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={loadingId !== null}
-                className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold text-primary-foreground bg-primary hover:bg-opacity-90 rounded-lg transition-colors cursor-pointer"
-              >
-                {loadingId === "profile-save" ? "Saving..." : "Save Settings"}
-              </button>
+              {/* Skills */}
+              <div>
+                <label className="block section-label mb-1.5">Skills (comma-separated)</label>
+                <input
+                  type="text"
+                  value={profileSkills}
+                  onChange={(e) => setProfileSkills(e.target.value)}
+                  placeholder="React, Python, Arduino, Figma…"
+                  className="forge-input"
+                />
+              </div>
+
+              {/* Save */}
+              <div className="flex justify-end pt-2 border-t border-border">
+                <button
+                  type="submit"
+                  disabled={loadingId === "profile"}
+                  className="btn-primary text-[13px] py-2 px-5"
+                >
+                  {loadingId === "profile" ? "Saving…" : "Save changes"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* 5. ADMIN CONSOLE TAB */}
-      {activeTab === "admin" && currentUser.role === "ADMIN" && adminData && (
-        <div className="space-y-10">
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-1 tracking-tight">Admin Management Center</h2>
-            <p className="text-xs text-muted-foreground font-medium">Moderate student listings and delete flagged content.</p>
+/* ═══════════════════════════════════════════════════════════════
+   CollaborationsFinder — standalone sub-component
+   Receives already-fetched people array and filter state from parent.
+   All filtering is done client-side (no extra network call).
+═══════════════════════════════════════════════════════════════ */
+
+interface CFProps {
+  people: any[];
+  collabSearch: string;
+  setCollabSearch: (v: string) => void;
+  collabDept: string;
+  setCollabDept: (v: string) => void;
+  collabSkill: string;
+  setCollabSkill: (v: string) => void;
+  collabStatus: "all" | "open" | "busy";
+  setCollabStatus: (v: "all" | "open" | "busy") => void;
+}
+
+function CollaborationsFinder({
+  people,
+  collabSearch, setCollabSearch,
+  collabDept,   setCollabDept,
+  collabSkill,  setCollabSkill,
+  collabStatus, setCollabStatus,
+}: CFProps) {
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  // "open to collaborate" = has no currently-OPEN project they own
+  const isOpenToWork = (u: any) =>
+    !u.projects.some((p: any) => p.status === "OPEN");
+
+  // Unique department list from the data
+  const allDepts = Array.from(
+    new Set(people.map((u: any) => u.department as string))
+  ).sort();
+
+  // Unique skill list from the data
+  const allSkills = Array.from(
+    new Set(people.flatMap((u: any) => u.skills.map((s: any) => s.name as string)))
+  ).sort();
+
+  // Filter logic
+  const filtered = people.filter((u: any) => {
+    const q = collabSearch.trim().toLowerCase();
+    if (
+      q &&
+      !u.name.toLowerCase().includes(q) &&
+      !u.department.toLowerCase().includes(q) &&
+      !(u.bio ?? "").toLowerCase().includes(q) &&
+      !u.skills.some((s: any) => s.name.toLowerCase().includes(q))
+    ) return false;
+    if (collabDept && u.department !== collabDept) return false;
+    if (collabSkill && !u.skills.some((s: any) => s.name === collabSkill)) return false;
+    if (collabStatus === "open" && !isOpenToWork(u)) return false;
+    if (collabStatus === "busy" &&  isOpenToWork(u)) return false;
+    return true;
+  });
+
+  const copyEmail = async (userId: number, email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = email;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    }
+    setCopiedId(userId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // Chevron arrow for selects
+  const selectBg = {
+    backgroundImage:
+      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+    backgroundRepeat: "no-repeat" as const,
+    backgroundPosition: "right 8px center",
+  };
+
+  return (
+    <div className="space-y-6">
+
+      {/* Header */}
+      <div>
+        <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Find collaborators</h2>
+        <p className="text-[12px] text-muted-foreground mt-0.5">
+          Browse verified Karunya students and find people with the skills you need.
+        </p>
+      </div>
+
+      {/* Search + filters */}
+      <div className="space-y-3">
+        {/* Search input */}
+        <div className="relative">
+          <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={collabSearch}
+            onChange={(e) => setCollabSearch(e.target.value)}
+            placeholder="Search by name, skill, department, or bio…"
+            className="forge-input pl-9 w-full"
+          />
+        </div>
+
+        {/* Filter row */}
+        <div className="flex flex-wrap gap-2 items-center">
+
+          {/* Availability pills */}
+          <div className="flex items-center gap-1 p-1 bg-secondary rounded-lg border border-border">
+            {(["all", "open", "busy"] as const).map((val) => (
+              <button
+                key={val}
+                onClick={() => setCollabStatus(val)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                  collabStatus === val
+                    ? "bg-card text-foreground shadow-sm border border-border"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {val === "all" ? "Everyone" : val === "open" ? "Available" : "Busy"}
+              </button>
+            ))}
           </div>
 
-          {/* User management */}
-          <div className="glass-panel p-5 rounded-lg border border-border bg-card space-y-4">
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <FiUser className="text-muted-foreground" />
-              Registered Accounts ({adminData.users.length})
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm divide-y divide-border">
-                <thead>
-                  <tr className="text-muted-foreground text-xs font-semibold uppercase">
-                    <th className="py-3 px-2">Name</th>
-                    <th className="py-3 px-2">Email</th>
-                    <th className="py-3 px-2">Role</th>
-                    <th className="py-3 px-2">Status</th>
-                    <th className="py-3 px-2 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border text-xs">
-                  {adminData.users.map((u) => (
-                    <tr key={u.id}>
-                      <td className="py-3 px-2 font-bold text-foreground hover:underline"><Link href={`/profile/${u.id}`}>{u.name}</Link></td>
-                      <td className="py-3 px-2 text-muted-foreground">{u.email}</td>
-                      <td className="py-3 px-2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                          u.role === "ADMIN"
-                            ? "notion-tag-yellow"
-                            : "notion-tag-gray"
-                        }`}>
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="py-3 px-2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-semibold uppercase ${
-                          u.verified ? "notion-tag-green" : "notion-tag-yellow"
-                        }`}>
-                          {u.verified ? "Verified" : "Unverified"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-2 text-right">
-                        {u.role !== "ADMIN" && (
-                           <button
-                            onClick={() => handleAdminDeleteUser(u.id)}
-                            disabled={loadingId !== null}
-                            className="text-destructive hover:text-red-400 font-semibold cursor-pointer text-[11px]"
-                          >
-                            {loadingId === `user-delete-${u.id}` ? "Deleting..." : "Ban / Delete"}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {/* Department select */}
+          <select
+            value={collabDept}
+            onChange={(e) => setCollabDept(e.target.value)}
+            className="text-[12px] py-1.5 pl-2.5 pr-7 bg-card border border-border rounded-md text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary transition-colors appearance-none"
+            style={selectBg}
+          >
+            <option value="">All departments</option>
+            {allDepts.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
 
-          {/* Project moderation */}
-          <div className="glass-panel p-5 rounded-lg border border-border bg-card space-y-4">
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <FiGrid className="text-muted-foreground" />
-              Published Projects ({adminData.projects.length})
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm divide-y divide-border">
-                <thead>
-                  <tr className="text-muted-foreground text-xs font-semibold uppercase">
-                    <th className="py-3 px-2">Project</th>
-                    <th className="py-3 px-2">Owner</th>
-                    <th className="py-3 px-2">Status</th>
-                    <th className="py-3 px-2 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border text-xs">
-                  {adminData.projects.map((p) => (
-                    <tr key={p.id}>
-                      <td className="py-3 px-2 font-bold text-foreground hover:underline">
-                        <a href={`/projects/${p.id}`}>{p.title}</a>
-                      </td>
-                      <td className="py-3 px-2 text-muted-foreground">{p.owner.name}</td>
-                      <td className="py-3 px-2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-semibold uppercase ${
-                          p.status === "OPEN"
-                            ? "notion-tag-green"
-                            : "notion-tag-red"
-                        }`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-2 text-right">
-                        <button
-                          onClick={() => handleProjectDelete(p.id)}
-                          disabled={loadingId !== null}
-                          className="text-destructive hover:text-red-400 font-semibold cursor-pointer text-[11px]"
-                        >
-                          {loadingId === `delete-${p.id}` ? "Deleting..." : "Force Delete"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Skill select */}
+          <select
+            value={collabSkill}
+            onChange={(e) => setCollabSkill(e.target.value)}
+            className="text-[12px] py-1.5 pl-2.5 pr-7 bg-card border border-border rounded-md text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary transition-colors appearance-none"
+            style={selectBg}
+          >
+            <option value="">All skills</option>
+            {allSkills.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          {/* Active filter pills */}
+          {collabDept && (
+            <button
+              onClick={() => setCollabDept("")}
+              className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-secondary text-foreground border border-border hover:bg-accent transition-colors"
+            >
+              {collabDept} <X size={10} strokeWidth={2} />
+            </button>
+          )}
+          {collabSkill && (
+            <button
+              onClick={() => setCollabSkill("")}
+              className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-secondary text-foreground border border-border hover:bg-accent transition-colors"
+            >
+              {collabSkill} <X size={10} strokeWidth={2} />
+            </button>
+          )}
+        </div>
+
+        {/* Result count */}
+        <p className="text-[11px] text-muted-foreground">
+          {filtered.length} {filtered.length === 1 ? "person" : "people"} found
+          {collabSearch || collabDept || collabSkill || collabStatus !== "all" ? " matching your filters" : ""}
+        </p>
+      </div>
+
+      {/* People grid */}
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((u: any) => {
+            const open = isOpenToWork(u);
+            const initial = u.name[0].toUpperCase();
+            const openProjectCount = u.projects.filter((p: any) => p.status === "OPEN").length;
+
+            return (
+              <div
+                key={u.id}
+                className="card p-5 flex flex-col gap-4 hover:border-muted-foreground/25 transition-all group"
+              >
+                {/* Top row: avatar + availability badge */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-secondary border border-border flex items-center justify-center font-semibold text-[15px] text-foreground shrink-0">
+                      {initial}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-[13px] font-semibold text-foreground leading-snug truncate">
+                        <Link href={`/profile/${u.id}`} className="hover:underline underline-offset-2">
+                          {u.name}
+                        </Link>
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Year {u.year} · {u.department.split(" ").slice(0, 2).join(" ")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Availability dot + label */}
+                  <div className={`flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide ${
+                    open
+                      ? "bg-success/10 border-success/20 text-green-600 dark:text-green-400"
+                      : "bg-muted border-border text-muted-foreground"
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${open ? "bg-success" : "bg-muted-foreground/50"}`} />
+                    {open ? "Available" : "Busy"}
+                  </div>
+                </div>
+
+                {/* Bio */}
+                {u.bio ? (
+                  <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+                    {u.bio}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground/50 italic">No bio added yet.</p>
+                )}
+
+                {/* Skills */}
+                {u.skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {u.skills.slice(0, 5).map((s: any) => (
+                      <span
+                        key={s.id}
+                        className={`text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground transition-colors cursor-pointer hover:bg-accent ${
+                          collabSkill === s.name ? "border-foreground/30 text-foreground bg-accent" : ""
+                        }`}
+                        onClick={() => setCollabSkill(collabSkill === s.name ? "" : s.name)}
+                        title={`Filter by ${s.name}`}
+                      >
+                        {s.name}
+                      </span>
+                    ))}
+                    {u.skills.length > 5 && (
+                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                        +{u.skills.length - 5}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground/50 italic">No skills listed.</p>
+                )}
+
+                {/* Footer: running projects + actions */}
+                <div className="flex items-center justify-between border-t border-border pt-3 mt-auto gap-2">
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <MapPin size={10} strokeWidth={1.75} className="shrink-0" />
+                    {openProjectCount > 0
+                      ? `${openProjectCount} open project${openProjectCount > 1 ? "s" : ""}`
+                      : "No active projects"}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    {/* Copy email */}
+                    <button
+                      onClick={() => copyEmail(u.id, u.email ?? "")}
+                      className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground"
+                      title="Copy email address"
+                      aria-label={`Copy ${u.name}'s email`}
+                    >
+                      {copiedId === u.id
+                        ? <CheckCheck size={13} strokeWidth={2} className="text-success" />
+                        : <Copy size={13} strokeWidth={1.75} />
+                      }
+                    </button>
+
+                    {/* View profile */}
+                    <Link
+                      href={`/profile/${u.id}`}
+                      className="btn-secondary text-[11px] py-1 px-2.5"
+                    >
+                      View profile
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="card p-14 text-center">
+          <div className="flex justify-center mb-3">
+            <Users size={28} strokeWidth={1.5} className="text-muted-foreground/40" />
           </div>
+          <p className="text-[14px] font-medium text-foreground mb-1">No people found</p>
+          <p className="text-[12px] text-muted-foreground">
+            Try clearing your filters or broadening your search.
+          </p>
         </div>
       )}
     </div>

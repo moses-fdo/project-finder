@@ -3,36 +3,31 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiUser, FiMail, FiLock, FiClock } from "react-icons/fi";
+import { User, Mail, Lock, KeyRound } from "lucide-react";
+
+const departments = [
+  "Computer Science", "Information Technology",
+  "Electronics & Communication", "Electrical & Electronics",
+  "Mechanical Engineering", "Civil Engineering",
+  "Biotechnology", "Food Processing Technology",
+];
 
 export default function SignupPage() {
-  const [step, setStep] = useState(1);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [step,       setStep]       = useState<1 | 2>(1);
+  const [name,       setName]       = useState("");
+  const [email,      setEmail]      = useState("");
+  const [password,   setPassword]   = useState("");
   const [department, setDepartment] = useState("");
-  const [year, setYear] = useState("");
-  const [otp, setOtp] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
+  const [year,       setYear]       = useState("");
+  const [otp,        setOtp]        = useState("");
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState("");
+  const [success,    setSuccess]    = useState("");
   const router = useRouter();
 
-  const departments = [
-    "Computer Science",
-    "Information Technology",
-    "Electronics & Communication",
-    "Electrical & Electronics",
-    "Mechanical Engineering",
-    "Civil Engineering",
-    "Biotechnology",
-    "Food Processing Technology"
-  ];
-
-  const handleSignupSubmit = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
 
     if (!email.endsWith("@karunya.edu.in")) {
       setError("Only @karunya.edu.in email addresses are allowed.");
@@ -41,234 +36,226 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          department,
-          year: Number(year),
-        }),
+        body: JSON.stringify({ name, email, password, department, year: Number(year) }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to register.");
-      }
-
-      setSuccessMsg(data.message || "OTP Sent to your email.");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Registration failed.");
+      setSuccess(data.message || "OTP sent to your email.");
       setStep(2);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: any) { setError(e.message); }
+    finally { setLoading(false); }
   };
 
-  const handleVerifySubmit = async (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-
+    setLoading(true); setError("");
     try {
-      const response = await fetch("/api/auth/verify", {
+      const res = await fetch("/api/auth/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code: otp }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to verify OTP.");
-      }
-
-      setSuccessMsg("Email verified successfully! Redirecting to login...");
-      setTimeout(() => {
-        router.push("/login?error=Verification+Successful.+Please+log+in.");
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Verification failed.");
+      setSuccess("Email verified! Redirecting…");
+      setTimeout(() => router.push("/login"), 1500);
+    } catch (e: any) { setError(e.message); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 relative bg-background">
-      <div className="w-full max-w-md glass-panel p-8 rounded-lg shadow-sm relative z-10 border border-border bg-card">
-        {step === 1 ? (
-          <>
-            <div className="text-center mb-8">
-              <Link href="/" className="inline-block h-9 w-9 rounded bg-primary flex items-center justify-center font-bold text-primary-foreground shadow-sm mb-4 text-base">
-                K
-              </Link>
-              <h2 className="text-2xl font-bold text-foreground">Create Account</h2>
-              <p className="text-xs text-muted-foreground mt-1.5">Sign up for verified Karunya student portal</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background">
+      <div className="w-full max-w-[380px]">
+
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex flex-col items-center gap-3">
+            <div className="h-9 w-9 rounded-[9px] bg-foreground flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H8z" fill="white" />
+              </svg>
             </div>
+            <span className="text-[15px] font-semibold text-foreground">Forge</span>
+          </Link>
+        </div>
 
-            {error && (
-              <div className="p-3 mb-6 text-xs notion-tag-red border border-rose-200/20 rounded-lg">
-                {error}
+        <div className="card p-7">
+          {step === 1 ? (
+            <>
+              <h1 className="text-[18px] font-semibold text-foreground mb-1">Create your account</h1>
+              <p className="text-[12px] text-muted-foreground mb-6">
+                Sign up with your @karunya.edu.in email to get started.
+              </p>
+
+              {error && (
+                <div className="p-3 mb-5 text-[12px] rounded-md bg-destructive/10 text-destructive border border-destructive/20">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSignup} className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="block section-label mb-1.5" htmlFor="signup-name">Full name</label>
+                  <div className="relative">
+                    <User size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <input
+                      id="signup-name"
+                      type="text"
+                      required
+                      placeholder="Your full name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="forge-input pl-9"
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block section-label mb-1.5" htmlFor="signup-email">Karunya email</label>
+                  <div className="relative">
+                    <Mail size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <input
+                      id="signup-email"
+                      type="email"
+                      required
+                      placeholder="you@karunya.edu.in"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="forge-input pl-9"
+                    />
+                  </div>
+                </div>
+
+                {/* Department + Year */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block section-label mb-1.5" htmlFor="signup-dept">Department</label>
+                    <select
+                      id="signup-dept"
+                      required
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className="forge-input cursor-pointer"
+                    >
+                      <option value="">Select…</option>
+                      {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block section-label mb-1.5" htmlFor="signup-year">Year</label>
+                    <select
+                      id="signup-year"
+                      required
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                      className="forge-input cursor-pointer"
+                    >
+                      <option value="">Select…</option>
+                      {[1, 2, 3, 4].map((y) => (
+                        <option key={y} value={y}>{y}{["st","nd","rd","th"][y-1]} Year</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block section-label mb-1.5" htmlFor="signup-password">Password</label>
+                  <div className="relative">
+                    <Lock size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <input
+                      id="signup-password"
+                      type="password"
+                      required
+                      minLength={6}
+                      placeholder="Min 6 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="forge-input pl-9"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary w-full justify-center text-[13px] py-2.5 mt-1"
+                >
+                  {loading ? "Sending OTP…" : "Continue"}
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <h1 className="text-[18px] font-semibold text-foreground mb-1">Check your email</h1>
+              <p className="text-[12px] text-muted-foreground mb-2">
+                We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>.
+              </p>
+              <div className="p-3 mb-5 text-[12px] rounded-md bg-warning/10 text-warning border border-warning/20">
+                <strong>Dev mode:</strong> Check your server console for the OTP code.
               </div>
-            )}
 
-            <form onSubmit={handleSignupSubmit} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Full Name</label>
-                <div className="relative">
-                  <FiUser className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
+              {success && (
+                <div className="p-3 mb-4 text-[12px] rounded-md notion-tag-green border border-green-200/20">{success}</div>
+              )}
+              {error && (
+                <div className="p-3 mb-4 text-[12px] rounded-md bg-destructive/10 text-destructive border border-destructive/20">{error}</div>
+              )}
+
+              <form onSubmit={handleVerify} className="space-y-4">
+                <div>
+                  <label className="block section-label mb-1.5" htmlFor="otp-input">
+                    <span className="flex items-center gap-1.5">
+                      <KeyRound size={11} strokeWidth={1.75} />
+                      Verification code
+                    </span>
+                  </label>
                   <input
+                    id="otp-input"
                     type="text"
                     required
-                    placeholder="Moses Fernando"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="123456"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="forge-input text-center font-mono tracking-[0.4em] text-[16px]"
+                    autoComplete="one-time-code"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Karunya Email Address</label>
-                <div className="relative">
-                  <FiMail className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
-                  <input
-                    type="email"
-                    required
-                    placeholder="username@karunya.edu.in"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                  />
-                </div>
-              </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary w-full justify-center text-[13px] py-2.5"
+                >
+                  {loading ? "Verifying…" : "Verify email"}
+                </button>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Department</label>
-                  <select
-                    required
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-secondary"
-                  >
-                    <option value="">Select...</option>
-                    {departments.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setError(""); setSuccess(""); }}
+                  className="btn-secondary w-full justify-center text-[13px] py-2"
+                >
+                  Back
+                </button>
+              </form>
+            </>
+          )}
+        </div>
 
-                <div>
-                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Year of Study</label>
-                  <select
-                    required
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-secondary"
-                  >
-                    <option value="">Select...</option>
-                    <option value="1">1st Year</option>
-                    <option value="2">2nd Year</option>
-                    <option value="3">3rd Year</option>
-                    <option value="4">4th Year</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Password</label>
-                <div className="relative">
-                  <FiLock className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2 px-4 bg-primary hover:bg-opacity-90 text-primary-foreground font-semibold rounded-lg shadow-sm transition-colors text-xs cursor-pointer disabled:opacity-50 mt-2"
-              >
-                {loading ? "Registering..." : "Send Verification OTP"}
-              </button>
-            </form>
-
-            <p className="text-xs text-center text-muted-foreground mt-6">
-              Already have an account?{" "}
-              <Link href="/login" className="text-foreground font-semibold hover:underline">
-                Sign in here
-              </Link>
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="text-center mb-6">
-              <FiClock className="mx-auto text-3xl text-muted-foreground mb-3 animate-pulse" />
-              <h2 className="text-2xl font-bold text-foreground">Enter OTP</h2>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                We&apos;ve sent a 6-digit OTP code to <strong className="text-foreground">{email}</strong>.
-              </p>
-              <div className="text-[10px] notion-tag-yellow border border-yellow-200/20 p-3 rounded-lg mt-4 text-left">
-                <strong>Development mode notice:</strong> Since no mailer is configured, check your server console/terminal logs to grab the OTP code!
-              </div>
-            </div>
-
-            {successMsg && (
-              <div className="p-3 mb-4 text-xs notion-tag-green border border-green-200/20 rounded-lg">
-                {successMsg}
-              </div>
-            )}
-
-            {error && (
-              <div className="p-3 mb-4 text-xs notion-tag-red border border-rose-200/20 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleVerifySubmit} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Verification Code</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="123456"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-center font-mono text-base tracking-widest text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2 px-4 bg-primary hover:bg-opacity-90 text-primary-foreground font-semibold rounded-lg shadow-sm transition-colors text-xs cursor-pointer disabled:opacity-50"
-              >
-                {loading ? "Verifying..." : "Verify Code"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="w-full py-2 px-4 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg border border-border mt-2 transition-colors cursor-pointer text-center"
-              >
-                Back to Details
-              </button>
-            </form>
-          </>
-        )}
+        <p className="text-[12px] text-center text-muted-foreground mt-5">
+          Already have an account?{" "}
+          <Link href="/login" className="text-foreground font-medium hover:underline underline-offset-2">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );

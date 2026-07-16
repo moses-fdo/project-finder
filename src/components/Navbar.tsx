@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { FiPlus, FiBookOpen, FiGrid } from "react-icons/fi";
+import { Plus, BookOpen, LayoutGrid } from "lucide-react";
 import NavbarClient from "./NavbarClient";
 import { prisma } from "@/lib/prisma";
 
@@ -19,69 +19,68 @@ export default async function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border glass-panel">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo and Brand */}
-        <div className="flex items-center gap-8">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+
+        {/* Logo */}
+        <div className="flex items-center gap-6 shrink-0">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-primary to-ring flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-105 transition-transform duration-200">
-              K
+            <div
+              className="h-7 w-7 rounded-[7px] bg-foreground flex items-center justify-center shrink-0"
+              aria-hidden="true"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
+              </svg>
             </div>
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
-              Karunya<span className="text-primary font-extrabold text-sm ml-0.5">Collab</span>
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">
+              Forge
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/projects"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1.5"
-            >
-              <FiBookOpen className="text-xs" />
-              Discover Projects
-            </Link>
-            {user && (
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1.5"
-              >
-                <FiGrid className="text-xs" />
+          {/* Desktop nav links — only shown when authenticated */}
+          {user && (
+            <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
+              <Link href="/projects" className="nav-item text-[13px]">
+                <BookOpen size={14} strokeWidth={1.75} />
+                Discover
+              </Link>
+              <Link href="/dashboard" className="nav-item text-[13px]">
+                <LayoutGrid size={14} strokeWidth={1.75} />
                 Dashboard
               </Link>
-            )}
-          </nav>
+            </nav>
+          )}
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-4">
+        {/* Right side */}
+        <div className="flex items-center gap-2">
           {user ? (
-            <div className="flex items-center gap-3">
+            <>
               <Link
                 href="/projects/create"
-                className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-opacity-90 rounded-lg shadow-md transition-all duration-200 hover:shadow-indigo-500/20 active:scale-95"
+                className="hidden sm:flex btn-primary text-[13px] py-[7px] px-3 gap-1.5"
               >
-                <FiPlus className="text-sm" />
-                Post Project
+                <Plus size={14} strokeWidth={2} />
+                New Project
               </Link>
-
               <NavbarClient user={user} unreadNotifications={unreadNotificationsCount} />
-            </div>
+            </>
           ) : (
-            <div className="flex items-center gap-3">
+            <>
               <Link
                 href="/login"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2 px-3"
+                className="btn-ghost text-[13px] px-3 py-[7px]"
               >
-                Sign In
+                Sign in
               </Link>
               <Link
                 href="/signup"
-                className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary to-ring hover:opacity-90 rounded-lg shadow-lg shadow-indigo-500/10 transition-all duration-200 active:scale-95"
+                className="btn-primary text-[13px] py-[7px] px-3"
               >
-                Get Started
+                Get started
               </Link>
-            </div>
+            </>
           )}
         </div>
       </div>

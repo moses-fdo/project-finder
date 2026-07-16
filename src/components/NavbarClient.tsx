@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { FiBell, FiUser, FiLogOut, FiGrid } from "react-icons/fi";
+import { Bell, LayoutGrid, User, LogOut } from "lucide-react";
 import Image from "next/image";
 
 interface NavbarClientProps {
@@ -15,7 +15,6 @@ export default function NavbarClient({ user, unreadNotifications }: NavbarClient
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Close menus on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -26,73 +25,82 @@ export default function NavbarClient({ user, unreadNotifications }: NavbarClient
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const initials = (user.name || "U")[0].toUpperCase();
+
   return (
-    <div className="flex items-center gap-3 relative" ref={profileRef}>
-      {/* Notifications bell */}
+    <div className="flex items-center gap-1 relative" ref={profileRef}>
+
+      {/* Notifications */}
       <Link
         href="/dashboard?tab=notifications"
-        className="relative p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition-all"
-        title="View Notifications"
+        className="btn-ghost relative p-[7px]"
+        title="Notifications"
+        aria-label={`Notifications${unreadNotifications > 0 ? `, ${unreadNotifications} unread` : ""}`}
       >
-        <FiBell className="text-xl" />
+        <Bell size={16} strokeWidth={1.75} />
         {unreadNotifications > 0 && (
-          <span className="absolute top-1 right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-md animate-pulse">
-            {unreadNotifications}
-          </span>
+          <span className="absolute top-[5px] right-[5px] h-[7px] w-[7px] rounded-full bg-destructive" aria-hidden="true" />
         )}
       </Link>
 
-      {/* Profile Avatar Button */}
+      {/* Avatar button */}
       <button
         onClick={() => setProfileOpen(!profileOpen)}
-        className="flex items-center gap-2 p-0.5 rounded-full border border-border bg-card hover:bg-secondary hover:border-muted-foreground transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
+        className="flex items-center justify-center h-7 w-7 rounded-full bg-secondary border border-border hover:border-muted-foreground/40 overflow-hidden transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Open profile menu"
+        aria-expanded={profileOpen}
       >
-        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-ring flex items-center justify-center text-sm font-bold text-white uppercase overflow-hidden">
-          {user.image ? (
-            <Image src={user.image} alt={user.name || "Avatar"} width={32} height={32} unoptimized className="h-full w-full object-cover" />
-          ) : (
-            (user.name || "U")[0]
-          )}
-        </div>
+        {user.image ? (
+          <Image
+            src={user.image}
+            alt={user.name ?? "Avatar"}
+            width={28}
+            height={28}
+            className="h-full w-full object-cover"
+            unoptimized
+          />
+        ) : (
+          <span className="text-[11px] font-semibold text-foreground">{initials}</span>
+        )}
       </button>
 
-      {/* Profile Dropdown Menu */}
+      {/* Dropdown */}
       {profileOpen && (
-        <div className="absolute right-0 top-12 w-56 rounded-xl border border-border bg-card p-2 shadow-xl animate-in fade-in slide-in-from-top-3 duration-200 z-50">
-          <div className="px-3 py-2 border-b border-border mb-1">
-            <p className="text-sm font-semibold truncate text-foreground">{user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold uppercase rounded-md bg-secondary text-primary-foreground border border-border">
-              {user.role}
-            </span>
+        <div className="dropdown animate-fade-in absolute right-0 top-10 w-56 p-1.5 z-50">
+          {/* User info */}
+          <div className="px-3 py-2.5 mb-1">
+            <p className="text-[13px] font-semibold text-foreground truncate">{user.name}</p>
+            <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.email}</p>
           </div>
+
+          <div className="h-px bg-border mx-1 mb-1" />
 
           <Link
             href="/dashboard"
             onClick={() => setProfileOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+            className="nav-item w-full px-3 py-2 rounded-md text-[13px]"
           >
-            <FiGrid className="text-base" />
+            <LayoutGrid size={14} strokeWidth={1.75} />
             Dashboard
           </Link>
 
           <Link
             href="/dashboard?tab=profile"
             onClick={() => setProfileOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+            className="nav-item w-full px-3 py-2 rounded-md text-[13px]"
           >
-            <FiUser className="text-base" />
-            My Profile
+            <User size={14} strokeWidth={1.75} />
+            Profile settings
           </Link>
 
-          <div className="border-t border-border my-1"></div>
+          <div className="h-px bg-border mx-1 my-1" />
 
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:text-red-400 hover:bg-red-950/20 rounded-lg transition-colors text-left cursor-pointer"
+            className="nav-item w-full px-3 py-2 rounded-md text-[13px] text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer text-left"
           >
-            <FiLogOut className="text-base" />
-            Sign Out
+            <LogOut size={14} strokeWidth={1.75} />
+            Sign out
           </button>
         </div>
       )}

@@ -1,22 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Karunya Project Hub | Find Student & Faculty Collaborators",
-  description: "Exclusive collaboration portal for Karunya Institute of Technology and Sciences. Post projects, find skilled student teams, and discover department opportunities.",
-  keywords: ["Karunya University", "Project Collaboration", "Student Portal", "Team Finder", "Karunya Hub"],
-  authors: [{ name: "Karunya Developer" }],
+  title: "Forge — Project Collaboration Platform",
+  description:
+    "Find collaborators, post projects, and build together. Forge connects students and developers on the same campus.",
+  keywords: ["Forge", "Project Collaboration", "Student Portal", "Team Finder"],
 };
 
 export default function RootLayout({
@@ -27,9 +23,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} h-full`}
+      style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
         {children}
       </body>
     </html>

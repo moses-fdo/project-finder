@@ -1,49 +1,40 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { FiGrid, FiLayers, FiBell, FiUser, FiShield } from "react-icons/fi";
+import { FolderOpen, Send, Bell, Settings } from "lucide-react";
 
-interface SidebarProps {
-  userRole: string;
-}
+const menuItems = [
+  { id: "projects",      label: "My Projects",   icon: FolderOpen },
+  { id: "applications",  label: "Applications",  icon: Send       },
+  { id: "notifications", label: "Notifications", icon: Bell       },
+  { id: "profile",       label: "Settings",      icon: Settings   },
+];
 
-export default function Sidebar({ userRole }: SidebarProps) {
-  const router = useRouter();
+export default function Sidebar() {
+  const router      = useRouter();
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") || "projects";
-
-  const menuItems = [
-    { id: "projects", label: "My Projects", icon: FiGrid },
-    { id: "applications", label: "My Applications", icon: FiLayers },
-    { id: "notifications", label: "Notifications", icon: FiBell },
-    { id: "profile", label: "Profile Settings", icon: FiUser },
-  ];
-
-  if (userRole === "ADMIN") {
-    menuItems.push({ id: "admin", label: "Admin Console", icon: FiShield });
-  }
-
-  const handleTabChange = (tabId: string) => {
-    router.push(`/dashboard?tab=${tabId}`);
-  };
+  const activeTab   = searchParams.get("tab") || "projects";
 
   return (
-    <aside className="w-full md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border p-4 bg-card md:min-h-[calc(100vh-4rem)]">
-      <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
+    <aside
+      className="w-full md:w-52 shrink-0 md:border-r border-b md:border-b-0 border-border md:min-h-[calc(100vh-3.5rem)]"
+      aria-label="Dashboard navigation"
+    >
+      <nav className="flex md:flex-col gap-0.5 p-2 md:p-3 overflow-x-auto md:overflow-visible">
         {menuItems.map((item) => {
-          const Icon = item.icon;
+          const Icon    = item.icon;
           const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
-              onClick={() => handleTabChange(item.id)}
-              className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all cursor-pointer whitespace-nowrap md:w-full ${
-                isActive
-                  ? "bg-primary/10 text-primary border-l-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
+              onClick={() => router.push(`/dashboard?tab=${item.id}`)}
+              className={[
+                "nav-item shrink-0 md:w-full text-left",
+                isActive ? "nav-item-active" : "",
+              ].join(" ")}
+              aria-current={isActive ? "page" : undefined}
             >
-              <Icon className="text-lg" />
+              <Icon size={14} strokeWidth={1.75} />
               {item.label}
             </button>
           );
