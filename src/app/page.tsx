@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import ProjectCard from "@/components/ProjectCard";
 import { FiArrowRight } from "react-icons/fi";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const featuredProjects = await prisma.project.findMany({
     take: 3,
