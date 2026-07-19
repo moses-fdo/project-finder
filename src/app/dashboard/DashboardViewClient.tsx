@@ -125,6 +125,24 @@ export default function DashboardViewClient({
     }
   }, [profileData]);
 
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(
+    () => new Set(bookmarks.map((bm: any) => bm.project?.id ?? bm.projectId))
+  );
+
+  const toggleBookmark = async (projectId: number) => {
+    const isBookmarked = bookmarkedIds.has(projectId);
+    setBookmarkedIds(prev => {
+      const next = new Set(prev);
+      isBookmarked ? next.delete(projectId) : next.add(projectId);
+      return next;
+    });
+    try {
+      await fetch(`/api/projects/${projectId}/bookmark`, {
+        method: isBookmarked ? "DELETE" : "POST",
+      });
+    } catch { /* silent */ }
+  };
+
   const [collabSearch,  setCollabSearch]  = useState("");
   const [collabDept,    setCollabDept]    = useState("");
   const [collabSkill,   setCollabSkill]   = useState("");
@@ -200,14 +218,26 @@ export default function DashboardViewClient({
     finally { setLoadingId(null); }
   };
 
+  const [localNotifications, setLocalNotifications] = useState(notifications);
+
+  useEffect(() => {
+    setLocalNotifications(notifications);
+  }, [notifications]);
+
   const markNotifRead = async (id: number) => {
-    await fetch(`/api/notifications/${id}`, { method: "PATCH" });
-    refresh();
+    setLocalNotifications(prev =>
+      prev.map(n => n.id === id ? { ...n, read: true } : n)
+    );
+    try {
+      await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+    } catch { /* silent */ }
   };
 
   const markAllRead = async () => {
-    await fetch("/api/notifications", { method: "PATCH" });
-    refresh();
+    setLocalNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    try {
+      await fetch("/api/notifications", { method: "PATCH" });
+    } catch { /* silent */ }
   };
 
   const saveProfile = async (e: React.FormEvent) => {
@@ -344,8 +374,20 @@ export default function DashboardViewClient({
                             <div className={`h-8 w-8 rounded-lg ${iconInfo.bg} flex items-center justify-center border border-border shrink-0`}>
                               <Icon size={16} className={iconInfo.text} />
                             </div>
-                            <button className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors cursor-pointer">
-                              <Bookmark size={14} />
+                            <button
+                              onClick={() => toggleBookmark(project.id)}
+                              className={`p-1 rounded-md transition-colors cursor-pointer ${
+                                bookmarkedIds.has(project.id)
+                                  ? "text-foreground"
+                                  : "text-muted-foreground hover:text-foreground"
+                              }`}
+                              aria-label={bookmarkedIds.has(project.id) ? "Remove bookmark" : "Bookmark project"}
+                              title={bookmarkedIds.has(project.id) ? "Remove bookmark" : "Save project"}
+                            >
+                              <Bookmark
+                                size={14}
+                                className={bookmarkedIds.has(project.id) ? "fill-foreground" : ""}
+                              />
                             </button>
                           </div>
 
@@ -862,7 +904,7 @@ export default function DashboardViewClient({
               <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Notifications</h2>
               <p className="text-[12px] text-muted-foreground mt-0.5">Application status updates and alerts.</p>
             </div>
-            {notifications.some((n) => !n.read) && (
+            {localNotifications.some((n) => !n.read) && (
               <button
                 onClick={markAllRead}
                 className="btn-ghost text-[12px]"
@@ -872,9 +914,9 @@ export default function DashboardViewClient({
             )}
           </div>
 
-          {notifications.length > 0 ? (
+          {localNotifications.length > 0 ? (
             <div className="space-y-2">
-              {notifications.map((notif) => (
+              {localNotifications.map((notif) => (
                 <div
                   key={notif.id}
                   onClick={() => !notif.read && markNotifRead(notif.id)}

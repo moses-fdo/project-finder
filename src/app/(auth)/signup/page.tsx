@@ -16,18 +16,6 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background">
       <div className="w-full max-w-[360px]">
 
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex flex-col items-center gap-3">
-            <div className="h-9 w-9 rounded-[9px] bg-foreground flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H8zM8 8h4v4H8z" fill="white" />
-              </svg>
-            </div>
-            <span className="text-[15px] font-semibold text-foreground">Colabro</span>
-          </Link>
-        </div>
-
         <div className="card p-7 text-center">
           <h1 className="text-[18px] font-semibold text-foreground mb-1">Create your account</h1>
           <p className="text-[12px] text-muted-foreground mb-6">

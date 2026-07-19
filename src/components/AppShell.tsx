@@ -35,7 +35,7 @@ interface AppShellProps {
   children: React.ReactNode;
   user: any;
   unreadNotifications?: number;
-  inboxNotifications?: NotificationItem[];  // optional — omit on non-dashboard pages
+  inboxNotifications?: NotificationItem[];
 }
 
 // Stable empty array outside the component — never recreated
@@ -51,52 +51,57 @@ export default function AppShell({
   const searchParams = useSearchParams();
   const router       = useRouter();
 
-  // Stable reference: use prop if provided, otherwise the module-level constant
   const stableNotifs = inboxNotifications ?? EMPTY_NOTIFS;
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [inboxOpen,   setInboxOpen]   = useState(false);
   const [localNotifs, setLocalNotifs] = useState<NotificationItem[]>(stableNotifs);
 
-  const profileRef = useRef<HTMLDivElement>(null);
-  const inboxRef   = useRef<HTMLDivElement>(null);
+  // Separate refs for desktop and mobile inbox containers
+  const profileRef   = useRef<HTMLDivElement>(null);
+  const inboxDesktop = useRef<HTMLDivElement>(null);
+  const inboxMobile  = useRef<HTMLDivElement>(null);
 
   const tab = searchParams.get("tab") || "home";
 
   /* ── close on outside click ────────────────────────────── */
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
-      if (inboxRef.current   && !inboxRef.current.contains(e.target as Node))   setInboxOpen(false);
+      const target = e.target as Node;
+
+      if (profileRef.current && !profileRef.current.contains(target)) {
+        setProfileOpen(false);
+      }
+
+      // Close inbox only if the click is outside BOTH the desktop and mobile containers
+      const insideDesktop = inboxDesktop.current?.contains(target) ?? false;
+      const insideMobile  = inboxMobile.current?.contains(target)  ?? false;
+      if (!insideDesktop && !insideMobile) {
+        setInboxOpen(false);
+      }
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
   }, []);
 
-  // NOTE: No sync effect for inboxNotifications — useState initialiser captures
-  // the value on first mount. Local read/mark operations mutate localNotifs directly.
-  // A full refresh (router.refresh) will remount and re-initialise with fresh data.
-
-  const initials     = (user?.name || "U")[0].toUpperCase();
-  const unreadCount  = inboxNotifications
+  const initials    = (user?.name || "U")[0].toUpperCase();
+  const unreadCount = inboxNotifications
     ? localNotifs.filter((n) => !n.read).length
     : unreadNotifications;
 
   /* ── mark one read ─────────────────────────────────────── */
   const markRead = async (id: number) => {
+    setLocalNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     try {
       await fetch(`/api/notifications/${id}`, { method: "PATCH" });
-      setLocalNotifs(prev =>
-        prev.map(n => n.id === id ? { ...n, read: true } : n)
-      );
     } catch { /* silent */ }
   };
 
   /* ── mark all read ─────────────────────────────────────── */
   const markAllRead = async () => {
+    setLocalNotifs(prev => prev.map(n => ({ ...n, read: true })));
     try {
       await fetch("/api/notifications", { method: "PATCH" });
-      setLocalNotifs(prev => prev.map(n => ({ ...n, read: true })));
     } catch { /* silent */ }
   };
 
@@ -119,12 +124,9 @@ export default function AppShell({
     { label: "Invitations",  icon: Mail,       href: "/dashboard?tab=invitations",  active: isTabActive("invitations") },
   ];
 
-  /* ── inbox dropdown ────────────────────────────────────── */
-  const renderInboxDropdown = () => (
-    <div
-      className="absolute right-0 top-[calc(100%+8px)] w-80 bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden"
-      style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)" }}
-    >
+  /* ── inbox dropdown content ────────────────────────────── */
+  const inboxDropdownContent = (
+    <>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
@@ -159,32 +161,20 @@ export default function AppShell({
             <div
               key={n.id}
               className={`flex items-start gap-3 px-4 py-3 transition-colors ${
-                n.read
-                  ? "opacity-50"
-                  : "cursor-pointer hover:bg-secondary/50"
+                n.read ? "opacity-50" : "cursor-pointer hover:bg-secondary/50"
               }`}
               onClick={() => !n.read && markRead(n.id)}
             >
-              {/* Unread dot */}
-              <span
-                className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 transition-all ${
-                  n.read ? "bg-transparent" : "bg-foreground"
-                }`}
-              />
-
+              <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 transition-all ${n.read ? "bg-transparent" : "bg-foreground"}`} />
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] text-foreground leading-relaxed">{n.message}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  {new Date(n.createdAt).toLocaleDateString(undefined, {
-                    month: "short", day: "numeric",
-                  })}
+                  {new Date(n.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                   {!n.read && (
                     <span className="ml-2 text-[9px] font-semibold uppercase tracking-wide text-foreground/60">New</span>
                   )}
                 </p>
               </div>
-
-              {/* Mark read icon */}
               {!n.read && (
                 <button
                   onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
@@ -211,7 +201,7 @@ export default function AppShell({
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 
   /* ════════════════════════════════════════════════════════ */
@@ -353,7 +343,7 @@ export default function AppShell({
         {/* Desktop header */}
         <header className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card sticky top-0 z-40">
 
-          {/* Search bar — fixed padding so icon never overlaps text */}
+          {/* Search bar */}
           <div className="relative w-72 max-w-xs">
             <Search
               size={13}
@@ -374,10 +364,10 @@ export default function AppShell({
             </span>
           </div>
 
-          {/* Right — inbox button */}
-          <div className="relative" ref={inboxRef}>
+          {/* Right — inbox (desktop) */}
+          <div className="relative" ref={inboxDesktop}>
             <button
-              onClick={() => setInboxOpen(!inboxOpen)}
+              onClick={() => setInboxOpen(prev => !prev)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors cursor-pointer ${
                 inboxOpen
                   ? "bg-secondary border-border text-foreground"
@@ -395,7 +385,14 @@ export default function AppShell({
               )}
             </button>
 
-            {inboxOpen && renderInboxDropdown()}
+            {inboxOpen && (
+              <div
+                className="absolute right-0 top-[calc(100%+8px)] w-80 bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden"
+                style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)" }}
+              >
+                {inboxDropdownContent}
+              </div>
+            )}
           </div>
         </header>
 
@@ -410,10 +407,10 @@ export default function AppShell({
             <span className="text-[15px] font-bold tracking-tight text-foreground">Colabro</span>
           </Link>
 
-          <div className="flex items-center gap-2" ref={inboxRef}>
-            {/* Mobile inbox button */}
+          {/* Mobile inbox (separate ref) */}
+          <div className="flex items-center gap-2 relative" ref={inboxMobile}>
             <button
-              onClick={() => setInboxOpen(!inboxOpen)}
+              onClick={() => setInboxOpen(prev => !prev)}
               className="relative p-1.5 text-muted-foreground hover:text-foreground rounded-lg transition-colors cursor-pointer"
               aria-label="Open inbox"
             >
@@ -430,10 +427,9 @@ export default function AppShell({
               }
             </div>
 
-            {/* Mobile inbox dropdown — anchors to the right */}
             {inboxOpen && (
-              <div className="absolute right-4 top-14 w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden">
-                {renderInboxDropdown()}
+              <div className="absolute right-0 top-[calc(100%+8px)] w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden">
+                {inboxDropdownContent}
               </div>
             )}
           </div>

@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { Clock, ArrowRight } from "lucide-react";
+import { Clock, ArrowRight, Bookmark } from "lucide-react";
 
 interface ProjectCardProps {
   project: {
@@ -19,6 +22,7 @@ interface ProjectCardProps {
       name: string;
     }[];
   };
+  initialBookmarked?: boolean;
 }
 
 function statusBadge(status: string) {
@@ -34,7 +38,10 @@ function statusBadge(status: string) {
   }
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, initialBookmarked = false }: ProjectCardProps) {
+  const [bookmarked, setBookmarked] = useState(initialBookmarked);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+
   const truncatedDesc =
     project.description.length > 120
       ? `${project.description.substring(0, 120)}…`
@@ -47,15 +54,52 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
   const ownerInitial = project.owner.name[0].toUpperCase();
 
+  const toggleBookmark = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (bookmarkLoading) return;
+    setBookmarkLoading(true);
+    const method = bookmarked ? "DELETE" : "POST";
+    try {
+      const res = await fetch(`/api/projects/${project.id}/bookmark`, { method });
+      if (res.ok) {
+        setBookmarked(!bookmarked);
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
   return (
     <article className="card card-hover flex flex-col h-full p-5 group">
-      {/* Top row: status + date */}
+      {/* Top row: status + bookmark + date */}
       <div className="flex items-center justify-between gap-2 mb-3">
         {statusBadge(project.status)}
-        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-          <Clock size={11} strokeWidth={1.75} />
-          {dateStr}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleBookmark}
+            disabled={bookmarkLoading}
+            aria-label={bookmarked ? "Remove bookmark" : "Bookmark project"}
+            title={bookmarked ? "Remove bookmark" : "Save project"}
+            className={`p-1 rounded-md transition-colors cursor-pointer disabled:opacity-50 ${
+              bookmarked
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Bookmark
+              size={13}
+              strokeWidth={1.75}
+              className={bookmarked ? "fill-foreground" : ""}
+            />
+          </button>
+          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Clock size={11} strokeWidth={1.75} />
+            {dateStr}
+          </span>
+        </div>
       </div>
 
       {/* Title */}
