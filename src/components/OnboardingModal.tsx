@@ -88,7 +88,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
             👋
           </div>
           <div>
-            <h2 className="text-[17px] font-bold text-foreground">Welcome to Forge!</h2>
+            <h2 className="text-[17px] font-bold text-foreground">Welcome to Colabro!</h2>
             <p className="text-[12px] text-muted-foreground">Please complete your student profile to continue</p>
           </div>
         </div>

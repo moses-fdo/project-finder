@@ -13,7 +13,9 @@ function LoginFormContent() {
   const errorParam   = searchParams.get("error");
 
   let defaultError = "";
-  if (errorParam && errorParam !== "Configuration") {
+  if (errorParam === "EduEmailRequired") {
+    defaultError = "Access Restricted: Please sign in with an official student or institutional educational email address (.edu, .edu.in, .ac.in, etc.).";
+  } else if (errorParam && errorParam !== "Configuration") {
     defaultError = "Sign-in failed. Please try again.";
   }
 
@@ -34,7 +36,7 @@ function LoginFormContent() {
                 <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H8zM8 8h4v4H8z" fill="white" />
               </svg>
             </div>
-            <span className="text-[15px] font-semibold text-foreground">Forge</span>
+            <span className="text-[15px] font-semibold text-foreground">Colabro</span>
           </Link>
         </div>
 

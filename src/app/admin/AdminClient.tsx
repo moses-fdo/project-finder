@@ -234,14 +234,14 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
       {/* ── Top bar ─────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 h-14 border-b border-border bg-card flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          {/* Forge logo */}
+          {/* Colabro logo */}
           <Link href="/dashboard" className="flex items-center gap-2 mr-4">
             <div className="h-7 w-7 rounded-[7px] bg-foreground flex items-center justify-center shrink-0">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
               </svg>
             </div>
-            <span className="text-[15px] font-bold tracking-tight text-foreground">Forge</span>
+            <span className="text-[15px] font-bold tracking-tight text-foreground">Colabro</span>
           </Link>
 
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-destructive/10 border border-destructive/20">

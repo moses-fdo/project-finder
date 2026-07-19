@@ -34,7 +34,7 @@ export default async function Navbar() {
               </svg>
             </div>
             <span className="text-[15px] font-semibold tracking-tight text-foreground">
-              Forge
+              Colabro
             </span>
           </Link>
 

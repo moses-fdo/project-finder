@@ -1123,7 +1123,7 @@ function CollaborationsFinder({
 
   // "open to collaborate" = has no currently-OPEN project they own
   const isOpenToWork = (u: any) =>
-    !u.projects.some((p: any) => p.status === "OPEN");
+    !(u.projects || []).some((p: any) => p.status === "OPEN");
 
   // Unique department list from the data
   const allDepts = Array.from(
@@ -1274,7 +1274,7 @@ function CollaborationsFinder({
           {filtered.map((u: any) => {
             const open = isOpenToWork(u);
             const initial = u.name[0].toUpperCase();
-            const openProjectCount = u.projects.filter((p: any) => p.status === "OPEN").length;
+            const openProjectCount = (u.projects || []).filter((p: any) => p.status === "OPEN").length;
 
             return (
               <div

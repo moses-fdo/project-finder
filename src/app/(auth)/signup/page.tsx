@@ -24,7 +24,7 @@ export default function SignupPage() {
                 <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H8zM8 8h4v4H8z" fill="white" />
               </svg>
             </div>
-            <span className="text-[15px] font-semibold text-foreground">Forge</span>
+            <span className="text-[15px] font-semibold text-foreground">Colabro</span>
           </Link>
         </div>
 

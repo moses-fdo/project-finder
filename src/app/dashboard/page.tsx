@@ -117,9 +117,9 @@ export default async function DashboardPage({
       select: { id: true, type: true, message: true, read: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
-    // 6: Collaborations directory (FLAT SELECT for ultra speed)
+    // 6: Collaborations directory
     prisma.user.findMany({
-      where: { role: { not: "ADMIN" }, id: { not: currentUserId } },
+      where: { id: { not: currentUserId } },
       take: 20,
       select: {
         id: true,
@@ -130,6 +130,8 @@ export default async function DashboardPage({
         bio: true,
         githubUrl: true,
         linkedinUrl: true,
+        skills: { select: { id: true, name: true } },
+        projects: { select: { id: true, status: true } },  // needed for availability status
       },
       orderBy: { createdAt: "desc" },
     }),

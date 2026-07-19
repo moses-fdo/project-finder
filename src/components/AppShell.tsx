@@ -228,7 +228,7 @@ export default function AppShell({
                 <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H8z" fill="white" />
               </svg>
             </div>
-            <span className="text-[16px] font-bold tracking-tight text-foreground">Forge</span>
+            <span className="text-[16px] font-bold tracking-tight text-foreground">Colabro</span>
           </Link>
         </div>
 
@@ -407,7 +407,7 @@ export default function AppShell({
                 <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
               </svg>
             </div>
-            <span className="text-[15px] font-bold tracking-tight text-foreground">Forge</span>
+            <span className="text-[15px] font-bold tracking-tight text-foreground">Colabro</span>
           </Link>
 
           <div className="flex items-center gap-2" ref={inboxRef}>

@@ -22,6 +22,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "google") {
         if (!user.email) return false;
 
+        const email = user.email.toLowerCase().trim();
+        const domain = email.split("@")[1] || "";
+        const isEdu =
+          domain.includes(".edu") ||
+          domain.includes(".ac.") ||
+          domain.endsWith(".edu");
+
+        if (!isEdu) {
+          return "/login?error=EduEmailRequired";
+        }
+
         let dbUser = await prisma.user.findUnique({
           where: { email: user.email }
         });

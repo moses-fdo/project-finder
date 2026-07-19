@@ -11,10 +11,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Forge — Project Collaboration Platform",
+  title: "Colabro — Campus Project & Hackathon Collaboration Platform",
   description:
-    "Find collaborators, post projects, and build together. Forge connects students and developers on the same campus.",
-  keywords: ["Forge", "Project Collaboration", "Student Portal", "Team Finder"],
+    "Find collaborators, post projects, and build together. Colabro connects students and developers across campus.",
+  keywords: ["Colabro", "Project Collaboration", "Hackathons", "Student Portal", "Team Finder"],
 };
 
 export default function RootLayout({
