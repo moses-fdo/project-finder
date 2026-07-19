@@ -1,5 +1,6 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
@@ -12,6 +13,10 @@ class CustomAuthError extends CredentialsSignin {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
+    GoogleProvider({
+      clientId: process.env.AUTH_GOOGLE_ID || "",
+      clientSecret: process.env.AUTH_GOOGLE_SECRET || "",
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -26,8 +31,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
-
-
         const user = await prisma.user.findUnique({
           where: { email }
         });
@@ -38,6 +41,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user.verified) {
           throw new CustomAuthError("not_verified");
+        }
+
+        if (!user.password) {
+          throw new CustomAuthError("invalid_password");
         }
 
         const isValid = await bcrypt.compare(password, user.password);
@@ -57,12 +64,50 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        if (!user.email) return false;
+
+        let dbUser = await prisma.user.findUnique({
+          where: { email: user.email }
+        });
+
+        if (!dbUser) {
+          await prisma.user.create({
+            data: {
+              name: user.name || user.email.split("@")[0],
+              email: user.email,
+              verified: true,
+              profileImage: user.image || null,
+            }
+          });
+        } else if (!dbUser.verified) {
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: { verified: true }
+          });
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id;
-        token.role = (user as any).role;
-        token.department = (user as any).department;
-        token.year = (user as any).year;
+        if (account?.provider === "google" && user.email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email }
+          });
+          if (dbUser) {
+            token.id = dbUser.id.toString();
+            token.role = dbUser.role;
+            token.department = dbUser.department;
+            token.year = dbUser.year;
+          }
+        } else {
+          token.id = user.id;
+          token.role = (user as any).role;
+          token.department = (user as any).department;
+          token.year = (user as any).year;
+        }
       }
       return token;
     },
