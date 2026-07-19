@@ -489,3 +489,85 @@ body {
     -4px 10px 15px rgba(0, 0, 0, 0.15);
 }
 
+/* ─── Professional Typography ────────────────────────────── */
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-outfit), var(--font-plus-jakarta), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+body {
+  font-family: var(--font-plus-jakarta), system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Custom Black Cursor & Mouse Click Ripple Animations ── */
+@media (pointer: fine) {
+  body, button, a, input, select, textarea, [role="button"] {
+    cursor: default;
+  }
+  
+  a, button, [role="button"], input[type="submit"], input[type="button"], select {
+    cursor: pointer;
+  }
+}
+
+.custom-cursor-dot {
+  position: fixed;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1), background-color 0.2s ease;
+  will-change: transform;
+}
+
+.custom-cursor-outline {
+  position: fixed;
+  top: -18px;
+  left: -18px;
+  width: 36px;
+  height: 36px;
+  border-width: 1.5px;
+  border-style: solid;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, background-color 0.2s ease;
+  will-change: transform;
+}
+
+.click-ripple {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99997;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #000000;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: ripple-pulse 0.55s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.dark .click-ripple {
+  border-color: #FFFFFF;
+}
+
+@keyframes ripple-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.9;
+    border-width: 2.5px;
+  }
+  50% {
+    opacity: 0.6;
+    border-width: 1.5px;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.2);
+    opacity: 0;
+    border-width: 0.5px;
+  }
+}
+

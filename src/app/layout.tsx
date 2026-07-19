@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import { Suspense } from "react";
 import NavigationProgress from "@/components/NavigationProgress";
+import CustomCursor from "@/components/CustomCursor";
 import "./globals.css";
 
-const inter = Inter({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-plus-jakarta",
   display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+  weight: ["500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -25,10 +34,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full`}
-      style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
+      className={`${plusJakarta.variable} ${outfit.variable} h-full`}
+      style={{ fontFamily: "var(--font-plus-jakarta), system-ui, -apple-system, sans-serif" }}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
+      <body className="min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
+        <CustomCursor />
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>

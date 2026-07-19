@@ -16,7 +16,7 @@ export default function Home() {
                 <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
               </svg>
             </div>
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">Forge</span>
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">Colabro</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link href="/login"  className="btn-ghost text-[13px] px-3 py-[7px]">Sign in</Link>
