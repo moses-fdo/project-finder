@@ -26,42 +26,35 @@ export default async function ProjectPage({ params }: PageProps) {
   const projectId = Number(id);
   if (isNaN(projectId)) notFound();
 
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: {
-      owner: {
-        select: { id: true, name: true, email: true, department: true, year: true, bio: true },
+  const currentUserId = Number((session.user as any).id);
+
+  const [project, application, existingBookmark, unreadNotificationsCount] = await Promise.all([
+    prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        owner: {
+          select: { id: true, name: true, email: true, department: true, year: true, bio: true },
+        },
+        skills: true,
       },
-      skills: true,
-    },
-  });
+    }),
+    prisma.application.findUnique({
+      where: { projectId_userId: { projectId, userId: currentUserId } },
+    }),
+    prisma.bookmark.findUnique({
+      where: { userId_projectId: { userId: currentUserId, projectId } },
+    }),
+    prisma.notification.count({
+      where: { userId: currentUserId, read: false },
+    }),
+  ]);
+
   if (!project) notFound();
 
-  const currentUserId = Number((session.user as any).id);
   const isOwner = currentUserId === project.ownerId;
-
-  // Check existing application
-  let hasApplied = false;
-  let applicationStatus: string | undefined;
-  if (!isOwner) {
-    const application = await prisma.application.findUnique({
-      where: { projectId_userId: { projectId, userId: currentUserId } },
-    });
-    if (application) {
-      hasApplied = true;
-      applicationStatus = application.status;
-    }
-  }
-
-  // Check existing bookmark
-  const existingBookmark = await prisma.bookmark.findUnique({
-    where: { userId_projectId: { userId: currentUserId, projectId } },
-  });
+  const hasApplied = !isOwner && !!application;
+  const applicationStatus = !isOwner && application ? application.status : undefined;
   const initialBookmarked = !!existingBookmark;
-
-  const unreadNotificationsCount = await prisma.notification.count({
-    where: { userId: currentUserId, read: false },
-  });
 
   const iconInfo = getProjectIcon(project.title);
   const Icon = iconInfo.icon;

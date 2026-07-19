@@ -175,6 +175,10 @@ body {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.forge-input.pl-9 {
+  padding-left: 2.35rem !important;
+}
+
 .forge-input::placeholder {
   color: var(--muted-foreground);
   opacity: 0.7;

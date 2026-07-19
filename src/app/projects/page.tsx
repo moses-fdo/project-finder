@@ -29,8 +29,8 @@ export default async function ProjectsPage({
 
   if (params.search) {
     where.OR = [
-      { title:       { contains: params.search } },
-      { description: { contains: params.search } },
+      { title:       { contains: params.search, mode: "insensitive" } },
+      { description: { contains: params.search, mode: "insensitive" } },
     ];
   }
   if (params.department) {
@@ -43,16 +43,24 @@ export default async function ProjectsPage({
     where.skills = { some: { name: params.skill } };
   }
 
-  const projects = await prisma.project.findMany({
-    where,
-    include: { owner: true, skills: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [projects, skillsData, unreadNotificationsCount] = await Promise.all([
+    prisma.project.findMany({
+      where,
+      include: { owner: true, skills: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.skill.findMany({
+      select: { name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.notification.count({
+      where: {
+        userId: Number((session.user as any).id),
+        read: false,
+      },
+    }),
+  ]);
 
-  const skillsData = await prisma.skill.findMany({
-    select: { name: true },
-    orderBy: { name: "asc" },
-  });
   const skills = skillsData.map((s) => s.name);
 
   const departments = [
@@ -65,15 +73,6 @@ export default async function ProjectsPage({
     "Biotechnology",
     "Food Processing Technology",
   ];
-
-
-
-  const unreadNotificationsCount = await prisma.notification.count({
-    where: {
-      userId: Number((session.user as any).id),
-      read: false,
-    },
-  });
 
   return (
     <AppShell user={session.user} unreadNotifications={unreadNotificationsCount}>

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
+import NavigationProgress from "@/components/NavigationProgress";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,6 +29,9 @@ export default function RootLayout({
       style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         {children}
       </body>
     </html>

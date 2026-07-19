@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
+import OnboardingModal from "./OnboardingModal";
 import {
   Home as HomeIcon,
   FolderOpen,
@@ -238,6 +239,7 @@ export default function AppShell({
               <Link
                 key={item.label}
                 href={item.href}
+                prefetch={true}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                   item.active
                     ? "bg-secondary text-foreground font-semibold"
@@ -315,6 +317,16 @@ export default function AppShell({
 
           {profileOpen && (
             <div className="absolute left-4 bottom-16 right-4 bg-card border border-border rounded-xl shadow-lg p-1.5 z-50 animate-fade-in">
+              {user?.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-bold text-amber-500 hover:bg-amber-500/10 transition-colors"
+                >
+                  <ShieldAlert size={14} />
+                  Admin Portal
+                </Link>
+              )}
               <Link
                 href="/dashboard?tab=profile"
                 onClick={() => setProfileOpen(false)}

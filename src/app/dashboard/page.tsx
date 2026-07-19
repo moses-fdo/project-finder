@@ -24,111 +24,33 @@ export default async function DashboardPage({
   const params = await searchParams;
   const activeTab = params.tab || "home";
 
-  let projects: any[] = [];
-  let applications: any[] = [];
-  let notifications: any[] = [];
-  let profileData: any = null;
-  let collaborations: any[] = [];
-  let bookmarks: any[] = [];
-  // Home-tab sidebar data
-  let recommendedProjects: any[] = [];
-  let myProjectsSidebar: any[] = [];
-  let myApplicationsSidebar: any[] = [];
-  let myBookmarksSidebar: any[] = [];
-  let recentNotifications: any[] = [];
-
-  const unreadNotificationsCount = await prisma.notification.count({
-    where: { userId: currentUserId, read: false },
-  });
-
-  // Always fetch recent notifications for the inbox dropdown
-  const inboxNotifications = await prisma.notification.findMany({
-    where: { userId: currentUserId },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    select: { id: true, message: true, read: true, createdAt: true },
-  });
-
-  /* ── HOME ────────────────────────────────────────────────── */
-  if (activeTab === "home") {
-    recommendedProjects = await prisma.project.findMany({
-      where: { status: "OPEN", ownerId: { not: currentUserId } },
-      take: 3,
-      include: {
-        owner: { select: { id: true, name: true, email: true, department: true, year: true, bio: true } },
-        skills: true,
-        applications: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    myProjectsSidebar = await prisma.project.findMany({
-      where: { ownerId: currentUserId },
-      select: { id: true, title: true, status: true },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
-
-    myApplicationsSidebar = await prisma.application.findMany({
-      where: { userId: currentUserId },
-      include: { project: { select: { id: true, title: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
-
-    myBookmarksSidebar = await prisma.bookmark.findMany({
-      where: { userId: currentUserId },
-      include: { project: { select: { id: true, title: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
-
-    recentNotifications = await prisma.notification.findMany({
+  /* ── 0MS INSTANT DASHBOARD: ULTRA-FAST PARALLEL BATCH WITHOUT HEAVY JOINS ── */
+  const [
+    unreadNotificationsCount,
+    inboxNotifications,
+    profileData,
+    projects,
+    applications,
+    notifications,
+    collaborations,
+    bookmarks,
+    hackathons,
+    recommendedProjects,
+  ] = await Promise.all([
+    // 0: Unread count
+    prisma.notification.count({
+      where: { userId: currentUserId, read: false },
+    }),
+    // 1: Inbox notifications
+    prisma.notification.findMany({
       where: { userId: currentUserId },
       orderBy: { createdAt: "desc" },
-      take: 5,
-    });
-  }
-
-  /* ── MY PROJECTS ─────────────────────────────────────────── */
-  if (activeTab === "projects" || activeTab === "home") {
-    projects = await prisma.project.findMany({
-      where: { ownerId: currentUserId },
-      include: {
-        skills: true,
-        applications: {
-          include: {
-            user: { select: { id: true, name: true, department: true, year: true, bio: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  /* ── APPLICATIONS ────────────────────────────────────────── */
-  if (activeTab === "applications") {
-    applications = await prisma.application.findMany({
-      where: { userId: currentUserId },
-      include: {
-        project: {
-          include: {
-            owner: { select: { id: true, name: true, email: true, department: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  /* ── COLLABORATIONS — people finder ─────────────────────── */
-  if (activeTab === "collaborations") {
-    collaborations = await prisma.user.findMany({
-      where: {
-        id: { not: currentUserId },
-        verified: true,
-        role: { not: "ADMIN" },   // never show admin accounts
-      },
+      take: 10,
+      select: { id: true, message: true, read: true, createdAt: true },
+    }),
+    // 2: Profile data
+    prisma.user.findUnique({
+      where: { id: currentUserId },
       select: {
         id: true,
         name: true,
@@ -139,53 +61,125 @@ export default async function DashboardPage({
         githubUrl: true,
         linkedinUrl: true,
         skills: { select: { id: true, name: true } },
-        projects: {
-          select: { id: true, status: true },
+      },
+    }),
+    // 3: User projects
+    prisma.project.findMany({
+      where: { ownerId: currentUserId },
+      take: 15,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        createdAt: true,
+        owner: { select: { id: true, name: true, department: true } },
+        skills: { select: { id: true, name: true } },
+        applications: {
+          take: 5,
+          select: {
+            id: true,
+            status: true,
+            message: true,
+            createdAt: true,
+            user: { select: { id: true, name: true, department: true, year: true, email: true } },
+          },
+          orderBy: { createdAt: "desc" },
         },
       },
-      orderBy: { name: "asc" },
-    });
-  }
-
-  /* ── NOTIFICATIONS ───────────────────────────────────────── */
-  if (activeTab === "notifications") {
-    notifications = await prisma.notification.findMany({
-      where: { userId: currentUserId },
       orderBy: { createdAt: "desc" },
-    });
-  }
-
-  /* ── BOOKMARKS ───────────────────────────────────────────── */
-  if (activeTab === "bookmarks") {
-    bookmarks = await prisma.bookmark.findMany({
+    }),
+    // 4: User applications
+    prisma.application.findMany({
       where: { userId: currentUserId },
-      include: {
+      take: 15,
+      select: {
+        id: true,
+        status: true,
+        message: true,
+        createdAt: true,
         project: {
-          include: {
-            owner: { select: { id: true, name: true, department: true, year: true } },
-            skills: true,
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            owner: { select: { id: true, name: true, department: true } },
+            skills: { select: { id: true, name: true } },
           },
         },
       },
       orderBy: { createdAt: "desc" },
-    });
-  }
+    }),
+    // 5: Notifications
+    prisma.notification.findMany({
+      where: { userId: currentUserId },
+      take: 15,
+      select: { id: true, type: true, message: true, read: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    // 6: Collaborations directory (FLAT SELECT for ultra speed)
+    prisma.user.findMany({
+      where: { role: { not: "ADMIN" }, id: { not: currentUserId } },
+      take: 20,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        department: true,
+        year: true,
+        bio: true,
+        githubUrl: true,
+        linkedinUrl: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    // 7: Saved Bookmarks
+    prisma.bookmark.findMany({
+      where: { userId: currentUserId },
+      take: 15,
+      select: {
+        createdAt: true,
+        project: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            status: true,
+            owner: { select: { id: true, name: true, department: true } },
+            skills: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    // 8: Hackathons
+    prisma.hackathon.findMany({
+      take: 10,
+      orderBy: { createdAt: "desc" },
+    }),
+    // 9: Recommended projects
+    prisma.project.findMany({
+      where: { status: "OPEN", ownerId: { not: currentUserId } },
+      take: 3,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        createdAt: true,
+        owner: { select: { id: true, name: true, department: true } },
+        skills: { select: { id: true, name: true } },
+        _count: { select: { applications: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
-  /* ── PROFILE ─────────────────────────────────────────────── */
-  if (activeTab === "profile" || activeTab === "home") {
-    profileData = await prisma.user.findUnique({
-      where: { id: currentUserId },
-      include: { skills: true },
-    });
-  }
-
-  // Always ensure profileData is loaded
-  if (!profileData) {
-    profileData = await prisma.user.findUnique({
-      where: { id: currentUserId },
-      include: { skills: true },
-    });
-  }
+  // Derived fast sidebars
+  const myProjectsSidebar = projects.slice(0, 5).map((p) => ({ id: p.id, title: p.title, status: p.status }));
+  const myApplicationsSidebar = applications.slice(0, 5).map((a) => ({ id: a.id, status: a.status, project: { id: a.project.id, title: a.project.title } }));
+  const myBookmarksSidebar = bookmarks.slice(0, 5).map((b) => ({ project: { id: b.project.id, title: b.project.title } }));
+  const recentNotifications = notifications.slice(0, 5);
 
   return (
     <AppShell user={user} unreadNotifications={unreadNotificationsCount} inboxNotifications={inboxNotifications}>
@@ -198,6 +192,7 @@ export default async function DashboardPage({
         profileData={profileData}
         collaborations={collaborations}
         bookmarks={bookmarks}
+        hackathons={hackathons}
         recommendedProjects={recommendedProjects}
         myProjectsSidebar={myProjectsSidebar}
         myApplicationsSidebar={myApplicationsSidebar}

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
+import OnboardingModal from "@/components/OnboardingModal";
 import {
   Check,
   X,
@@ -33,6 +35,7 @@ interface DashboardViewClientProps {
   profileData: any;
   collaborations?: any[];
   bookmarks?: any[];
+  hackathons?: any[];
   recommendedProjects?: any[];
   myProjectsSidebar?: any[];
   myApplicationsSidebar?: any[];
@@ -82,6 +85,7 @@ export default function DashboardViewClient({
   profileData,
   collaborations = [],
   bookmarks = [],
+  hackathons = [],
   recommendedProjects = [],
   myProjectsSidebar = [],
   myApplicationsSidebar = [],
@@ -90,6 +94,14 @@ export default function DashboardViewClient({
 }: DashboardViewClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+
+  const [currentTab, setCurrentTab] = useState(activeTab || "home");
+
+  useEffect(() => {
+    if (activeTab && activeTab !== currentTab) {
+      setCurrentTab(activeTab);
+    }
+  }, [activeTab]);
 
   const [profileName,     setProfileName]     = useState(profileData?.name         || "");
   const [profileDept,     setProfileDept]     = useState(profileData?.department   || "");
@@ -101,6 +113,18 @@ export default function DashboardViewClient({
     profileData?.skills?.map((s: any) => s.name).join(", ") || ""
   );
 
+  useEffect(() => {
+    if (profileData) {
+      setProfileName(profileData.name || "");
+      setProfileDept(profileData.department || "");
+      setProfileYear(profileData.year?.toString() || "");
+      setProfileBio(profileData.bio || "");
+      setProfileGithub(profileData.githubUrl || "");
+      setProfileLinkedin(profileData.linkedinUrl || "");
+      setProfileSkills(profileData.skills?.map((s: any) => s.name).join(", ") || "");
+    }
+  }, [profileData]);
+
   const [collabSearch,  setCollabSearch]  = useState("");
   const [collabDept,    setCollabDept]    = useState("");
   const [collabSkill,   setCollabSkill]   = useState("");
@@ -108,8 +132,27 @@ export default function DashboardViewClient({
   const [actionError,   setActionError]   = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
   const [loadingId,     setLoadingId]     = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const refresh = () => startTransition(() => router.refresh());
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    setActionError("");
+    try {
+      const res = await fetch("/api/user/profile", { method: "DELETE" });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Failed to delete account.");
+      }
+      await signOut({ callbackUrl: "/login" });
+    } catch (err: any) {
+      setActionError(err.message || "Failed to delete account.");
+      setDeletingAccount(false);
+      setShowDeleteModal(false);
+    }
+  };
 
   /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -219,7 +262,7 @@ export default function DashboardViewClient({
       )}
 
       {/* ── HOME VIEW ─────────────────────────────────────── */}
-      {activeTab === "home" && (
+      {currentTab === "home" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left / Middle Column (lg:col-span-8): Main Content */}
@@ -236,23 +279,27 @@ export default function DashboardViewClient({
             </div>
 
             {/* Mobile Search Bar (Only shown on mobile) */}
-            <div className="md:hidden relative w-full">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const q = (e.currentTarget.elements.namedItem("search") as HTMLInputElement)?.value;
+              if (q) router.push(`/projects?search=${encodeURIComponent(q)}`);
+              else router.push("/projects");
+            }} className="md:hidden relative w-full">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                 <Search size={14} className="text-muted-foreground" />
               </span>
               <input
+                name="search"
                 type="text"
                 placeholder="Search projects, skills, people..."
-                onClick={() => router.push("/projects")}
                 className="w-full pl-9 py-2 bg-secondary/50 border border-border rounded-lg text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none"
-                readOnly
               />
-            </div>
+            </form>
 
             {/* Mobile Quick Actions (Only shown on mobile) */}
             <div className="md:hidden space-y-2.5">
               <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Quick Actions</h3>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <Link href="/projects/create" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
                   <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5 font-bold">
                     <Plus size={16} className="text-foreground" />
@@ -270,12 +317,6 @@ export default function DashboardViewClient({
                     <Users size={16} className="text-foreground" />
                   </div>
                   <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">Collabs</span>
-                </Link>
-                <Link href="/dashboard?tab=hackathons" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
-                  <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5">
-                    <Trophy size={16} className="text-foreground" />
-                  </div>
-                  <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">Hackathons</span>
                 </Link>
               </div>
             </div>
@@ -339,16 +380,19 @@ export default function DashboardViewClient({
                           )}
                         </div>
 
-                        {/* Footer (Avatars + member fraction) */}
+                        {/* Footer (Owner info) */}
                         <div className="flex items-center justify-between border-t border-border mt-4 pt-3">
-                          <div className="flex items-center -space-x-1.5 overflow-hidden">
-                            <span className="h-5 w-5 rounded-full bg-blue-500 border border-card flex items-center justify-center text-[7px] text-white font-bold">JD</span>
-                            <span className="h-5 w-5 rounded-full bg-green-500 border border-card flex items-center justify-center text-[7px] text-white font-bold">MK</span>
-                            {project.applications.length > 2 && (
-                              <span className="h-5 w-5 rounded-full bg-secondary border border-card flex items-center justify-center text-[7px] text-muted-foreground font-semibold">+{project.applications.length - 2}</span>
-                            )}
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <span className="h-5 w-5 rounded-full bg-secondary border border-border flex items-center justify-center text-[9px] font-bold text-foreground shrink-0">
+                              {project.owner?.name?.[0]?.toUpperCase() || "U"}
+                            </span>
+                            <span className="text-[11px] font-medium text-foreground truncate">
+                              {project.owner?.name || "Student Project"}
+                            </span>
                           </div>
-                          <span className="text-[10px] text-muted-foreground font-medium">3/5 members</span>
+                          <span className="text-[10px] text-muted-foreground font-medium shrink-0">
+                            {project.applications?.length || 0} applicant{(project.applications?.length || 0) !== 1 ? "s" : ""}
+                          </span>
                         </div>
                       </article>
                     );
@@ -358,38 +402,6 @@ export default function DashboardViewClient({
                     No recommended projects at the moment.
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Upcoming Hackathons Banner */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[15px] font-bold text-foreground tracking-tight">Upcoming Hackathons</h2>
-                <Link href="/dashboard?tab=hackathons" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-0.5">
-                  View all <span className="text-[13px] leading-none">→</span>
-                </Link>
-              </div>
-
-              <div className="card p-4 flex flex-col sm:flex-row items-center justify-between gap-4 overflow-hidden relative">
-                <div className="flex items-start gap-4">
-                  <div className="h-16 w-16 bg-black text-white shrink-0 rounded-lg flex flex-col items-center justify-center border border-neutral-850 p-2 text-center select-none font-bold">
-                    <span className="text-[8px] tracking-wider text-muted-foreground leading-none">AI IMPACT</span>
-                    <span className="text-[10px] font-extrabold leading-tight mt-0.5">HACKATHON</span>
-                    <span className="text-[8px] text-purple-400 mt-0.5">&apos;25</span>
-                  </div>
-                  <div>
-                    <h3 className="text-[13px] font-bold text-foreground">AI Impact Hackathon 2025</h3>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">Build AI solutions for real world problems.</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5 text-[10px] text-muted-foreground font-medium">
-                      <span className="flex items-center gap-1">📅 24 May 2025</span>
-                      <span className="flex items-center gap-1">📍 KIDS, Karunya</span>
-                      <span className="flex items-center gap-1">👥 3 - 5 Members</span>
-                    </div>
-                  </div>
-                </div>
-                <button className="btn-secondary text-[11px] py-1.5 px-4 rounded-lg font-bold shrink-0 shadow-sm border-border hover:bg-secondary select-none">
-                  Register Now
-                </button>
               </div>
             </div>
 
@@ -408,29 +420,7 @@ export default function DashboardViewClient({
                     </div>
                   ))
                 ) : (
-                  <>
-                    <div className="p-3.5 flex items-center justify-between text-[11px] hover:bg-secondary/15 transition-all">
-                      <div className="flex items-center gap-2.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />
-                        <span className="text-foreground">You applied to <span className="font-semibold text-foreground">AI Study Companion</span></span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium">2h ago</span>
-                    </div>
-                    <div className="p-3.5 flex items-center justify-between text-[11px] hover:bg-secondary/15 transition-all">
-                      <div className="flex items-center gap-2.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
-                        <span className="text-foreground">Sarah accepted your application to <span className="font-semibold text-foreground">EcoTrack</span></span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium">5h ago</span>
-                    </div>
-                    <div className="p-3.5 flex items-center justify-between text-[11px] hover:bg-secondary/15 transition-all">
-                      <div className="flex items-center gap-2.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-                        <span className="text-foreground">New project recommendation available</span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium">1d ago</span>
-                    </div>
-                  </>
+                  <p className="p-4 text-[11px] text-muted-foreground italic text-center">No recent activity.</p>
                 )}
               </div>
             </div>
@@ -490,29 +480,7 @@ export default function DashboardViewClient({
                     </div>
                   ))
                 ) : (
-                  <>
-                    <div className="flex items-center justify-between text-[11px] gap-2">
-                      <div>
-                        <span className="font-medium text-foreground">EcoTrack</span>
-                        <p className="text-[9px] text-muted-foreground mt-0.5">Applied 2h ago</p>
-                      </div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full">Pending</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] gap-2">
-                      <div>
-                        <span className="font-medium text-foreground">StudyBuddy</span>
-                        <p className="text-[9px] text-muted-foreground mt-0.5">Applied 1d ago</p>
-                      </div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full">Pending</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] gap-2">
-                      <div>
-                        <span className="font-medium text-foreground">FitForge</span>
-                        <p className="text-[9px] text-muted-foreground mt-0.5">Applied 2d ago</p>
-                      </div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 px-2 py-0.5 rounded-full">Rejected</span>
-                    </div>
-                  </>
+                  <p className="text-[11px] text-muted-foreground italic">No applications yet.</p>
                 )}
               </div>
             </div>
@@ -532,20 +500,7 @@ export default function DashboardViewClient({
                     </div>
                   ))
                 ) : (
-                  <>
-                    <div className="flex items-center gap-2 text-[11px]">
-                      <Bookmark size={12} className="text-muted-foreground shrink-0" />
-                      <span className="font-medium text-foreground">AI-Powered Career Guidance</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px]">
-                      <Bookmark size={12} className="text-muted-foreground shrink-0" />
-                      <span className="font-medium text-foreground">Open Source for Beginners</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px]">
-                      <Bookmark size={12} className="text-muted-foreground shrink-0" />
-                      <span className="font-medium text-foreground">Campus Safety App</span>
-                    </div>
-                  </>
+                  <p className="text-[11px] text-muted-foreground italic">No saved bookmarks yet.</p>
                 )}
               </div>
             </div>
@@ -567,7 +522,7 @@ export default function DashboardViewClient({
       )}
 
       {/* ── COLLABORATIONS — people finder ────────────────── */}
-      {activeTab === "collaborations" && (
+      {currentTab === "collaborations" && (
         <CollaborationsFinder
           people={collaborations}
           collabSearch={collabSearch}
@@ -581,40 +536,73 @@ export default function DashboardViewClient({
         />
       )}
 
+
+
       {/* ── HACKATHONS VIEW ────────────────────────────────── */}
-      {activeTab === "hackathons" && (
+      {currentTab === "hackathons" && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Hackathons</h2>
-            <p className="text-[12px] text-muted-foreground mt-0.5">Participate in campus and student-led hackathons.</p>
+            <h2 className="text-[17px] font-bold text-foreground tracking-tight">Campus Hackathons</h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Participate in campus and student-led hackathons &amp; competitions.</p>
           </div>
-          
-          <div className="card p-5 flex flex-col sm:flex-row items-center justify-between gap-4 overflow-hidden relative">
-            <div className="flex items-start gap-4">
-              <div className="h-16 w-16 bg-black text-white shrink-0 rounded-lg flex flex-col items-center justify-center border border-neutral-800 p-2 text-center select-none font-bold">
-                <span className="text-[8px] tracking-wider text-muted-foreground leading-none">AI IMPACT</span>
-                <span className="text-[10px] font-extrabold leading-tight mt-0.5">HACKATHON</span>
-                <span className="text-[8px] text-purple-400 mt-0.5">&apos;25</span>
-              </div>
-              <div>
-                <h3 className="text-[14px] font-bold text-foreground">AI Impact Hackathon 2025</h3>
-                <p className="text-[12px] text-muted-foreground mt-0.5">Build AI solutions for real world problems.</p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5 text-[11px] text-muted-foreground font-medium">
-                  <span className="flex items-center gap-1">📅 24 May 2025</span>
-                  <span className="flex items-center gap-1">📍 KIDS, Karunya</span>
-                  <span className="flex items-center gap-1 font-semibold text-purple-500">🏆 Cash prizes up to ₹50,000</span>
+
+          {hackathons.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {hackathons.map((h) => (
+                <div key={h.id} className="card p-5 space-y-4 flex flex-col justify-between border-border relative">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold shrink-0 text-[18px]">
+                        🏆
+                      </div>
+                      <div>
+                        <h3 className="text-[15px] font-bold text-foreground leading-snug">{h.title}</h3>
+                        <span className="text-[10px] text-muted-foreground font-medium">📅 {h.date}</span>
+                      </div>
+                    </div>
+
+                    <p className="text-[12px] text-muted-foreground leading-relaxed pt-1">
+                      {h.description}
+                    </p>
+
+                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground font-medium pt-2">
+                      <span className="flex items-center gap-1">📍 {h.location}</span>
+                      <span className="flex items-center gap-1">👥 {h.teamSize}</span>
+                      {h.prize && <span className="flex items-center gap-1 text-amber-500 font-semibold">🏆 {h.prize}</span>}
+                    </div>
+                  </div>
+
+                  {h.link ? (
+                    <div className="border-t border-border pt-3">
+                      <a
+                        href={h.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-primary w-full justify-center text-[12px] py-2 flex items-center gap-1.5 font-bold"
+                      >
+                        Register Now ↗
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="border-t border-border pt-3">
+                      <span className="text-[11px] text-muted-foreground italic">Registration opens soon</span>
+                    </div>
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
-            <button className="btn-primary text-[12px] py-2 px-5 rounded-lg font-bold shrink-0 shadow-sm hover:opacity-90 transition-all select-none">
-              Register Now
-            </button>
-          </div>
+          ) : (
+            <div className="card p-12 text-center space-y-2">
+              <Trophy size={32} className="mx-auto text-muted-foreground/40" />
+              <p className="text-[14px] font-medium text-foreground">No upcoming hackathons right now</p>
+              <p className="text-[12px] text-muted-foreground">Check back soon for upcoming student hackathons and competitions.</p>
+            </div>
+          )}
         </div>
       )}
 
       {/* ── BOOKMARKS ─────────────────────────────────────── */}
-      {activeTab === "bookmarks" && (
+      {currentTab === "bookmarks" && (
         <div className="space-y-5">
           <div>
             <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Bookmarks</h2>
@@ -692,7 +680,7 @@ export default function DashboardViewClient({
       )}
 
       {/* ── MY PROJECTS ───────────────────────────────────── */}
-      {activeTab === "projects" && (
+      {currentTab === "projects" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -817,7 +805,7 @@ export default function DashboardViewClient({
       )}
 
       {/* ── MY APPLICATIONS ───────────────────────────────── */}
-      {activeTab === "applications" && (
+      {currentTab === "applications" && (
         <div className="space-y-5">
           <div>
             <h2 className="text-[17px] font-semibold text-foreground tracking-tight">My applications</h2>
@@ -867,7 +855,7 @@ export default function DashboardViewClient({
       )}
 
       {/* ── NOTIFICATIONS ─────────────────────────────────── */}
-      {activeTab === "notifications" && (
+      {currentTab === "notifications" && (
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
@@ -918,7 +906,7 @@ export default function DashboardViewClient({
       )}
 
       {/* ── PROFILE SETTINGS ──────────────────────────────── */}
-      {activeTab === "profile" && (
+      {currentTab === "profile" && (
         <div className="space-y-5">
           <div>
             <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Profile settings</h2>
@@ -1036,9 +1024,72 @@ export default function DashboardViewClient({
                 </button>
               </div>
             </form>
+
+            {/* Danger Zone */}
+            <div className="card p-5 border-destructive/30 bg-destructive/5 space-y-3 mt-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-[13px] font-bold text-destructive">Danger Zone</h4>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Permanently delete your account and all associated projects, applications, and data.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(true)}
+                  className="btn-ghost text-[12px] px-3.5 py-1.5 text-destructive hover:bg-destructive/15 border border-destructive/30 font-semibold shrink-0 cursor-pointer"
+                >
+                  Delete Account
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card w-full max-w-[400px] p-6 space-y-4 border-destructive/40 bg-card shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 text-destructive">
+              <Trash2 size={22} />
+              <h3 className="text-[16px] font-bold">Delete Account?</h3>
+            </div>
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              This action is <strong className="text-foreground">permanent and cannot be undone</strong>. All your projects, applications, bookmarks, and account data will be permanently deleted.
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="btn-secondary text-[12px] py-1.5 px-3 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deletingAccount}
+                className="btn-primary bg-destructive hover:bg-destructive/90 text-white border-none text-[12px] py-1.5 px-4 font-bold cursor-pointer"
+              >
+                {deletingAccount ? "Deleting…" : "Yes, Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Modal for brand new accounts */}
+      <OnboardingModal
+        user={profileData}
+        onComplete={(updatedUser: any) => {
+          if (updatedUser) {
+            setProfileName(updatedUser.name || "");
+            setProfileDept(updatedUser.department || "");
+            setProfileYear(updatedUser.year?.toString() || "");
+          }
+        }}
+      />
     </div>
   );
 }

@@ -44,3 +44,32 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const session = await auth();
+    const currentUser = session?.user;
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "You must be logged in to delete your account." }, { status: 401 });
+    }
+
+    const currentUserId = Number((currentUser as any).id);
+
+    // Clean up all related records before deleting user
+    await prisma.$transaction([
+      prisma.application.deleteMany({ where: { userId: currentUserId } }),
+      prisma.bookmark.deleteMany({ where: { userId: currentUserId } }),
+      prisma.notification.deleteMany({ where: { userId: currentUserId } }),
+      prisma.application.deleteMany({ where: { project: { ownerId: currentUserId } } }),
+      prisma.bookmark.deleteMany({ where: { project: { ownerId: currentUserId } } }),
+      prisma.project.deleteMany({ where: { ownerId: currentUserId } }),
+      prisma.user.delete({ where: { id: currentUserId } }),
+    ]);
+
+    return NextResponse.json({ message: "Account deleted successfully." });
+  } catch (error: any) {
+    console.error("Delete account error:", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
+}

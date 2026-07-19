@@ -16,6 +16,15 @@ import {
   XCircle,
   ArrowLeft,
   TrendingUp,
+  Trophy,
+  Plus,
+  Calendar,
+  MapPin,
+  Gift,
+  Link2,
+  FileSpreadsheet,
+  Download,
+  Upload,
 } from "lucide-react";
 
 interface Stats {
@@ -29,23 +38,135 @@ interface AdminClientProps {
   stats: Stats;
   users: any[];
   projects: any[];
+  hackathons?: any[];
 }
 
-export default function AdminClient({ stats, users, projects }: AdminClientProps) {
+export default function AdminClient({ stats, users, projects, hackathons = [] }: AdminClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects">("overview");
+  const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects" | "hackathons">("overview");
   const [userSearch, setUserSearch] = useState("");
   const [projSearch, setProjSearch] = useState("");
   const [loadingId,  setLoadingId]  = useState<string | null>(null);
   const [feedback,   setFeedback]   = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  // Hackathon form state
+  const [showAddHackathon, setShowAddHackathon] = useState(false);
+  const [hTitle,       setHTitle]       = useState("");
+  const [hDescription, setHDescription] = useState("");
+  const [hDate,        setHDate]        = useState("");
+  const [hLocation,    setHLocation]    = useState("");
+  const [hTeamSize,    setHTeamSize]    = useState("1 - 4 Members");
+  const [hPrize,       setHPrize]       = useState("");
+  const [hLink,        setHLink]        = useState("");
+  const [hSubmitting,  setHSubmitting]  = useState(false);
+
+  // Excel Import state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile,     setImportFile]     = useState<File | null>(null);
+  const [importing,      setImporting]      = useState(false);
+  const [importErrors,   setImportErrors]   = useState<string[]>([]);
+
+  const handleExcelImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importFile) return;
+    setImporting(true);
+    setImportErrors([]);
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+
+      const res = await fetch("/api/admin/hackathons/import", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.details) setImportErrors(data.details);
+        throw new Error(data.error || "Failed to import Excel sheet.");
+      }
+
+      showFeedback("ok", data.message || "Hackathons imported successfully!");
+      setShowImportModal(false);
+      setImportFile(null);
+      refresh();
+    } catch (err: any) {
+      showFeedback("err", err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const downloadSampleTemplate = () => {
+    const csvContent =
+      "Title,Description,Date,Location,Team Size,Prize,Registration Link\n" +
+      "\"Karunya HackFest 2025\",\"Build innovative solutions for smart campus mobility.\",\"25-26 April 2025\",\"KIDS Auditorium, Karunya\",\"3 - 5 Members\",\"₹50,000 Cash Prizes\",\"https://forms.google.com/sample\"\n" +
+      "\"AI Health Hackathon\",\"AI & ML healthcare hackathon for students.\",\"10 May 2025\",\"Computer Lab 3\",\"1 - 4 Members\",\"Internship & ₹30,000\",\"https://forms.google.com/sample2\"\n";
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "hackathons_sample_template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const refresh = () => startTransition(() => router.refresh());
 
   const showFeedback = (type: "ok" | "err", msg: string) => {
     setFeedback({ type, msg });
     setTimeout(() => setFeedback(null), 3500);
+  };
+
+  const createHackathon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setHSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/hackathons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: hTitle,
+          description: hDescription,
+          date: hDate,
+          location: hLocation,
+          teamSize: hTeamSize,
+          prize: hPrize,
+          link: hLink,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create hackathon.");
+      showFeedback("ok", `Hackathon "${hTitle}" created & broadcasted to all students!`);
+      setShowAddHackathon(false);
+      setHTitle(""); setHDescription(""); setHDate(""); setHLocation(""); setHPrize(""); setHLink("");
+      refresh();
+    } catch (err: any) {
+      showFeedback("err", err.message);
+    } finally {
+      setHSubmitting(false);
+    }
+  };
+
+  const deleteHackathon = async (id: number, title: string) => {
+    if (!confirm(`Delete hackathon "${title}"?`)) return;
+    setLoadingId(`hack-${id}`);
+    try {
+      const res = await fetch(`/api/admin/hackathons/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Failed to delete hackathon.");
+      }
+      showFeedback("ok", `Hackathon "${title}" deleted.`);
+      refresh();
+    } catch (err: any) {
+      showFeedback("err", err.message);
+    } finally {
+      setLoadingId(null);
+    }
   };
 
   /* ── delete user ───────────────────────────────────────── */
@@ -101,9 +222,10 @@ export default function AdminClient({ stats, users, projects }: AdminClientProps
   ];
 
   const tabs = [
-    { id: "overview" as const, label: "Overview",  icon: TrendingUp  },
-    { id: "users"    as const, label: "Users",     icon: Users       },
-    { id: "projects" as const, label: "Projects",  icon: FolderOpen  },
+    { id: "overview"   as const, label: "Overview",                        icon: TrendingUp },
+    { id: "users"      as const, label: `Users (${users.length})`,         icon: Users      },
+    { id: "projects"   as const, label: `Projects (${projects.length})`,   icon: FolderOpen },
+    { id: "hackathons" as const, label: `Hackathons (${hackathons.length})`, icon: Trophy   },
   ];
 
   return (
@@ -449,7 +571,324 @@ export default function AdminClient({ stats, users, projects }: AdminClientProps
           </div>
         )}
 
+        {/* ════════════════════════════════════════════════════ */}
+        {/* HACKATHONS ───────────────────────────────────────── */}
+        {activeTab === "hackathons" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-[17px] font-bold text-foreground">Campus Hackathons</h2>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Post and manage upcoming student hackathons &amp; competitions.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="btn-secondary text-[12px] py-2 px-3.5 flex items-center gap-1.5 cursor-pointer font-semibold"
+                >
+                  <FileSpreadsheet size={14} className="text-green-500" />
+                  Import Excel
+                </button>
+                <button
+                  onClick={() => setShowAddHackathon(true)}
+                  className="btn-primary text-[12px] py-2 px-4 flex items-center gap-1.5 cursor-pointer font-bold"
+                >
+                  <Plus size={14} />
+                  Create Hackathon
+                </button>
+              </div>
+            </div>
+
+            {hackathons.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {hackathons.map((h) => (
+                  <div key={h.id} className="card p-5 space-y-4 flex flex-col justify-between border-border relative">
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold">
+                            <Trophy size={16} />
+                          </div>
+                          <div>
+                            <h3 className="text-[14px] font-bold text-foreground">{h.title}</h3>
+                            <span className="text-[10px] text-muted-foreground font-medium">{h.date}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => deleteHackathon(h.id, h.title)}
+                          disabled={loadingId === `hack-${h.id}`}
+                          className="btn-ghost p-1.5 text-destructive hover:bg-destructive/10 cursor-pointer rounded-md"
+                          title="Delete hackathon"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      <p className="text-[12px] text-muted-foreground line-clamp-3 leading-relaxed">
+                        {h.description}
+                      </p>
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground font-medium pt-2">
+                        <span className="flex items-center gap-1">📍 {h.location}</span>
+                        <span className="flex items-center gap-1">👥 {h.teamSize}</span>
+                        {h.prize && <span className="flex items-center gap-1 text-amber-500 font-semibold">🏆 {h.prize}</span>}
+                      </div>
+                    </div>
+
+                    {h.link && (
+                      <div className="border-t border-border pt-3 mt-2">
+                        <a
+                          href={h.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                        >
+                          Registration Link <ExternalLink size={11} />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="card p-12 text-center space-y-2">
+                <Trophy size={32} className="mx-auto text-muted-foreground/40" />
+                <p className="text-[14px] font-medium text-foreground">No hackathons posted yet</p>
+                <p className="text-[12px] text-muted-foreground">Click &ldquo;Create Hackathon&rdquo; to post your first event for students.</p>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
+
+      {/* ── CREATE HACKATHON MODAL ────────────────────────────── */}
+      {showAddHackathon && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card w-full max-w-[460px] p-6 space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
+                  <Trophy size={18} />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-bold text-foreground">Create New Hackathon</h3>
+                  <p className="text-[11px] text-muted-foreground">Post event &amp; notify all platform students</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddHackathon(false)}
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={createHackathon} className="space-y-3.5">
+              <div>
+                <label className="block section-label mb-1">Hackathon Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. AI Impact Hackathon 2025"
+                  value={hTitle}
+                  onChange={(e) => setHTitle(e.target.value)}
+                  className="forge-input"
+                />
+              </div>
+
+              <div>
+                <label className="block section-label mb-1">Description *</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Describe the challenge, rules, and themes…"
+                  value={hDescription}
+                  onChange={(e) => setHDescription(e.target.value)}
+                  className="forge-input resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block section-label mb-1">Date *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 24 May 2025"
+                    value={hDate}
+                    onChange={(e) => setHDate(e.target.value)}
+                    className="forge-input"
+                  />
+                </div>
+                <div>
+                  <label className="block section-label mb-1">Location *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. KIDS Auditorium / Online"
+                    value={hLocation}
+                    onChange={(e) => setHLocation(e.target.value)}
+                    className="forge-input"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block section-label mb-1">Team Size</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 3 - 5 Members"
+                    value={hTeamSize}
+                    onChange={(e) => setHTeamSize(e.target.value)}
+                    className="forge-input"
+                  />
+                </div>
+                <div>
+                  <label className="block section-label mb-1">Prizes / Perks</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Cash prize up to ₹50,000"
+                    value={hPrize}
+                    onChange={(e) => setHPrize(e.target.value)}
+                    className="forge-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block section-label mb-1">Registration Link (Optional)</label>
+                <input
+                  type="url"
+                  placeholder="https://forms.google.com/..."
+                  value={hLink}
+                  onChange={(e) => setHLink(e.target.value)}
+                  className="forge-input"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowAddHackathon(false)}
+                  className="btn-secondary text-[12px] py-2 px-4 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={hSubmitting}
+                  className="btn-primary text-[12px] py-2 px-5 cursor-pointer font-bold"
+                >
+                  {hSubmitting ? "Posting…" : "Post & Broadcast Hackathon"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── IMPORT EXCEL MODAL ───────────────────────────────── */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card w-full max-w-[480px] p-6 space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center font-bold">
+                  <FileSpreadsheet size={18} />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-bold text-foreground">Import Hackathons from Excel</h3>
+                  <p className="text-[11px] text-muted-foreground">Upload a .xlsx, .xls, or .csv spreadsheet</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowImportModal(false); setImportFile(null); setImportErrors([]); }}
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="card p-3.5 bg-secondary/40 border-dashed border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-semibold text-foreground flex items-center gap-1.5">
+                  <Download size={13} className="text-primary" />
+                  Need a sample template?
+                </span>
+                <button
+                  type="button"
+                  onClick={downloadSampleTemplate}
+                  className="text-[11px] font-bold text-primary hover:underline"
+                >
+                  Download CSV Template
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Your file should contain column headers: <strong className="text-foreground">Title, Description, Date, Location, Team Size, Prize, Registration Link</strong>.
+              </p>
+            </div>
+
+            {importErrors.length > 0 && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg space-y-1">
+                <p className="text-[12px] font-bold text-destructive">Import Warning / Errors:</p>
+                <ul className="text-[11px] text-destructive/90 space-y-0.5 max-h-24 overflow-y-auto list-disc pl-4">
+                  {importErrors.map((err, i) => (
+                    <li key={i}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <form onSubmit={handleExcelImport} className="space-y-4">
+              <div>
+                <label className="block section-label mb-1.5">Select Excel / CSV File</label>
+                <div className="relative border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-6 text-center transition-colors bg-card">
+                  <input
+                    type="file"
+                    required
+                    accept=".xlsx, .xls, .csv"
+                    onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="space-y-2 pointer-events-none">
+                    <Upload size={24} className="mx-auto text-muted-foreground" />
+                    {importFile ? (
+                      <div>
+                        <p className="text-[13px] font-bold text-foreground">{importFile.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{(importFile.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-[13px] font-medium text-foreground">Click or drag Excel file here</p>
+                        <p className="text-[11px] text-muted-foreground">Supports .xlsx, .xls, and .csv files</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => { setShowImportModal(false); setImportFile(null); setImportErrors([]); }}
+                  className="btn-secondary text-[12px] py-2 px-4 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={importing || !importFile}
+                  className="btn-primary text-[12px] py-2 px-5 cursor-pointer font-bold bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {importing ? "Importing Sheet…" : "Import Hackathons"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
