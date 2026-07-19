@@ -125,7 +125,7 @@ export default async function Home() {
       <footer className="border-t border-border bg-card/30 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:flex sm:justify-between sm:items-center">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Karunya Collab Hub. All rights reserved.
+            &copy; {new Date().getFullYear()} Karunya Colla Hub. All rights reserved.
           </p>
           <div className="flex justify-center gap-4 mt-4 sm:mt-0">
             <Link href="/projects" className="text-xs text-muted-foreground hover:text-foreground">Discover</Link>
