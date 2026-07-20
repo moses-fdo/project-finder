@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, Bricolage_Grotesque } from "next/font/google";
 import { Suspense } from "react";
 import NavigationProgress from "@/components/NavigationProgress";
 import CustomCursor from "@/components/CustomCursor";
@@ -19,6 +19,13 @@ const outfit = Outfit({
   weight: ["500", "600", "700", "800"],
 });
 
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
 export const metadata: Metadata = {
   title: "Colabro — Campus Project & Hackathon Collaboration Platform",
   description:
@@ -34,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakarta.variable} ${outfit.variable} h-full`}
+      className={`${plusJakarta.variable} ${outfit.variable} ${bricolage.variable} h-full`}
       style={{ fontFamily: "var(--font-plus-jakarta), system-ui, -apple-system, sans-serif" }}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
