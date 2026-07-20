@@ -102,7 +102,7 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
   const downloadSampleTemplate = () => {
     const csvContent =
       "Title,Description,Date,Location,Team Size,Prize,Registration Link\n" +
-      "\"Karunya HackFest 2025\",\"Build innovative solutions for smart campus mobility.\",\"25-26 April 2025\",\"KIDS Auditorium, Karunya\",\"3 - 5 Members\",\"₹50,000 Cash Prizes\",\"https://forms.google.com/sample\"\n" +
+      "\"HackFest 2025\",\"Build innovative solutions for smart campus mobility.\",\"25-26 April 2025\",\"Main Auditorium\",\"3 - 5 Members\",\"₹50,000 Cash Prizes\",\"https://forms.google.com/sample\"\n" +
       "\"AI Health Hackathon\",\"AI & ML healthcare hackathon for students.\",\"10 May 2025\",\"Computer Lab 3\",\"1 - 4 Members\",\"Internship & ₹30,000\",\"https://forms.google.com/sample2\"\n";
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });

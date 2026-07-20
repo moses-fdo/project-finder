@@ -1224,7 +1224,7 @@ function CollaborationsFinder({
       <div>
         <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Find collaborators</h2>
         <p className="text-[12px] text-muted-foreground mt-0.5">
-          Browse verified Karunya students and find people with the skills you need.
+          Browse verified students and find people with the skills you need.
         </p>
       </div>
 

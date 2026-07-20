@@ -76,7 +76,7 @@ export default async function Home() {
                 </h1>
 
                 <p className="reveal delay-200 text-[15px] text-muted-foreground leading-relaxed mb-8 max-w-md">
-                  Colabro connects Karunya students and faculty to build real
+                  Colabro connects students and faculty to build real
                   projects together — from weekend hackathons to semester-long
                   research initiatives.
                 </p>
@@ -166,7 +166,7 @@ export default async function Home() {
                 end={850}
                 suffix="+"
                 label="Active members"
-                sub="Verified Karunya students"
+                sub="Verified students"
                 icon={<Users size={15} strokeWidth={1.75} />}
               />
               <CountUpStat
@@ -202,7 +202,7 @@ export default async function Home() {
                 {
                   icon: <FolderOpen size={18} strokeWidth={1.75} />,
                   title: "Post your project",
-                  body: "Describe your idea, set required skills and team size, and publish to the entire Karunya community in under two minutes.",
+                  body: "Describe your idea, set required skills and team size, and publish to the entire community in under two minutes.",
                   delay: "",
                 },
                 {
@@ -232,7 +232,7 @@ export default async function Home() {
                 {
                   icon: <GitMerge size={18} strokeWidth={1.75} />,
                   title: "Verified community",
-                  body: "Every member is verified with an institutional email. No bots, no noise — just real Karunya students and faculty.",
+                  body: "Every member is verified with an institutional email. No bots, no noise — just real students and faculty.",
                   delay: "delay-500",
                 },
               ].map((f) => (
@@ -267,7 +267,7 @@ export default async function Home() {
                 {
                   n: "01",
                   title: "Sign up & verify",
-                  body: "Register with your @karunya.edu.in address and confirm your identity with a one-time code sent to your inbox.",
+                  body: "Register with your institutional email address and confirm your identity with a one-time code sent to your inbox.",
                   delay: "",
                 },
                 {
@@ -372,7 +372,7 @@ export default async function Home() {
               className="reveal delay-200 text-[14px] leading-relaxed max-w-md mx-auto mb-10 opacity-60"
               style={{ color: "var(--background)" }}
             >
-              Join Colabro for free and start connecting with Karunya students
+              Join Colabro for free and start connecting with students
               who want to build the same things you do.
             </p>
             <div className="reveal delay-300 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -400,7 +400,7 @@ export default async function Home() {
               className="reveal delay-400 text-[11px] mt-6 opacity-40"
               style={{ color: "var(--background)" }}
             >
-              Requires a verified @karunya.edu.in email address
+              Requires a verified institutional email address
             </p>
           </div>
         </section>
@@ -424,7 +424,7 @@ export default async function Home() {
                 Colabro
               </span>
               <span className="text-[12px] text-muted-foreground">
-                · Karunya Institute of Technology & Sciences
+                · Campus Collaboration Platform
               </span>
             </div>
             <div className="flex items-center gap-5">
