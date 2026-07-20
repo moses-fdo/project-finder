@@ -14,6 +14,8 @@ import {
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CountUpStat from "@/components/CountUpStat";
+import ThemeToggle from "@/components/ThemeToggle";
+import ColabroLogo from "@/components/ColabroLogo";
 
 export default async function Home() {
   const session = await auth();
@@ -25,12 +27,8 @@ export default async function Home() {
       {/* ── Navbar ──────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 w-full bg-card/95 backdrop-blur-sm" style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.06)" }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="h-7 w-7 rounded-[7px] bg-foreground flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
-              </svg>
-            </div>
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <ColabroLogo size={40} />
             <span
               className="text-[15px] font-semibold tracking-tight text-foreground"
               style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}
@@ -43,6 +41,7 @@ export default async function Home() {
             <a href="#how-it-works" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">How it works</a>
           </nav>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link href="/login" className="btn-ghost text-[13px] px-3 py-[7px]">Sign in</Link>
             <Link href="/signup" className="btn-primary text-[13px] py-[7px] px-4">Get started</Link>
           </div>
@@ -412,11 +411,7 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-5 w-5 rounded-[5px] bg-foreground flex items-center justify-center shrink-0">
-                <svg width="10" height="10" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
-                </svg>
-              </div>
+              <ColabroLogo size={22} />
               <span
                 className="text-[13px] font-semibold text-foreground"
                 style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}

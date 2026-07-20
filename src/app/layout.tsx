@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Outfit, Bricolage_Grotesque } from "next/font/google
 import { Suspense } from "react";
 import NavigationProgress from "@/components/NavigationProgress";
 import CustomCursor from "@/components/CustomCursor";
+import ThemeProvider from "@/components/ThemeProvider";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -43,13 +44,24 @@ export default function RootLayout({
       lang="en"
       className={`${plusJakarta.variable} ${outfit.variable} ${bricolage.variable} h-full`}
       style={{ fontFamily: "var(--font-plus-jakarta), system-ui, -apple-system, sans-serif" }}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Inline script — runs before paint to set dark class, preventing flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('colabro-theme');if(t==='dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
-        <CustomCursor />
-        <Suspense fallback={null}>
-          <NavigationProgress />
-        </Suspense>
-        {children}
+        <ThemeProvider>
+          <CustomCursor />
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
