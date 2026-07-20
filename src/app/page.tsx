@@ -23,7 +23,7 @@ export default async function Home() {
     <div className="min-h-screen flex flex-col bg-background">
 
       {/* ── Navbar ──────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 w-full bg-card/95 backdrop-blur-sm" style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.06)" }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <div className="h-7 w-7 rounded-[7px] bg-foreground flex items-center justify-center">
@@ -58,7 +58,7 @@ export default async function Home() {
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(234,88,12,0.07) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 100% 60%, rgba(0,0,0,0.02) 0%, transparent 70%)",
+                "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.07) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 100% 60%, rgba(0,0,0,0.02) 0%, transparent 70%)",
             }}
           />
 
@@ -72,7 +72,7 @@ export default async function Home() {
                   style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}
                 >
                   Find teammates.<br />
-                  <span className="text-[#ea580c]">Ship ideas.</span>
+                  <span className="text-[#7c3aed]">Ship ideas.</span>
                 </h1>
 
                 <p className="reveal delay-200 text-[15px] text-muted-foreground leading-relaxed mb-8 max-w-md">
@@ -139,7 +139,7 @@ export default async function Home() {
                   ))}
 
                   {/* bottom bar */}
-                  <div className="pt-1 border-t border-border flex items-center justify-between">
+                  <div className="pt-1 flex items-center justify-between" style={{ boxShadow: "inset 0 1px 0 rgba(0,0,0,0.05)" }}>
                     <span className="text-[10.5px] text-muted-foreground">Showing 3 of 24 projects</span>
                     <span className="text-[10.5px] font-medium text-foreground flex items-center gap-1">
                       View all <ArrowRight size={10} strokeWidth={2} />
@@ -152,9 +152,9 @@ export default async function Home() {
         </section>
 
         {/* ── Stats strip ──────────────────────────────────────── */}
-        <section className="border-y border-border bg-card">
+        <section className="bg-card" style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.05), inset 0 1px 0 rgba(0,0,0,0.04)" }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-            <div className="grid grid-cols-3 divide-x divide-border">
+            <div className="grid grid-cols-3">
               <CountUpStat
                 end={120}
                 suffix="+"
@@ -237,7 +237,7 @@ export default async function Home() {
                 },
               ].map((f) => (
                 <div key={f.title} className={`reveal ${f.delay} feature-card p-6 space-y-3`}>
-                  <div className="h-9 w-9 rounded-lg bg-[rgba(234,88,12,0.08)] border border-[rgba(234,88,12,0.15)] flex items-center justify-center text-[#ea580c]">
+                  <div className="h-9 w-9 rounded-lg bg-[rgba(124,58,237,0.08)] border border-[rgba(124,58,237,0.15)] flex items-center justify-center text-[#7c3aed]">
                     {f.icon}
                   </div>
                   <h3 className="text-[14px] font-semibold text-foreground">{f.title}</h3>
@@ -249,7 +249,7 @@ export default async function Home() {
         </section>
 
         {/* ── How it works ─────────────────────────────────────── */}
-        <section id="how-it-works" className="py-20 border-t border-border bg-card">
+        <section id="how-it-works" className="py-20 bg-card" style={{ boxShadow: "inset 0 1px 0 rgba(0,0,0,0.04)" }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
             <div className="text-center mb-14">
@@ -306,7 +306,7 @@ export default async function Home() {
         </section>
 
         {/* ── Social proof strip ───────────────────────────────── */}
-        <section className="py-16 border-t border-border">
+        <section className="py-16" style={{ boxShadow: "inset 0 1px 0 rgba(0,0,0,0.04)" }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <p className="reveal text-center section-label mb-10">Trusted by students across departments</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -334,7 +334,7 @@ export default async function Home() {
                   {/* stars */}
                   <div className="flex gap-0.5">
                     {[...Array(5)].map((_, i) => (
-                      <svg key={i} width="12" height="12" viewBox="0 0 12 12" fill="#ea580c" aria-hidden="true">
+                      <svg key={i} width="12" height="12" viewBox="0 0 12 12" fill="#7c3aed" aria-hidden="true">
                         <path d="M6 1l1.236 2.505L10 3.924 8 5.88l.472 2.748L6 7.25l-2.472 1.378L4 5.88 2 3.924l2.764-.419z" />
                       </svg>
                     ))}
@@ -351,7 +351,7 @@ export default async function Home() {
         </section>
 
         {/* ── CTA ──────────────────────────────────────────────── */}
-        <section className="py-24 border-t border-border cta-dark">
+        <section className="py-24 cta-dark" style={{ boxShadow: "inset 0 1px 0 rgba(0,0,0,0.08)" }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
             <p
               className="reveal text-[11px] font-semibold tracking-widest uppercase mb-5 opacity-50"
@@ -408,7 +408,7 @@ export default async function Home() {
       </main>
 
       {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="border-t border-border bg-card py-8">
+      <footer className="bg-card py-8" style={{ boxShadow: "inset 0 1px 0 rgba(0,0,0,0.05)" }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">

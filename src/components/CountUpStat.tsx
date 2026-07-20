@@ -103,7 +103,7 @@ export default function CountUpStat({
               fontWeight: 800,
               letterSpacing: "-0.04em",
               lineHeight: 1.1,
-              color: "#ea580c",
+              color: "#7c3aed",
               paddingBottom: "2px",
             }}
           >

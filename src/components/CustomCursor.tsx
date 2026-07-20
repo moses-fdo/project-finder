@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Ripple {
   id: number;
@@ -9,139 +9,120 @@ interface Ripple {
 }
 
 export default function CustomCursor() {
-  const [isPointer, setIsPointer] = useState(false);
-  const [isClicking, setIsClicking] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isClicking, setIsClicking] = useState(false);
   const [ripples, setRipples] = useState<Ripple[]>([]);
 
-  const cursorDotRef = useRef<HTMLDivElement>(null);
-  const cursorOutlineRef = useRef<HTMLDivElement>(null);
-  const posRef = useRef({ x: -100, y: -100 });
-  const outlinePosRef = useRef({ x: -100, y: -100 });
-  const requestRef = useRef<number | null>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const posRef = useRef({ x: -200, y: -200 });
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Only enable custom cursor on devices with fine pointer (mouse/trackpad)
-    const mediaQuery = window.matchMedia("(pointer: fine)");
-    if (!mediaQuery.matches) return;
+    const mq = window.matchMedia("(pointer: fine)");
+    if (!mq.matches) return;
 
     setIsVisible(true);
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const onMove = (e: MouseEvent) => {
       posRef.current = { x: e.clientX, y: e.clientY };
-
-      const target = e.target as HTMLElement | null;
-      if (target) {
-        const isInteractive = Boolean(
-          target.closest(
-            "a, button, input, select, textarea, [role='button'], .btn-primary, .btn-secondary, .btn-ghost, .card, .nav-item, summary"
-          )
-        );
-        setIsPointer(isInteractive);
-      }
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
+    const onDown = (e: MouseEvent) => {
       setIsClicking(true);
-
-      const newRipple: Ripple = {
-        id: Date.now() + Math.random(),
-        x: e.clientX,
-        y: e.clientY,
-      };
-
-      setRipples((prev) => [...prev.slice(-10), newRipple]);
-
-      setTimeout(() => {
-        setRipples((prev) => prev.filter((r) => r.id !== newRipple.id));
-      }, 550);
+      const r: Ripple = { id: Date.now() + Math.random(), x: e.clientX, y: e.clientY };
+      setRipples((p) => [...p.slice(-8), r]);
+      setTimeout(() => setRipples((p) => p.filter((x) => x.id !== r.id)), 500);
     };
 
-    const handleMouseUp = () => {
-      setIsClicking(false);
-    };
+    const onUp = () => setIsClicking(false);
+    const onLeave = () => setIsVisible(false);
+    const onEnter = () => setIsVisible(true);
 
-    const handleMouseLeave = () => {
-      setIsVisible(false);
-    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("mouseup", onUp);
+    document.addEventListener("mouseleave", onLeave);
+    document.addEventListener("mouseenter", onEnter);
 
-    const handleMouseEnter = () => {
-      setIsVisible(true);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("mouseleave", handleMouseLeave);
-    document.addEventListener("mouseenter", handleMouseEnter);
-
-    const animateCursor = () => {
-      const ease = 0.18;
-
-      outlinePosRef.current.x += (posRef.current.x - outlinePosRef.current.x) * ease;
-      outlinePosRef.current.y += (posRef.current.y - outlinePosRef.current.y) * ease;
-
-      if (cursorDotRef.current) {
-        cursorDotRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0)`;
+    const loop = () => {
+      if (mainRef.current) {
+        mainRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0) scale(${isClicking ? 0.88 : 1})`;
       }
-
-      if (cursorOutlineRef.current) {
-        cursorOutlineRef.current.style.transform = `translate3d(${outlinePosRef.current.x}px, ${outlinePosRef.current.y}px, 0)`;
-      }
-
-      requestRef.current = requestAnimationFrame(animateCursor);
+      rafRef.current = requestAnimationFrame(loop);
     };
 
-    requestRef.current = requestAnimationFrame(animateCursor);
+    rafRef.current = requestAnimationFrame(loop);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("mouseleave", handleMouseLeave);
-      document.removeEventListener("mouseenter", handleMouseEnter);
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mouseup", onUp);
+      document.removeEventListener("mouseleave", onLeave);
+      document.removeEventListener("mouseenter", onEnter);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [isClicking]);
 
   if (!isVisible) return null;
 
   return (
     <>
-      {/* Sleek Black Custom Precision Dot */}
+      {/* ── Cursor — snaps exactly to mouse, no trail ── */}
       <div
-        ref={cursorDotRef}
-        className={`custom-cursor-dot ${isClicking ? "scale-75" : ""} ${
-          isPointer ? "scale-125 bg-black dark:bg-white" : "bg-black dark:bg-white"
-        }`}
+        ref={mainRef}
         aria-hidden="true"
-      />
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          pointerEvents: "none",
+          zIndex: 99999,
+          willChange: "transform",
+        }}
+      >
+        <ArrowSVG size={24} />
+      </div>
 
-      {/* Interactive Outer Ring */}
-      <div
-        ref={cursorOutlineRef}
-        className={`custom-cursor-outline ${
-          isClicking
-            ? "scale-75 border-black/80 dark:border-white/80 bg-black/10 dark:bg-white/10"
-            : isPointer
-            ? "scale-150 border-black bg-black/5 dark:border-white dark:bg-white/10"
-            : "border-black/50 dark:border-white/50"
-        }`}
-        aria-hidden="true"
-      />
-
-      {/* Mouse Click Ripple Animations */}
-      {ripples.map((ripple) => (
+      {/* ── Click ripple ── */}
+      {ripples.map((r) => (
         <span
-          key={ripple.id}
-          className="click-ripple"
-          style={{
-            left: `${ripple.x}px`,
-            top: `${ripple.y}px`,
-          }}
+          key={r.id}
           aria-hidden="true"
+          className="click-ripple"
+          style={{ left: `${r.x}px`, top: `${r.y}px` }}
         />
       ))}
     </>
+  );
+}
+
+/** Filled rounded arrow cursor — matches the reference image */
+function ArrowSVG({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 20 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: "block" }}
+    >
+      {/* White halo for contrast on any background */}
+      <path
+        d="M2 1.2 L2 20.5 L7.4 15.1 L10.8 22.5 L13.6 21.2 L10.2 13.8 L17 13.8 Z"
+        fill="white"
+        stroke="white"
+        strokeWidth="2.8"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      {/* Solid black arrow */}
+      <path
+        d="M2 1.2 L2 20.5 L7.4 15.1 L10.8 22.5 L13.6 21.2 L10.2 13.8 L17 13.8 Z"
+        fill="#0a0a0a"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
