@@ -22,6 +22,7 @@ import {
   Check,
   CheckCheck,
   ShieldAlert,
+  X,
 } from "lucide-react";
 
 interface NotificationItem {
@@ -55,6 +56,7 @@ export default function AppShell({
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [inboxOpen,   setInboxOpen]   = useState(false);
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
   const [localNotifs, setLocalNotifs] = useState<NotificationItem[]>(stableNotifs);
 
   // Separate refs for desktop and mobile inbox containers
@@ -473,8 +475,9 @@ export default function AppShell({
           <span className="text-[10px] font-medium">Collabs</span>
         </Link>
 
-        <Link
-          href="/dashboard?tab=profile"
+        {/* Profile tab — opens sheet instead of navigating */}
+        <button
+          onClick={() => setMobileProfileOpen(true)}
           className={`flex flex-col items-center justify-center gap-1 w-12 ${
             isTabActive("profile") ? "text-foreground" : "text-muted-foreground"
           }`}
@@ -486,8 +489,77 @@ export default function AppShell({
             }
           </div>
           <span className="text-[10px] font-medium">Profile</span>
-        </Link>
+        </button>
       </nav>
+
+      {/* ── Mobile profile sheet ─────────────────────────────── */}
+      {mobileProfileOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileProfileOpen(false)}
+          />
+          {/* Sheet */}
+          <div className="fixed bottom-0 left-0 right-0 z-[70] bg-card rounded-t-2xl shadow-2xl md:hidden animate-slide-up">
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="h-1 w-10 rounded-full bg-border" />
+            </div>
+
+            {/* User info */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
+              <div className="h-11 w-11 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
+                {user?.image
+                  ? <Image src={user.image} alt={user.name || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
+                  : <span className="text-[15px] font-bold text-foreground">{initials}</span>
+                }
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-[14px] font-semibold text-foreground truncate">{user?.name || "User"}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{user?.email || ""}</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-3 py-2 space-y-0.5">
+              {user?.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileProfileOpen(false)}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[13px] font-bold text-amber-500 hover:bg-amber-500/10 transition-colors"
+                >
+                  <ShieldAlert size={16} />
+                  Admin Portal
+                </Link>
+              )}
+              <Link
+                href="/dashboard?tab=profile"
+                onClick={() => setMobileProfileOpen(false)}
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[13px] font-medium text-foreground hover:bg-secondary transition-colors"
+              >
+                <Settings size={16} strokeWidth={1.75} />
+                Profile Settings
+              </Link>
+            </div>
+
+            <div className="h-px bg-border mx-4" />
+
+            <div className="px-3 py-2">
+              <button
+                onClick={() => { setMobileProfileOpen(false); signOut({ callbackUrl: "/" }); }}
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[13px] font-medium text-destructive hover:bg-destructive/10 transition-colors text-left"
+              >
+                <LogOut size={16} strokeWidth={1.75} />
+                Sign out
+              </button>
+            </div>
+
+            {/* Safe area spacer for phones with home indicator */}
+            <div className="h-6" />
+          </div>
+        </>
+      )}
 
     </div>
   );
