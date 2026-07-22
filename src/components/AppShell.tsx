@@ -6,6 +6,9 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import OnboardingModal from "./OnboardingModal";
+import ColabroLogo from "./ColabroLogo";
+import ThemeToggle from "./ThemeToggle";
+import { useTheme } from "./ThemeProvider";
 import {
   Home as HomeIcon,
   FolderOpen,
@@ -213,15 +216,15 @@ export default function AppShell({
       {/* ── Desktop Sidebar ─────────────────────────────────── */}
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card shrink-0 h-screen sticky top-0">
         {/* Logo */}
-        <div className="h-14 border-b border-border px-5 flex items-center gap-2">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-[7px] bg-foreground flex items-center justify-center shrink-0">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H8z" fill="white" />
-              </svg>
-            </div>
-            <span className="text-[16px] font-bold tracking-tight text-foreground">Colabro</span>
+        <div className="h-14 border-b border-border px-5 flex items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <ColabroLogo size={32} />
+            <span className="text-[15px] font-bold tracking-tight text-foreground"
+              style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}>
+              Colabro
+            </span>
           </Link>
+          <ThemeToggle />
         </div>
 
         {/* Main nav */}
@@ -366,8 +369,10 @@ export default function AppShell({
             </span>
           </div>
 
-          {/* Right — inbox (desktop) */}
-          <div className="relative" ref={inboxDesktop}>
+          {/* Right — inbox (desktop) + theme toggle */}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <div className="relative" ref={inboxDesktop}>
             <button
               onClick={() => setInboxOpen(prev => !prev)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors cursor-pointer ${
@@ -395,22 +400,23 @@ export default function AppShell({
                 {inboxDropdownContent}
               </div>
             )}
+            </div>
           </div>
         </header>
 
         {/* Mobile header */}
         <header className="flex md:hidden h-14 border-b border-border items-center justify-between px-4 bg-card sticky top-0 z-40">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-[6px] bg-foreground flex items-center justify-center shrink-0">
-              <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
-              </svg>
-            </div>
-            <span className="text-[15px] font-bold tracking-tight text-foreground">Colabro</span>
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <ColabroLogo size={30} />
+            <span className="text-[15px] font-bold tracking-tight text-foreground"
+              style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}>
+              Colabro
+            </span>
           </Link>
 
-          {/* Mobile inbox (separate ref) */}
+          {/* Mobile inbox + theme toggle (separate ref) */}
           <div className="flex items-center gap-2 relative" ref={inboxMobile}>
+            <ThemeToggle />
             <button
               onClick={() => setInboxOpen(prev => !prev)}
               className="relative p-1.5 text-muted-foreground hover:text-foreground rounded-lg transition-colors cursor-pointer"
@@ -541,6 +547,7 @@ export default function AppShell({
                 <Settings size={16} strokeWidth={1.75} />
                 Profile Settings
               </Link>
+              <ThemeToggleRow />
             </div>
 
             <div className="h-px bg-border mx-4" />
@@ -562,5 +569,27 @@ export default function AppShell({
       )}
 
     </div>
+  );
+}
+
+/* ── Inline theme toggle row for mobile sheet ── */
+function ThemeToggleRow() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-[13px] font-medium text-foreground hover:bg-secondary transition-colors"
+    >
+      <span className="flex items-center gap-3">
+        {theme === "dark"
+          ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        }
+        {theme === "dark" ? "Light mode" : "Dark mode"}
+      </span>
+      <span className="text-[11px] text-muted-foreground">
+        {theme === "dark" ? "On" : "Off"}
+      </span>
+    </button>
   );
 }
