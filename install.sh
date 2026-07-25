@@ -6,8 +6,9 @@ cd /c/Users/Moses\ Fernando/Documents/GitHub/project-finder
 echo "=== Installing global tools ==="
 if ! command -v pnpm &> /dev/null; then
   npm install -g pnpm || true
-echo "=== Installing project dependencies with pnpm ==="
 fi
+
+echo "=== Installing project dependencies ==="
 
 # Reinstall dependencies
 rm -rf node_modules package-lock.json pnpm-lock.yaml

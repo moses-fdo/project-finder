@@ -8,7 +8,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(hackathons);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get hackathons error:", error);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const session = await auth();
     const currentUser = session?.user;
 
-    if (!currentUser || (currentUser as any).role !== "ADMIN") {
+    if (!currentUser || currentUser.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized. Admin privileges required." }, { status: 403 });
     }
 
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ message: "Hackathon created successfully.", hackathon });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Create hackathon error:", error);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }

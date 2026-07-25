@@ -10,7 +10,7 @@ export async function DELETE(
     const session = await auth();
     const currentUser = session?.user;
 
-    if (!currentUser || (currentUser as any).role !== "ADMIN") {
+    if (!currentUser || currentUser.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized. Admin role required." }, { status: 403 });
     }
 
@@ -34,7 +34,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({ message: "User deleted successfully." });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin delete user error:", error);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }

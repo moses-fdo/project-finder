@@ -1,27 +1,34 @@
-
 /**
  * Safe JSON parsing that doesn't throw on error responses
  */
-export async function safeJson(response: Response): Promise<{ data: any, error?: string }> {
+export async function safeJson<T = unknown>(
+  response: Response
+): Promise<{ data: T; error?: string }> {
   if (!response.ok) {
-    return { data: {}, error: "Request failed" };
+    return { data: {} as T, error: "Request failed" };
   }
   try {
-    const data = await response.json();
+    const data = (await response.json()) as T;
     return { data };
   } catch {
-    return { data: {} };
+    return { data: {} as T };
   }
 }
 
 /**
- * Safe error builder that extracts meaningful error messages
+ * Extract a meaningful error message from a failed response body
  */
-export function safeError(res: Response, defaultMsg: string = "Request failed"): string {
+export async function safeError(
+  res: Response,
+  defaultMsg: string = "Request failed"
+): Promise<string> {
   if (!res.ok && res.headers.get("content-type")?.includes("application/json")) {
     try {
-      // Try to parse error
-    } catch {}
+      const data = (await res.json()) as { error?: string; message?: string };
+      return data.error || data.message || defaultMsg;
+    } catch {
+      // fall through to default
+    }
   }
   return defaultMsg;
 }

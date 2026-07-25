@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import NavigationProgress from "@/components/NavigationProgress";
 import ThemeProvider from "@/components/ThemeProvider";
 import CustomCursor from "@/components/CustomCursor";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import "./globals.css";
 import "../styles/animations.css";
 
@@ -61,7 +62,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <NavigationProgress />
           </Suspense>
-          {children}
+          <ErrorBoundary>{children}</ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>
