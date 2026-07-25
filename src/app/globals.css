@@ -53,7 +53,7 @@
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
   --success: #22C55E;
-  --warning: #7C3AED;
+  --warning: #F59E0B;
 
   /* Structural — very subtle, not visible as hard lines */
   --border: rgba(0, 0, 0, 0.07);
@@ -82,7 +82,7 @@
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
   --success: #22C55E;
-  --warning: #7C3AED;
+  --warning: #F59E0B;
   --border: rgba(255, 255, 255, 0.08);
   --input: #1B1B1B;
   --ring: #FFFFFF;
@@ -240,7 +240,7 @@ body {
 
 .btn-secondary:hover {
   background: var(--accent);
-  border-color: rgba(0,0,0,0.14);
+  border-color: var(--border);
 }
 
 .btn-secondary:active {
@@ -308,13 +308,13 @@ body {
 }
 
 .badge-yellow {
-  background: rgba(124, 58, 237, 0.08);
-  color: #7c3aed;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
 }
 
 .dark .badge-yellow {
-  background: rgba(124, 58, 237, 0.15);
-  color: #a78bfa;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
 }
 
 .badge-gray {
@@ -331,12 +331,12 @@ body {
 
 .notion-tag-green  { background: rgba(34, 197, 94, 0.1);  color: #16a34a; }
 .notion-tag-red    { background: rgba(239, 68, 68, 0.1);  color: #dc2626; }
-.notion-tag-yellow { background: rgba(124, 58, 237, 0.08); color: #7c3aed; }
+.notion-tag-yellow { background: rgba(245, 158, 11, 0.1); color: #d97706; }
 .notion-tag-gray   { background: var(--secondary); color: var(--muted-foreground); }
 
 .dark .notion-tag-green  { background: rgba(34, 197, 94, 0.15);  color: #4ade80; }
 .dark .notion-tag-red    { background: rgba(239, 68, 68, 0.15);  color: #f87171; }
-.dark .notion-tag-yellow { background: rgba(124, 58, 237, 0.15); color: #a78bfa; }
+.dark .notion-tag-yellow { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
 
 /* ─── Section dividers ─────────────────────────────────────── */
 
@@ -652,6 +652,34 @@ body {
   letter-spacing: -0.03em;
   line-height: 1;
   color: var(--foreground);
+}
+
+/* ─── Landing — scroll hint dot ────────────────────────── */
+
+@keyframes scroll-dot {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(280%); opacity: 0; }
+}
+
+.scroll-dot {
+  animation: scroll-dot 1.7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-dot { animation: none; opacity: 0.4; }
+}
+
+/* ─── Landing — GSAP-driven elements: ensure visible when JS animations
+       are blocked (reduced motion, headless, slow hydration) ── */
+@media (prefers-reduced-motion: reduce) {
+  .how-row,
+  .sc,
+  .cc {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* ─── Mobile sheet slide-up ─────────────────────────────── */

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getErrorMessage } from "@/lib/error";
 
 export async function PATCH(req: Request) {
   try {
@@ -8,12 +9,22 @@ export async function PATCH(req: Request) {
     const currentUser = session?.user;
 
     if (!currentUser) {
-      return NextResponse.json({ error: "You must be logged in to update your profile." }, { status: 401 });
+      return NextResponse.json(
+        { error: "You must be logged in to update your profile." },
+        { status: 401 }
+      );
     }
 
-    const { name, bio, githubUrl, linkedinUrl, department, year, skills } = await req.json();
+    const { name, bio, githubUrl, linkedinUrl, department, year, skills } =
+      await req.json();
 
     const currentUserId = Number((currentUser as any).id);
+    if (isNaN(currentUserId)) {
+      return NextResponse.json(
+        { error: "Invalid user ID." },
+        { status: 400 }
+      );
+    }
 
     const updateData: any = {};
     if (name) updateData.name = name;
@@ -26,9 +37,9 @@ export async function PATCH(req: Request) {
     if (skills && Array.isArray(skills)) {
       updateData.skills = {
         set: [],
-        connectOrCreate: skills.map((name: string) => ({
-          where: { name },
-          create: { name },
+        connectOrCreate: skills.map((skillName: string) => ({
+          where: { name: skillName },
+          create: { name: skillName },
         })),
       };
     }
@@ -38,10 +49,16 @@ export async function PATCH(req: Request) {
       data: updateData,
     });
 
-    return NextResponse.json({ message: "Profile updated successfully.", user: updatedUser });
-  } catch (error: any) {
+    return NextResponse.json({
+      message: "Profile updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
     console.error("Update profile error:", error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    return NextResponse.json(
+      { error: getErrorMessage(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -51,25 +68,40 @@ export async function DELETE() {
     const currentUser = session?.user;
 
     if (!currentUser) {
-      return NextResponse.json({ error: "You must be logged in to delete your account." }, { status: 401 });
+      return NextResponse.json(
+        { error: "You must be logged in to delete your account." },
+        { status: 401 }
+      );
     }
 
     const currentUserId = Number((currentUser as any).id);
+    if (isNaN(currentUserId)) {
+      return NextResponse.json(
+        { error: "Invalid user ID." },
+        { status: 400 }
+      );
+    }
 
-    // Clean up all related records before deleting user
     await prisma.$transaction([
       prisma.application.deleteMany({ where: { userId: currentUserId } }),
       prisma.bookmark.deleteMany({ where: { userId: currentUserId } }),
       prisma.notification.deleteMany({ where: { userId: currentUserId } }),
-      prisma.application.deleteMany({ where: { project: { ownerId: currentUserId } } }),
-      prisma.bookmark.deleteMany({ where: { project: { ownerId: currentUserId } } }),
+      prisma.application.deleteMany({
+        where: { project: { ownerId: currentUserId } },
+      }),
+      prisma.bookmark.deleteMany({
+        where: { project: { ownerId: currentUserId } },
+      }),
       prisma.project.deleteMany({ where: { ownerId: currentUserId } }),
       prisma.user.delete({ where: { id: currentUserId } }),
     ]);
 
     return NextResponse.json({ message: "Account deleted successfully." });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Delete account error:", error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    return NextResponse.json(
+      { error: getErrorMessage(error) },
+      { status: 500 }
+    );
   }
 }

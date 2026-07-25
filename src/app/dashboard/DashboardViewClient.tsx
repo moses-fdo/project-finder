@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -95,13 +95,8 @@ export default function DashboardViewClient({
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const [currentTab, setCurrentTab] = useState(activeTab || "home");
-
-  useEffect(() => {
-    if (activeTab && activeTab !== currentTab) {
-      setCurrentTab(activeTab);
-    }
-  }, [activeTab]);
+  // Derive currentTab directly from prop — no effect needed
+  const currentTab = activeTab || "home";
 
   const [profileName,     setProfileName]     = useState(profileData?.name         || "");
   const [profileDept,     setProfileDept]     = useState(profileData?.department   || "");
@@ -113,18 +108,6 @@ export default function DashboardViewClient({
     profileData?.skills?.map((s: any) => s.name).join(", ") || ""
   );
 
-  useEffect(() => {
-    if (profileData) {
-      setProfileName(profileData.name || "");
-      setProfileDept(profileData.department || "");
-      setProfileYear(profileData.year?.toString() || "");
-      setProfileBio(profileData.bio || "");
-      setProfileGithub(profileData.githubUrl || "");
-      setProfileLinkedin(profileData.linkedinUrl || "");
-      setProfileSkills(profileData.skills?.map((s: any) => s.name).join(", ") || "");
-    }
-  }, [profileData]);
-
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(
     () => new Set(bookmarks.map((bm: any) => bm.project?.id ?? bm.projectId))
   );
@@ -133,7 +116,7 @@ export default function DashboardViewClient({
     const isBookmarked = bookmarkedIds.has(projectId);
     setBookmarkedIds(prev => {
       const next = new Set(prev);
-      isBookmarked ? next.delete(projectId) : next.add(projectId);
+      if (isBookmarked) { next.delete(projectId); } else { next.add(projectId); }
       return next;
     });
     try {
@@ -218,23 +201,21 @@ export default function DashboardViewClient({
     finally { setLoadingId(null); }
   };
 
-  const [localNotifications, setLocalNotifications] = useState(notifications);
-
-  useEffect(() => {
-    setLocalNotifications(notifications);
-  }, [notifications]);
+  // Local notification overrides for optimistic read-marking
+  const [readIds, setReadIds] = useState<Set<number>>(() => new Set());
+  const localNotifications = notifications.map(n =>
+    readIds.has(n.id) ? { ...n, read: true } : n
+  );
 
   const markNotifRead = async (id: number) => {
-    setLocalNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+    setReadIds(prev => new Set([...prev, id]));
     try {
       await fetch(`/api/notifications/${id}`, { method: "PATCH" });
     } catch { /* silent */ }
   };
 
   const markAllRead = async () => {
-    setLocalNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setReadIds(new Set(notifications.map(n => n.id)));
     try {
       await fetch("/api/notifications", { method: "PATCH" });
     } catch { /* silent */ }
@@ -279,289 +260,232 @@ export default function DashboardViewClient({
 
   /* ══════════════════════════════════════════════════════════ */
   return (
-    <div className="flex-1 p-5 md:p-8 space-y-5">
+    <div className="flex-1 p-5 md:p-7 space-y-6">
       {actionError && (
-        <div className="p-3 text-[12px] rounded-md bg-destructive/10 text-destructive border border-destructive/20">
-          {actionError}
-        </div>
+        <div className="p-3 text-[12px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">{actionError}</div>
       )}
       {actionSuccess && (
-        <div className="p-3 text-[12px] rounded-md notion-tag-green border border-green-200/20">
-          {actionSuccess}
-        </div>
+        <div className="p-3 text-[12px] rounded-lg bg-success/10 text-green-700 dark:text-green-400 border border-success/20">{actionSuccess}</div>
       )}
 
       {/* ── HOME VIEW ─────────────────────────────────────── */}
       {currentTab === "home" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left / Middle Column (lg:col-span-8): Main Content */}
-          <div className="lg:col-span-8 space-y-8">
-            
-            {/* Header Greeting */}
-            <div className="space-y-1">
-              <h1 className="text-[22px] font-bold tracking-tight text-foreground md:text-[24px]">
-                Good morning, {currentUser?.name?.split(" ")[0] || "Moses"} <span className="md:inline hidden">👋</span>
+        <div className="space-y-6">
+
+          {/* Greeting + CTA */}
+          <div className="flex items-center justify-between gap-4 pb-5 border-b border-border">
+            <div>
+              <h1 className="text-[21px] font-bold tracking-tight text-foreground leading-tight">
+                Welcome back, {currentUser?.name?.split(" ")[0] || "there"} 👋
               </h1>
-              <p className="text-[13px] text-muted-foreground">
-                Let&apos;s build something amazing today.
+              <p className="text-[13px] text-muted-foreground mt-0.5">
+                {projects.length > 0
+                  ? `You have ${projects.length} active project${projects.length !== 1 ? "s" : ""}.`
+                  : "Start by posting your first project."}
               </p>
             </div>
-
-            {/* Mobile Search Bar (Only shown on mobile) */}
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const q = (e.currentTarget.elements.namedItem("search") as HTMLInputElement)?.value;
-              if (q) router.push(`/projects?search=${encodeURIComponent(q)}`);
-              else router.push("/projects");
-            }} className="md:hidden relative w-full">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                <Search size={14} className="text-muted-foreground" />
-              </span>
-              <input
-                name="search"
-                type="text"
-                placeholder="Search projects, skills, people..."
-                className="w-full pl-9 py-2 bg-secondary/50 border border-border rounded-lg text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none"
-              />
-            </form>
-
-            {/* Mobile Quick Actions (Only shown on mobile) */}
-            <div className="md:hidden space-y-2.5">
-              <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Quick Actions</h3>
-              <div className="grid grid-cols-3 gap-2">
-                <Link href="/projects/create" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
-                  <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5 font-bold">
-                    <Plus size={16} className="text-foreground" />
-                  </div>
-                  <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">New Project</span>
-                </Link>
-                <Link href="/projects" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
-                  <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5">
-                    <Search size={16} className="text-foreground" />
-                  </div>
-                  <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">Discover</span>
-                </Link>
-                <Link href="/dashboard?tab=collaborations" className="flex flex-col items-center justify-center p-3 bg-card border border-border rounded-xl hover:bg-secondary/40 transition-colors">
-                  <div className="h-9 w-9 bg-secondary border border-border rounded-lg flex items-center justify-center mb-1.5">
-                    <Users size={16} className="text-foreground" />
-                  </div>
-                  <span className="text-[10px] font-medium text-foreground text-center line-clamp-1">Collabs</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Recommended For You Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[15px] font-bold text-foreground tracking-tight">Recommended for you</h2>
-                <Link href="/projects" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-0.5">
-                  View all <span className="text-[13px] leading-none">→</span>
-                </Link>
-              </div>
-
-              {/* Recommended list - Grid on PC, list on Mobile */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {recommendedProjects && recommendedProjects.length > 0 ? (
-                  recommendedProjects.map((project) => {
-                    const iconInfo = getProjectIcon(project.title);
-                    const Icon = iconInfo.icon;
-                    return (
-                      <article key={project.id} className="card p-5 flex flex-col justify-between h-full hover:border-muted-foreground/30 hover:shadow-[0_4px_16px_rgba(0,0,0,0.02)] transition-all relative group">
-                        <div>
-                          {/* Top Card Bar */}
-                          <div className="flex items-center justify-between gap-2 mb-4">
-                            <div className={`h-8 w-8 rounded-lg ${iconInfo.bg} flex items-center justify-center border border-border shrink-0`}>
-                              <Icon size={16} className={iconInfo.text} />
-                            </div>
-                            <button
-                              onClick={() => toggleBookmark(project.id)}
-                              className={`p-1 rounded-md transition-colors cursor-pointer ${
-                                bookmarkedIds.has(project.id)
-                                  ? "text-foreground"
-                                  : "text-muted-foreground hover:text-foreground"
-                              }`}
-                              aria-label={bookmarkedIds.has(project.id) ? "Remove bookmark" : "Bookmark project"}
-                              title={bookmarkedIds.has(project.id) ? "Remove bookmark" : "Save project"}
-                            >
-                              <Bookmark
-                                size={14}
-                                className={bookmarkedIds.has(project.id) ? "fill-foreground" : ""}
-                              />
-                            </button>
-                          </div>
-
-                          {/* Status Badge */}
-                          <div className="mb-2">
-                            {project.status === "OPEN" ? (
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">Looking for team</span>
-                            ) : project.status === "FULL" ? (
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">In Progress</span>
-                            ) : (
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">Closed</span>
-                            )}
-                          </div>
-
-                          {/* Title */}
-                          <h3 className="text-[14px] font-bold text-foreground leading-snug group-hover:underline decoration-1 underline-offset-2">
-                            <Link href={`/projects/${project.id}`}>{project.title}</Link>
-                          </h3>
-
-                          {/* Description */}
-                          <p className="text-[11px] text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
-                            {project.description}
-                          </p>
-
-                          {/* Tags */}
-                          {project.skills && project.skills.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-3">
-                              {project.skills.slice(0, 3).map((skill: any) => (
-                                <span key={skill.id} className="text-[9px] font-medium px-2 py-0.5 rounded bg-secondary border border-border text-muted-foreground">{skill.name}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Footer (Owner info) */}
-                        <div className="flex items-center justify-between border-t border-border mt-4 pt-3">
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            <span className="h-5 w-5 rounded-full bg-secondary border border-border flex items-center justify-center text-[9px] font-bold text-foreground shrink-0">
-                              {project.owner?.name?.[0]?.toUpperCase() || "U"}
-                            </span>
-                            <span className="text-[11px] font-medium text-foreground truncate">
-                              {project.owner?.name || "Student Project"}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground font-medium shrink-0">
-                            {project.applications?.length || 0} applicant{(project.applications?.length || 0) !== 1 ? "s" : ""}
-                          </span>
-                        </div>
-                      </article>
-                    );
-                  })
-                ) : (
-                  <div className="col-span-3 card p-8 text-center text-[12px] text-muted-foreground">
-                    No recommended projects at the moment.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="space-y-4 hidden md:block">
-              <h2 className="text-[15px] font-bold text-foreground tracking-tight">Recent Activity</h2>
-              <div className="card divide-y divide-border">
-                {recentNotifications && recentNotifications.length > 0 ? (
-                  recentNotifications.slice(0, 3).map((notif) => (
-                    <div key={notif.id} className="p-3.5 flex items-center justify-between text-[12px] hover:bg-secondary/15 transition-all">
-                      <div className="flex items-center gap-2.5">
-                        <span className="h-2 w-2 rounded-full bg-purple-500 shrink-0" />
-                        <span className="text-foreground">{notif.message}</span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium">{new Date(notif.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="p-4 text-[11px] text-muted-foreground italic text-center">No recent activity.</p>
-                )}
-              </div>
-            </div>
-
+            <Link href="/projects/create" className="btn-primary text-[12px] py-2 px-3.5 shrink-0 hidden sm:flex items-center gap-1.5">
+              <Plus size={13} strokeWidth={2} /> New project
+            </Link>
           </div>
 
-          {/* Right Column (lg:col-span-4): Sidebars & Widgets (PC only) */}
-          <div className="lg:col-span-4 space-y-6 hidden lg:block">
-            
-            {/* My Projects Panel */}
-            <div className="card p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[13px] font-bold text-foreground tracking-tight">My Projects</h3>
-                <Link href="/projects/create" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">+ New</Link>
+          {/* Quick-stat row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "My projects",  value: projects.length,                                     href: "/dashboard?tab=projects" },
+              { label: "Applications", value: applications.length,                                  href: "/dashboard?tab=applications" },
+              { label: "Pending",      value: applications.filter((a: any) => a.status === "PENDING").length, href: "/dashboard?tab=applications" },
+              { label: "Unread",       value: recentNotifications.filter((n: any) => !n.read).length, href: "/dashboard?tab=notifications" },
+            ].map(({ label, value, href }) => (
+              <Link key={label} href={href}
+                className="card px-4 py-3.5 flex flex-col gap-1 hover:border-muted-foreground/25 transition-all"
+              >
+                <span className="text-[24px] font-extrabold text-foreground tracking-tight leading-none tabular-nums">{value}</span>
+                <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Two-column body */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_264px] gap-6 items-start">
+
+          {/* ── LEFT: recommended + activity ── */}
+          <div className="space-y-6">
+
+          {/* Recommended */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[13px] font-bold text-foreground">Open to join</h2>
+              <Link href="/projects" className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5">
+                Browse all →
+              </Link>
+            </div>
+
+            <div className="space-y-2">
+              {recommendedProjects && recommendedProjects.length > 0 ? (
+                recommendedProjects.map((project) => {
+                  const iconInfo = getProjectIcon(project.title);
+                  const Icon = iconInfo.icon;
+                  return (
+                    <article key={project.id} className="card p-4 flex items-start gap-3 hover:border-muted-foreground/25 transition-all group">
+                      <div className={`h-9 w-9 rounded-lg ${iconInfo.bg} border border-border flex items-center justify-center shrink-0 mt-0.5`}>
+                        <Icon size={15} className={iconInfo.text} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <h3 className="text-[13px] font-semibold text-foreground leading-snug line-clamp-1 group-hover:underline underline-offset-2">
+                            <Link href={`/projects/${project.id}`}>{project.title}</Link>
+                          </h3>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {project.status === "OPEN" && <span className="badge badge-green">Open</span>}
+                            {project.status === "FULL" && <span className="badge badge-yellow">Full</span>}
+                            {project.status === "CLOSED" && <span className="badge badge-red">Closed</span>}
+                            <button
+                              onClick={() => toggleBookmark(project.id)}
+                              className={`p-0.5 rounded transition-colors cursor-pointer ${bookmarkedIds.has(project.id) ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
+                              aria-label="Bookmark"
+                            >
+                              <Bookmark size={12} strokeWidth={1.75} className={bookmarkedIds.has(project.id) ? "fill-foreground" : ""} />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground line-clamp-1 leading-relaxed mb-1.5">
+                          {project.description}
+                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex flex-wrap gap-1">
+                            {project.skills?.slice(0, 3).map((skill: any) => (
+                              <span key={skill.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                                {skill.name}
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground shrink-0">by {project.owner?.name}</span>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="card p-8 text-center text-[12px] text-muted-foreground">No open projects at the moment.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent activity */}
+          <div className="space-y-3 hidden md:block">
+            <h2 className="text-[13px] font-bold text-foreground">Recent activity</h2>
+            <div className="card overflow-hidden divide-y divide-border">
+              {recentNotifications && recentNotifications.length > 0 ? (
+                recentNotifications.slice(0, 4).map((notif) => (
+                  <div key={notif.id} className="flex items-center gap-3 px-4 py-3 text-[12px] hover:bg-secondary/20 transition-colors">
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30 shrink-0" />
+                    <span className="text-foreground flex-1 truncate leading-snug">{notif.message}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                      {new Date(notif.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="px-4 py-6 text-[12px] text-muted-foreground text-center">No recent activity.</p>
+              )}
+            </div>
+          </div>
+
+          </div>{/* end left */}
+
+          {/* ── RIGHT: sidebar panels ── */}
+          <div className="space-y-4 hidden lg:block">
+
+            {/* My Projects */}
+            <div className="card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[12px] font-bold text-foreground">My projects</h3>
+                <Link href="/projects/create" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-colors">+ New</Link>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {myProjectsSidebar && myProjectsSidebar.length > 0 ? (
                   myProjectsSidebar.map((proj) => (
-                    <div key={proj.id} className="flex items-center justify-between text-[12px]">
-                      <Link href={`/projects/${proj.id}`} className="font-medium text-foreground hover:underline line-clamp-1">{proj.title}</Link>
-                      <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-semibold">
-                        <span className={`h-1.5 w-1.5 rounded-full ${
-                          proj.status === "OPEN" ? "bg-green-500" : proj.status === "FULL" ? "bg-blue-500" : "bg-red-500"
-                        }`} />
-                        {proj.status === "OPEN" ? "Looking for team" : proj.status === "FULL" ? "In Progress" : "Completed"}
+                    <div key={proj.id} className="flex items-center justify-between gap-2">
+                      <Link href={`/projects/${proj.id}`} className="text-[12px] font-medium text-foreground hover:underline underline-offset-2 line-clamp-1 min-w-0">{proj.title}</Link>
+                      <span className={`flex items-center gap-1 text-[10px] font-semibold shrink-0 ${proj.status === "OPEN" ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${proj.status === "OPEN" ? "bg-green-500" : proj.status === "FULL" ? "bg-blue-500" : "bg-muted-foreground/40"}`} />
+                        {proj.status === "OPEN" ? "Open" : proj.status === "FULL" ? "Full" : "Closed"}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-[11px] text-muted-foreground italic">No projects yet.</p>
+                  <p className="text-[11px] text-muted-foreground">No projects yet.</p>
                 )}
               </div>
-              <div className="border-t border-border pt-3">
-                <Link href="/dashboard?tab=projects" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-0.5">
-                  View all projects <span className="text-[13px] leading-none">→</span>
-                </Link>
+              <div className="border-t border-border mt-3 pt-2.5">
+                <Link href="/dashboard?tab=projects" className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors">All projects →</Link>
               </div>
             </div>
 
-            {/* Applications Panel */}
-            <div className="card p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[13px] font-bold text-foreground tracking-tight">Applications</h3>
-                <Link href="/dashboard?tab=applications" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">View all</Link>
-              </div>
-              <div className="space-y-3">
-                {myApplicationsSidebar && myApplicationsSidebar.length > 0 ? (
-                  myApplicationsSidebar.map((app) => (
-                    <div key={app.id} className="flex items-center justify-between text-[12px] gap-2">
-                      <div className="min-w-0">
-                        <Link href={`/projects/${app.project.id}`} className="font-medium text-foreground hover:underline line-clamp-1">{app.project.title}</Link>
-                        <p className="text-[9px] text-muted-foreground mt-0.5">Applied recently</p>
-                      </div>
-                      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
-                        app.status === "ACCEPTED" ? "bg-green-500/10 text-green-600" : app.status === "REJECTED" ? "bg-red-500/10 text-red-600" : "bg-yellow-500/10 text-yellow-600"
-                      }`}>{app.status === "ACCEPTED" ? "Accepted" : app.status === "REJECTED" ? "Rejected" : "Pending"}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-[11px] text-muted-foreground italic">No applications yet.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Bookmarks Panel */}
-            <div className="card p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[13px] font-bold text-foreground tracking-tight">Bookmarks</h3>
-                <Link href="/dashboard?tab=bookmarks" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">View all</Link>
+            {/* Applications */}
+            <div className="card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[12px] font-bold text-foreground">Applications</h3>
+                <Link href="/dashboard?tab=applications" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-colors">View all</Link>
               </div>
               <div className="space-y-2.5">
-                {myBookmarksSidebar && myBookmarksSidebar.length > 0 ? (
-                  myBookmarksSidebar.map((bm) => (
-                    <div key={bm.project.id} className="flex items-center gap-2 text-[12px]">
-                      <Bookmark size={13} className="text-purple-500 shrink-0" />
-                      <Link href={`/projects/${bm.project.id}`} className="font-medium text-foreground hover:underline line-clamp-1">{bm.project.title}</Link>
+                {myApplicationsSidebar && myApplicationsSidebar.length > 0 ? (
+                  myApplicationsSidebar.map((app) => (
+                    <div key={app.id} className="flex items-center justify-between gap-2">
+                      <Link href={`/projects/${app.project.id}`} className="text-[12px] font-medium text-foreground hover:underline underline-offset-2 line-clamp-1 min-w-0">{app.project.title}</Link>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${app.status === "ACCEPTED" ? "bg-green-500/10 text-green-600 dark:text-green-400" : app.status === "REJECTED" ? "bg-red-500/10 text-red-500" : "bg-secondary text-muted-foreground"}`}>
+                        {app.status === "ACCEPTED" ? "Accepted" : app.status === "REJECTED" ? "Rejected" : "Pending"}
+                      </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-[11px] text-muted-foreground italic">No saved bookmarks yet.</p>
+                  <p className="text-[11px] text-muted-foreground">No applications yet.</p>
                 )}
               </div>
             </div>
 
-            {/* Quote widget */}
-            <div className="card p-5 bg-secondary/25 border border-border/80 relative space-y-3">
-              <span className="text-[28px] font-serif text-muted-foreground/30 absolute top-2 left-3 leading-none select-none">&ldquo;</span>
-              <p className="text-[12px] text-muted-foreground font-medium italic leading-relaxed pt-2 pl-2">
-                Great things are never done by one person. They&apos;re done by a team.
-              </p>
-              <p className="text-[10px] text-foreground font-bold tracking-tight text-right pr-2">
-                — Steve Jobs
-              </p>
-            </div>
+            {/* Saved */}
+            {myBookmarksSidebar && myBookmarksSidebar.length > 0 && (
+              <div className="card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-[12px] font-bold text-foreground">Saved</h3>
+                  <Link href="/dashboard?tab=bookmarks" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-colors">View all</Link>
+                </div>
+                <div className="space-y-2">
+                  {myBookmarksSidebar.map((bm) => (
+                    <div key={bm.project.id} className="flex items-center gap-2">
+                      <Bookmark size={11} className="text-muted-foreground/50 shrink-0" />
+                      <Link href={`/projects/${bm.project.id}`} className="text-[12px] font-medium text-foreground hover:underline underline-offset-2 line-clamp-1">{bm.project.title}</Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
+          </div>{/* end right */}
+
+          </div>{/* end two-column */}
+
+          {/* Mobile quick actions */}
+          <div className="sm:hidden grid grid-cols-3 gap-2 pt-1">
+            {[
+              { href: "/projects/create", icon: Plus,   label: "New project" },
+              { href: "/projects",        icon: Search, label: "Discover" },
+              { href: "/dashboard?tab=collaborations", icon: Users, label: "Collabs" },
+            ].map(({ href, icon: Icon, label }) => (
+              <Link key={label} href={href} className="flex flex-col items-center gap-1.5 p-3 card hover:border-muted-foreground/25 transition-all">
+                <div className="h-9 w-9 rounded-lg bg-secondary border border-border flex items-center justify-center">
+                  <Icon size={15} className="text-foreground" />
+                </div>
+                <span className="text-[10px] font-medium text-foreground text-center">{label}</span>
+              </Link>
+            ))}
           </div>
 
         </div>
       )}
+
 
       {/* ── COLLABORATIONS — people finder ────────────────── */}
       {currentTab === "collaborations" && (

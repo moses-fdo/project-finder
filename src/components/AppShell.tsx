@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
-import OnboardingModal from "./OnboardingModal";
 import ColabroLogo from "./ColabroLogo";
 import ThemeToggle from "./ThemeToggle";
 import { useTheme } from "./ThemeProvider";
@@ -19,13 +18,12 @@ import {
   Send,
   Mail,
   Inbox,
-  MoreVertical,
+  MoreHorizontal,
   LogOut,
   Settings,
   Check,
   CheckCheck,
   ShieldAlert,
-  X,
 } from "lucide-react";
 
 interface NotificationItem {
@@ -42,7 +40,6 @@ interface AppShellProps {
   inboxNotifications?: NotificationItem[];
 }
 
-// Stable empty array outside the component — never recreated
 const EMPTY_NOTIFS: NotificationItem[] = [];
 
 export default function AppShell({
@@ -62,28 +59,21 @@ export default function AppShell({
   const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
   const [localNotifs, setLocalNotifs] = useState<NotificationItem[]>(stableNotifs);
 
-  // Separate refs for desktop and mobile inbox containers
   const profileRef   = useRef<HTMLDivElement>(null);
   const inboxDesktop = useRef<HTMLDivElement>(null);
   const inboxMobile  = useRef<HTMLDivElement>(null);
 
   const tab = searchParams.get("tab") || "home";
 
-  /* ── close on outside click ────────────────────────────── */
   useEffect(() => {
     function handle(e: MouseEvent) {
       const target = e.target as Node;
-
       if (profileRef.current && !profileRef.current.contains(target)) {
         setProfileOpen(false);
       }
-
-      // Close inbox only if the click is outside BOTH the desktop and mobile containers
       const insideDesktop = inboxDesktop.current?.contains(target) ?? false;
       const insideMobile  = inboxMobile.current?.contains(target)  ?? false;
-      if (!insideDesktop && !insideMobile) {
-        setInboxOpen(false);
-      }
+      if (!insideDesktop && !insideMobile) setInboxOpen(false);
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
@@ -94,33 +84,26 @@ export default function AppShell({
     ? localNotifs.filter((n) => !n.read).length
     : unreadNotifications;
 
-  /* ── mark one read ─────────────────────────────────────── */
   const markRead = async (id: number) => {
     setLocalNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    try {
-      await fetch(`/api/notifications/${id}`, { method: "PATCH" });
-    } catch { /* silent */ }
+    try { await fetch(`/api/notifications/${id}`, { method: "PATCH" }); } catch { /* silent */ }
   };
 
-  /* ── mark all read ─────────────────────────────────────── */
   const markAllRead = async () => {
     setLocalNotifs(prev => prev.map(n => ({ ...n, read: true })));
-    try {
-      await fetch("/api/notifications", { method: "PATCH" });
-    } catch { /* silent */ }
+    try { await fetch("/api/notifications", { method: "PATCH" }); } catch { /* silent */ }
   };
 
-  /* ── nav helpers ───────────────────────────────────────── */
   const isTabActive = (itemTab: string) =>
     pathname === "/dashboard" && tab === itemTab;
 
   const navItems = [
-    { label: "Home",           icon: HomeIcon,  href: "/dashboard?tab=home",           active: isTabActive("home") },
-    { label: "Projects",       icon: FolderOpen,href: "/dashboard?tab=projects",       active: isTabActive("projects") },
-    { label: "Discover",       icon: Search,    href: "/projects",                     active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
-    { label: "Collaborations", icon: Users,     href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
-    { label: "Hackathons",     icon: Trophy,    href: "/dashboard?tab=hackathons",     active: isTabActive("hackathons") },
-    { label: "Bookmarks",      icon: Bookmark,  href: "/dashboard?tab=bookmarks",      active: isTabActive("bookmarks") },
+    { label: "Home",           icon: HomeIcon,   href: "/dashboard?tab=home",           active: isTabActive("home") },
+    { label: "Projects",       icon: FolderOpen, href: "/dashboard?tab=projects",       active: isTabActive("projects") },
+    { label: "Discover",       icon: Search,     href: "/projects",                     active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
+    { label: "Collaborations", icon: Users,      href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
+    { label: "Hackathons",     icon: Trophy,     href: "/dashboard?tab=hackathons",     active: isTabActive("hackathons") },
+    { label: "Bookmarks",      icon: Bookmark,   href: "/dashboard?tab=bookmarks",      active: isTabActive("bookmarks") },
   ];
 
   const spaceItems = [
@@ -129,10 +112,9 @@ export default function AppShell({
     { label: "Invitations",  icon: Mail,       href: "/dashboard?tab=invitations",  active: isTabActive("invitations") },
   ];
 
-  /* ── inbox dropdown content ────────────────────────────── */
+  /* ── Inbox dropdown ──────────────────────────────────── */
   const inboxDropdownContent = (
     <>
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <Inbox size={14} strokeWidth={1.75} className="text-foreground" />
@@ -154,7 +136,6 @@ export default function AppShell({
         )}
       </div>
 
-      {/* List */}
       <div className="max-h-[360px] overflow-y-auto divide-y divide-border">
         {localNotifs.length === 0 ? (
           <div className="px-4 py-10 text-center">
@@ -170,7 +151,7 @@ export default function AppShell({
               }`}
               onClick={() => !n.read && markRead(n.id)}
             >
-              <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 transition-all ${n.read ? "bg-transparent" : "bg-foreground"}`} />
+              <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-transparent" : "bg-foreground"}`} />
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] text-foreground leading-relaxed">{n.message}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">
@@ -195,7 +176,6 @@ export default function AppShell({
         )}
       </div>
 
-      {/* Footer */}
       {localNotifs.length > 0 && (
         <div className="px-4 py-2.5 border-t border-border">
           <button
@@ -213,76 +193,89 @@ export default function AppShell({
   return (
     <div className="min-h-screen flex bg-background text-foreground">
 
-      {/* ── Desktop Sidebar ─────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card shrink-0 h-screen sticky top-0">
-        {/* Logo */}
-        <div className="h-14 border-b border-border px-5 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <ColabroLogo size={32} />
-            <span className="text-[15px] font-bold tracking-tight text-foreground"
-              style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}>
+      {/* ── Desktop Sidebar ─────────────────────────────── */}
+      <aside className="hidden md:flex flex-col w-60 border-r border-border bg-card shrink-0 h-screen sticky top-0">
+
+        {/* Logo row */}
+        <div className="h-14 border-b border-border px-4 flex items-center justify-between gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+            <ColabroLogo size={28} />
+            <span
+              className="text-[14px] font-bold tracking-tight text-foreground truncate"
+              style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}
+            >
               Colabro
             </span>
           </Link>
           <ThemeToggle />
         </div>
 
-        {/* Main nav */}
-        <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
-          <div className="space-y-0.5">
+        {/* Nav */}
+        <nav className="flex-1 px-2.5 py-3 space-y-5 overflow-y-auto">
+
+          <div className="space-y-px">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
                 prefetch={true}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors group ${
                   item.active
                     ? "bg-secondary text-foreground font-semibold"
-                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                 }`}
               >
-                <item.icon size={16} strokeWidth={item.active ? 2.25 : 1.75} />
+                {/* Active indicator bar */}
+                {item.active && (
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-foreground" aria-hidden="true" />
+                )}
+                <item.icon size={15} strokeWidth={item.active ? 2.25 : 1.75} className="shrink-0" />
                 {item.label}
               </Link>
             ))}
           </div>
 
           {/* Spaces */}
-          <div className="space-y-1">
-            <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              Spaces
+          <div>
+            <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-1.5">
+              My Space
             </p>
-            {spaceItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
-                  item.active
-                    ? "bg-secondary text-foreground font-semibold"
-                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                }`}
-              >
-                <item.icon size={16} strokeWidth={item.active ? 2.25 : 1.75} />
-                {item.label}
-              </Link>
-            ))}
+            <div className="space-y-px">
+              {spaceItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                    item.active
+                      ? "bg-secondary text-foreground font-semibold"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                  }`}
+                >
+                  {item.active && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-foreground" aria-hidden="true" />
+                  )}
+                  <item.icon size={15} strokeWidth={item.active ? 2.25 : 1.75} className="shrink-0" />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
 
-          {/* Admin — only visible to ADMIN role */}
+          {/* Admin */}
           {(user as any)?.role === "ADMIN" && (
-            <div className="space-y-1">
-              <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            <div>
+              <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-1.5">
                 Admin
               </p>
               <Link
                 href="/admin"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                   pathname === "/admin"
                     ? "bg-destructive/10 text-destructive font-semibold"
                     : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                 }`}
               >
-                <ShieldAlert size={16} strokeWidth={pathname === "/admin" ? 2.25 : 1.75} />
+                <ShieldAlert size={15} strokeWidth={pathname === "/admin" ? 2.25 : 1.75} />
                 Console
               </Link>
             </div>
@@ -290,16 +283,17 @@ export default function AppShell({
         </nav>
 
         {/* User footer */}
-        <div className="p-4 border-t border-border relative" ref={profileRef}>
-          <div
+        <div className="p-3 border-t border-border relative" ref={profileRef}>
+          <button
+            type="button"
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center justify-between gap-3 p-1.5 rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors"
+            className="w-full flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-secondary/60 cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="h-8 w-8 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0 overflow-hidden">
                 {user?.image
-                  ? <Image src={user.image} alt={user.name || "Avatar"} width={32} height={32} className="object-cover h-full w-full" unoptimized />
-                  : <span className="text-[12px] font-bold text-foreground">{initials}</span>
+                  ? <Image src={user.image} alt={user.name || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
+                  : <span className="text-[11px] font-bold text-foreground">{initials}</span>
                 }
               </div>
               <div className="text-left overflow-hidden">
@@ -307,18 +301,18 @@ export default function AppShell({
                 <p className="text-[10px] text-muted-foreground leading-none truncate mt-0.5">{user?.email || ""}</p>
               </div>
             </div>
-            <MoreVertical size={14} className="text-muted-foreground shrink-0" />
-          </div>
+            <MoreHorizontal size={14} className="text-muted-foreground shrink-0" />
+          </button>
 
           {profileOpen && (
-            <div className="absolute left-4 bottom-16 right-4 bg-card border border-border rounded-xl shadow-lg p-1.5 z-50 animate-fade-in">
+            <div className="absolute left-3 bottom-[calc(100%-8px)] right-3 bg-card border border-border rounded-xl shadow-lg p-1.5 z-50 animate-fade-in">
               {user?.role === "ADMIN" && (
                 <Link
                   href="/admin"
                   onClick={() => setProfileOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-bold text-amber-500 hover:bg-amber-500/10 transition-colors"
                 >
-                  <ShieldAlert size={14} />
+                  <ShieldAlert size={13} />
                   Admin Portal
                 </Link>
               )}
@@ -327,14 +321,15 @@ export default function AppShell({
                 onClick={() => setProfileOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
               >
-                <Settings size={14} />
+                <Settings size={13} />
                 Profile Settings
               </Link>
+              <div className="h-px bg-border my-1" />
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium text-destructive hover:bg-destructive/10 transition-colors text-left cursor-pointer"
               >
-                <LogOut size={14} />
+                <LogOut size={13} />
                 Sign out
               </button>
             </div>
@@ -342,79 +337,71 @@ export default function AppShell({
         </div>
       </aside>
 
-      {/* ── Main column ─────────────────────────────────────── */}
+      {/* ── Main column ─────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
 
         {/* Desktop header */}
-        <header className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card sticky top-0 z-40">
-
-          {/* Search bar */}
-          <div className="relative w-72 max-w-xs">
-            <Search
-              size={13}
-              strokeWidth={1.75}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-            />
+        <header className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card/95 backdrop-blur-sm sticky top-0 z-40">
+          <div className="relative w-64">
+            <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               placeholder="Search projects, skills…"
               onClick={() => router.push("/projects")}
               readOnly
-              className="w-full pl-[2.125rem] pr-14 py-1.5 bg-secondary/50 border border-border rounded-lg text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-muted-foreground/50 transition-colors cursor-pointer"
+              className="w-full pl-9 pr-12 py-1.5 bg-secondary/50 border border-border rounded-lg text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-muted-foreground/40 transition-colors cursor-pointer"
             />
             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-              <kbd className="text-[10px] font-mono text-muted-foreground bg-card border border-border px-1.5 py-0.5 rounded shadow-sm">
-                ⌘K
-              </kbd>
+              <kbd className="text-[10px] font-mono text-muted-foreground bg-card border border-border px-1.5 py-0.5 rounded shadow-sm">⌘K</kbd>
             </span>
           </div>
 
-          {/* Right — inbox (desktop) + theme toggle */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <div className="relative" ref={inboxDesktop}>
-            <button
-              onClick={() => setInboxOpen(prev => !prev)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors cursor-pointer ${
-                inboxOpen
-                  ? "bg-secondary border-border text-foreground"
-                  : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
-              aria-label="Open inbox"
-              aria-expanded={inboxOpen}
-            >
-              <Inbox size={14} strokeWidth={1.75} />
-              Inbox
-              {unreadCount > 0 && (
-                <span className="h-4 min-w-[16px] px-1 rounded-full bg-foreground text-background text-[9px] font-bold flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-
-            {inboxOpen && (
-              <div
-                className="absolute right-0 top-[calc(100%+8px)] w-80 bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden"
-                style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)" }}
+              <button
+                onClick={() => setInboxOpen(prev => !prev)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors cursor-pointer ${
+                  inboxOpen
+                    ? "bg-secondary border-border text-foreground"
+                    : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+                aria-label="Open inbox"
+                aria-expanded={inboxOpen}
               >
-                {inboxDropdownContent}
-              </div>
-            )}
+                <Inbox size={14} strokeWidth={1.75} />
+                Inbox
+                {unreadCount > 0 && (
+                  <span className="h-4 min-w-[16px] px-1 rounded-full bg-foreground text-background text-[9px] font-bold flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {inboxOpen && (
+                <div
+                  className="absolute right-0 top-[calc(100%+8px)] w-80 bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden"
+                  style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)" }}
+                >
+                  {inboxDropdownContent}
+                </div>
+              )}
             </div>
           </div>
         </header>
 
         {/* Mobile header */}
         <header className="flex md:hidden h-14 border-b border-border items-center justify-between px-4 bg-card sticky top-0 z-40">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <ColabroLogo size={30} />
-            <span className="text-[15px] font-bold tracking-tight text-foreground"
-              style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}>
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <ColabroLogo size={28} />
+            <span
+              className="text-[14px] font-bold tracking-tight text-foreground"
+              style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}
+            >
               Colabro
             </span>
           </Link>
 
-          {/* Mobile inbox + theme toggle (separate ref) */}
           <div className="flex items-center gap-2 relative" ref={inboxMobile}>
             <ThemeToggle />
             <button
@@ -449,42 +436,29 @@ export default function AppShell({
         </div>
       </div>
 
-      {/* ── Mobile bottom nav ───────────────────────────────── */}
+      {/* ── Mobile bottom nav ───────────────────────────── */}
       <nav className="fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-card/95 backdrop-blur-md flex items-center justify-around z-50 md:hidden pb-safe">
-        <Link
-          href="/dashboard?tab=home"
-          className={`flex flex-col items-center justify-center gap-1 w-12 ${
-            isTabActive("home") ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          <HomeIcon size={18} strokeWidth={isTabActive("home") ? 2.25 : 1.75} />
-          <span className="text-[10px] font-medium">Home</span>
-        </Link>
+        {[
+          { href: "/dashboard?tab=home", icon: HomeIcon, label: "Home", active: isTabActive("home") },
+          { href: "/projects", icon: Search, label: "Discover", active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
+          { href: "/dashboard?tab=collaborations", icon: Users, label: "Collabs", active: isTabActive("collaborations") },
+        ].map(({ href, icon: Icon, label, active }) => (
+          <Link
+            key={label}
+            href={href}
+            className={`flex flex-col items-center justify-center gap-0.5 w-14 py-1 rounded-xl transition-colors ${
+              active ? "text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            <Icon size={19} strokeWidth={active ? 2.25 : 1.75} />
+            <span className="text-[10px] font-medium">{label}</span>
+          </Link>
+        ))}
 
-        <Link
-          href="/projects"
-          className={`flex flex-col items-center justify-center gap-1 w-12 ${
-            pathname.startsWith("/projects") && !pathname.endsWith("/create") ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          <Search size={18} strokeWidth={pathname.startsWith("/projects") && !pathname.endsWith("/create") ? 2.25 : 1.75} />
-          <span className="text-[10px] font-medium">Discover</span>
-        </Link>
-
-        <Link
-          href="/dashboard?tab=collaborations"
-          className={`flex flex-col items-center justify-center gap-1 w-12 ${
-            isTabActive("collaborations") ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          <Users size={18} strokeWidth={isTabActive("collaborations") ? 2.25 : 1.75} />
-          <span className="text-[10px] font-medium">Collabs</span>
-        </Link>
-
-        {/* Profile tab — opens sheet instead of navigating */}
         <button
+          type="button"
           onClick={() => setMobileProfileOpen(true)}
-          className={`flex flex-col items-center justify-center gap-1 w-12 ${
+          className={`flex flex-col items-center justify-center gap-0.5 w-14 py-1 rounded-xl transition-colors ${
             isTabActive("profile") ? "text-foreground" : "text-muted-foreground"
           }`}
         >
@@ -498,22 +472,18 @@ export default function AppShell({
         </button>
       </nav>
 
-      {/* ── Mobile profile sheet ─────────────────────────────── */}
+      {/* ── Mobile profile sheet ─────────────────────────── */}
       {mobileProfileOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm md:hidden"
             onClick={() => setMobileProfileOpen(false)}
           />
-          {/* Sheet */}
           <div className="fixed bottom-0 left-0 right-0 z-[70] bg-card rounded-t-2xl shadow-2xl md:hidden animate-slide-up">
-            {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="h-1 w-10 rounded-full bg-border" />
             </div>
 
-            {/* User info */}
             <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
               <div className="h-11 w-11 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
                 {user?.image
@@ -527,8 +497,7 @@ export default function AppShell({
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="px-3 py-2 space-y-0.5">
+            <div className="px-3 py-2 space-y-px">
               {user?.role === "ADMIN" && (
                 <Link
                   href="/admin"
@@ -550,9 +519,9 @@ export default function AppShell({
               <ThemeToggleRow />
             </div>
 
-            <div className="h-px bg-border mx-4" />
+            <div className="h-px bg-border mx-4 my-1" />
 
-            <div className="px-3 py-2">
+            <div className="px-3 pb-2">
               <button
                 onClick={() => { setMobileProfileOpen(false); signOut({ callbackUrl: "/" }); }}
                 className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[13px] font-medium text-destructive hover:bg-destructive/10 transition-colors text-left"
@@ -562,17 +531,14 @@ export default function AppShell({
               </button>
             </div>
 
-            {/* Safe area spacer for phones with home indicator */}
             <div className="h-6" />
           </div>
         </>
       )}
-
     </div>
   );
 }
 
-/* ── Inline theme toggle row for mobile sheet ── */
 function ThemeToggleRow() {
   const { theme, toggle } = useTheme();
   return (
@@ -587,9 +553,7 @@ function ThemeToggleRow() {
         }
         {theme === "dark" ? "Light mode" : "Dark mode"}
       </span>
-      <span className="text-[11px] text-muted-foreground">
-        {theme === "dark" ? "On" : "Off"}
-      </span>
+      <span className="text-[11px] text-muted-foreground">{theme === "dark" ? "On" : "Off"}</span>
     </button>
   );
 }

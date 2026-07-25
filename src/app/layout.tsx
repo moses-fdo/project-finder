@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Outfit, Bricolage_Grotesque } from "next/font/google";
 import { Suspense } from "react";
 import NavigationProgress from "@/components/NavigationProgress";
-import CustomCursor from "@/components/CustomCursor";
 import ThemeProvider from "@/components/ThemeProvider";
+import CustomCursor from "@/components/CustomCursor";
 import "./globals.css";
+import "../styles/animations.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -28,7 +29,7 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Colabro — Campus Project & Hackathon Collaboration Platform",
+  title: "Colabro \u2013 Campus Project & Hackathon Collaboration Platform",
   description:
     "Find collaborators, post projects, and build together. Colabro connects students and developers across campus.",
   keywords: ["Colabro", "Project Collaboration", "Hackathons", "Student Portal", "Team Finder"],
@@ -47,7 +48,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Inline script — runs before paint to set dark class, preventing flash */}
+        {/* Inline script -- runs before paint to set dark class, preventing flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('colabro-theme');if(t==='dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})()`,

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, GraduationCap, Calendar, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 const departments = [
   "Computer Science",
@@ -20,6 +20,24 @@ interface OnboardingModalProps {
   onComplete?: (updatedUser?: any) => void;
 }
 
+function parseError(error: unknown, defaultMessage: string): Promise<string> {
+  if (!error) return Promise.resolve(defaultMessage);
+  if (typeof error === "string") return Promise.resolve(error);
+  if (error instanceof Error) return Promise.resolve(error.message);
+  if (error instanceof Response) {
+    try {
+      const clone = error.clone(); // Important for consumed responses
+      return clone.json().then(
+        (data: any) => data.error || defaultMessage,
+        () => defaultMessage
+      );
+    } catch {
+      return Promise.resolve(defaultMessage);
+    }
+  }
+  return Promise.resolve(defaultMessage);
+}
+
 export default function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
   const router = useRouter();
   const [name, setName] = useState(user?.name || "");
@@ -29,7 +47,6 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState(false);
 
-  // Check if onboarding is needed
   const needsOnboarding = !completed && (!user?.department || !user?.year || !user?.name);
 
   if (!needsOnboarding) return null;
@@ -66,14 +83,23 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update profile.");
+      if (!res.ok) {
+        try {
+          const data = await res.json();
+          setError(data.error || "Failed to update profile.");
+        } catch {
+          setError("Failed to update profile.");
+        }
+        setLoading(false);
+        return;
+      }
 
+      const data = await res.json();
       setCompleted(true);
-      if (onComplete) onComplete(data.user);
+      if (onComplete && data.user) onComplete(data.user);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+    } catch (err: unknown) {
+      setError(await parseError(err, "Something went wrong."));
     } finally {
       setLoading(false);
     }
@@ -82,7 +108,6 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
   return (
     <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="card w-full max-w-[420px] p-7 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-border bg-card">
-        
         <div className="flex items-center gap-3 mb-5">
           <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-semibold text-[18px]">
             👋
@@ -106,7 +131,6 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Full Name
             </label>
             <div className="relative">
-              <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 id="onboard-name"
                 type="text"
@@ -125,7 +149,6 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Department / Course
             </label>
             <div className="relative">
-              <GraduationCap size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
               <select
                 id="onboard-dept"
                 required
@@ -135,7 +158,9 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               >
                 <option value="">Select your department…</option>
                 {departments.map((d) => (
-                  <option key={d} value={d}>{d}</option>
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
                 ))}
               </select>
             </div>
@@ -147,7 +172,6 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Year of Study
             </label>
             <div className="relative">
-              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
               <select
                 id="onboard-year"
                 required

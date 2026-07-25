@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export default function NavigationProgress() {
@@ -11,6 +11,7 @@ export default function NavigationProgress() {
 
   // Trigger progress bar whenever route or search params change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setProgress(30);
 
