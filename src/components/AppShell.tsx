@@ -18,6 +18,7 @@ import {
   Send,
   Mail,
   Inbox,
+  MessageSquare,
   MoreHorizontal,
   LogOut,
   Settings,
@@ -128,12 +129,13 @@ export default function AppShell({
     pathname === "/dashboard" && tab === itemTab;
 
   const navItems = [
-    { label: "Home",           icon: HomeIcon,   href: "/dashboard?tab=home",           active: isTabActive("home") },
-    { label: "Projects",       icon: FolderOpen, href: "/dashboard?tab=projects",       active: isTabActive("projects") },
-    { label: "Discover",       icon: Search,     href: "/projects",                     active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
-    { label: "Collaborations", icon: Users,      href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
-    { label: "Hackathons",     icon: Trophy,     href: "/dashboard?tab=hackathons",     active: isTabActive("hackathons") },
-    { label: "Bookmarks",      icon: Bookmark,   href: "/dashboard?tab=bookmarks",      active: isTabActive("bookmarks") },
+    { label: "Home",           icon: HomeIcon,        href: "/dashboard?tab=home",           active: isTabActive("home") },
+    { label: "Projects",       icon: FolderOpen,      href: "/dashboard?tab=projects",       active: isTabActive("projects") },
+    { label: "Discover",       icon: Search,          href: "/projects",                     active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
+    { label: "Collaborations", icon: Users,           href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
+    { label: "Messages",       icon: MessageSquare,   href: "/messages",                     active: pathname.startsWith("/messages") },
+    { label: "Hackathons",     icon: Trophy,          href: "/dashboard?tab=hackathons",     active: isTabActive("hackathons") },
+    { label: "Bookmarks",      icon: Bookmark,        href: "/dashboard?tab=bookmarks",      active: isTabActive("bookmarks") },
   ];
 
   const spaceItems = [
