@@ -136,6 +136,19 @@ model Event {
   updatedAt       DateTime @updatedAt
 }
 
+model Hackathon {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  date        String
+  location    String
+  teamSize    String   @default("1 - 4 Members")
+  prize       String?
+  link        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model AllowedEmail {
   id        Int      @id @default(autoincrement())
   email     String   @unique

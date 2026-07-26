@@ -1884,7 +1884,7 @@ function CollaborationsFinder({
                         </Link>
                       </h3>
                       <p className="text-[10.5px] text-muted-foreground truncate font-normal mt-0.5">
-                        Year {u.year} · {u.department.split(" ").slice(0, 2).join(" ")}
+                        Year {u.year || "N/A"}{u.department ? ` · ${u.department.split(" ").slice(0, 2).join(" ")}` : ""}
                       </p>
                     </div>
                   </div>
