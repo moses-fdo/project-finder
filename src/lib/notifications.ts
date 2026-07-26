@@ -39,14 +39,16 @@ export function getNotificationLink(notification: NotificationLike): string {
     return "/dashboard?tab=applications";
   }
 
-  // Hackathons / announcements
+  // Events / announcements
   if (
+    type === "EVENT" ||
     type === "HACKATHON" ||
     type === "SYSTEM" ||
+    msg.includes("event") ||
     msg.includes("hackathon") ||
     msg.includes("competition")
   ) {
-    return "/dashboard?tab=hackathons";
+    return "/dashboard?tab=events";
   }
 
   return "/dashboard?tab=notifications";

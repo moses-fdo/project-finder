@@ -131,7 +131,7 @@ export async function POST(req: Request) {
       );
     }
 
-    await prisma.hackathon.createMany({ data: newHackathons });
+    await prisma.event.createMany({ data: newHackathons });
 
     const users = await prisma.user.findMany({ select: { id: true } });
     if (users.length > 0) {

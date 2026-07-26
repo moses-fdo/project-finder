@@ -156,9 +156,9 @@ export default async function DashboardPage({
       },
       orderBy: { createdAt: "desc" },
     }),
-    // 8: Hackathons
-    prisma.hackathon.findMany({
-      take: 10,
+    // 8: Events
+    prisma.event.findMany({
+      take: 100,
       orderBy: { createdAt: "desc" },
     }),
     // 9: Recommended projects
@@ -220,6 +220,8 @@ export default async function DashboardPage({
     }),
   ]);
 
+  const events = hackathons; // destructuring alias
+
   // Derived fast sidebars
   const myProjectsSidebar = projects.slice(0, 5).map((p) => ({ id: p.id, title: p.title, status: p.status }));
   const myApplicationsSidebar = applications.slice(0, 5).map((a) => ({ id: a.id, status: a.status, project: { id: a.project.id, title: a.project.title } }));
@@ -237,7 +239,8 @@ export default async function DashboardPage({
         profileData={profileData}
         collaborations={collaborations}
         bookmarks={bookmarks}
-        hackathons={hackathons}
+        events={events}
+        hackathons={events}
         recommendedProjects={recommendedProjects}
         receivedInvitations={receivedInvitations}
         sentInvitations={sentInvitations}

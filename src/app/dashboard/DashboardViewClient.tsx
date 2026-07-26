@@ -40,6 +40,7 @@ interface DashboardViewClientProps {
   profileData: any;
   collaborations?: any[];
   bookmarks?: any[];
+  events?: any[];
   hackathons?: any[];
   recommendedProjects?: any[];
   receivedInvitations?: any[];
@@ -92,6 +93,7 @@ export default function DashboardViewClient({
   profileData,
   collaborations = [],
   bookmarks = [],
+  events = [],
   hackathons = [],
   recommendedProjects = [],
   receivedInvitations = [],
@@ -109,6 +111,8 @@ export default function DashboardViewClient({
 
   // Derive currentTab directly from prop — no effect needed
   const currentTab = activeTab || "home";
+
+  const [eventFilter, setEventFilter] = useState<"all" | "active" | "ended">("active");
 
   const [profileName,     setProfileName]     = useState(profileData?.name         || "");
   const [profileDept,     setProfileDept]     = useState(profileData?.department   || "");
@@ -608,68 +612,194 @@ export default function DashboardViewClient({
 
 
 
-      {/* ── HACKATHONS VIEW ────────────────────────────────── */}
-      {currentTab === "hackathons" && (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-[17px] font-bold text-foreground tracking-tight">Campus Hackathons</h2>
-            <p className="text-[12px] text-muted-foreground mt-0.5">Participate in campus and student-led hackathons &amp; competitions.</p>
+      {/* ── EVENTS VIEW ─────────────────────────────────────── */}
+      {(currentTab === "events" || currentTab === "hackathons") && (() => {
+        const eventsList = (events && events.length > 0) ? events : hackathons;
+        const nowMs = Date.now();
+
+        const activeEvents = eventsList.filter((h: any) => {
+          if (!h.endDate) return true;
+          const endMs = new Date(h.endDate).getTime();
+          return isNaN(endMs) || endMs >= nowMs;
+        });
+
+        const endedEvents = eventsList.filter((h: any) => {
+          if (!h.endDate) return false;
+          const endMs = new Date(h.endDate).getTime();
+          return !isNaN(endMs) && endMs < nowMs;
+        });
+
+        const displayEvents = eventFilter === "active" ? activeEvents : (eventFilter === "ended" ? endedEvents : eventsList);
+
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-[17px] font-bold text-foreground tracking-tight">Events &amp; Competitions</h2>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Explore hackathons, hiring challenges, and tech events from top platforms &amp; universities.</p>
+              </div>
+
+              {/* Sub-filters for Active vs Ended */}
+              <div className="flex items-center gap-1.5 p-1 bg-secondary/50 rounded-xl border border-border shrink-0 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setEventFilter("active")}
+                  className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    eventFilter === "active"
+                      ? "bg-card text-foreground shadow-sm font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Upcoming &amp; Live ({activeEvents.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEventFilter("ended")}
+                  className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    eventFilter === "ended"
+                      ? "bg-card text-foreground shadow-sm font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Past Events ({endedEvents.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEventFilter("all")}
+                  className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    eventFilter === "all"
+                      ? "bg-card text-foreground shadow-sm font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All ({eventsList.length})
+                </button>
+              </div>
+            </div>
+
+            {displayEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {displayEvents.map((h: any) => {
+                  const isEnded = h.endDate ? new Date(h.endDate).getTime() < nowMs : false;
+                  const locationStr = [h.location, h.city, h.state, h.country].filter(Boolean).join(", ") || h.location || "Online";
+
+                  return (
+                    <div
+                      key={h.id}
+                      className={`card p-5 space-y-4 flex flex-col justify-between border-border relative transition-all hover:border-primary/40 ${
+                        isEnded ? "opacity-75 bg-card/60" : ""
+                      }`}
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold shrink-0 text-[18px]">
+                              🏆
+                            </div>
+                            <div>
+                              <h3 className="text-[15px] font-bold text-foreground leading-snug line-clamp-1">{h.title}</h3>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                {h.organizer && (
+                                  <span className="text-[11px] font-semibold text-foreground/90">{h.organizer}</span>
+                                )}
+                                {h.organizerType && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-medium">
+                                    {h.organizerType}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Status Badge */}
+                          {isEnded ? (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border shrink-0">
+                              Ended
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+                              Live / Upcoming
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3">
+                          {h.description}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground font-medium pt-2 border-t border-border/50">
+                          <div>
+                            <span className="text-foreground font-semibold">📅 Dates:</span>{" "}
+                            {h.startDate
+                              ? `${h.startDate}${h.endDate ? ` → ${h.endDate}` : ""}`
+                              : (h.date || "TBA")}
+                          </div>
+                          <div>
+                            <span className="text-foreground font-semibold">📍 Venue:</span> {locationStr}
+                          </div>
+                          {h.mode && (
+                            <div>
+                              <span className="text-foreground font-semibold">🌐 Mode:</span> {h.mode}
+                            </div>
+                          )}
+                          {h.registrationFee && (
+                            <div>
+                              <span className="text-foreground font-semibold">💳 Fee:</span> {h.registrationFee}
+                            </div>
+                          )}
+                          {h.prize && (
+                            <div className="col-span-2 text-amber-500 font-semibold line-clamp-1">
+                              🏆 Prize Pool: {h.prize}
+                            </div>
+                          )}
+                          {h.source && (
+                            <div className="col-span-2 text-[10px] text-muted-foreground/80">
+                              Source: {h.source}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {h.link ? (
+                        <div className="border-t border-border pt-3">
+                          <a
+                            href={h.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`w-full justify-center text-[12px] py-2 flex items-center gap-1.5 font-bold transition-all rounded-lg ${
+                              isEnded
+                                ? "btn-secondary text-muted-foreground hover:text-foreground opacity-80"
+                                : "btn-primary"
+                            }`}
+                          >
+                            {isEnded ? "View Event Page ↗" : "Register Now ↗"}
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="border-t border-border pt-3">
+                          <span className="text-[11px] text-muted-foreground italic">Registration opens soon</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="card p-12 text-center space-y-2">
+                <Trophy size={32} className="mx-auto text-muted-foreground/40" />
+                <p className="text-[14px] font-medium text-foreground">
+                  {eventFilter === "active" ? "No upcoming events right now" : "No events found"}
+                </p>
+                <p className="text-[12px] text-muted-foreground">
+                  {eventFilter === "active"
+                    ? "Check back soon for new hackathons and competitions, or view past events."
+                    : "Try switching filters to view upcoming or past events."}
+                </p>
+              </div>
+            )}
           </div>
-
-          {hackathons.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {hackathons.map((h) => (
-                <div key={h.id} className="card p-5 space-y-4 flex flex-col justify-between border-border relative">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold shrink-0 text-[18px]">
-                        🏆
-                      </div>
-                      <div>
-                        <h3 className="text-[15px] font-bold text-foreground leading-snug">{h.title}</h3>
-                        <span className="text-[10px] text-muted-foreground font-medium">📅 {h.date}</span>
-                      </div>
-                    </div>
-
-                    <p className="text-[12px] text-muted-foreground leading-relaxed pt-1">
-                      {h.description}
-                    </p>
-
-                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground font-medium pt-2">
-                      <span className="flex items-center gap-1">📍 {h.location}</span>
-                      <span className="flex items-center gap-1">👥 {h.teamSize}</span>
-                      {h.prize && <span className="flex items-center gap-1 text-amber-500 font-semibold">🏆 {h.prize}</span>}
-                    </div>
-                  </div>
-
-                  {h.link ? (
-                    <div className="border-t border-border pt-3">
-                      <a
-                        href={h.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-primary w-full justify-center text-[12px] py-2 flex items-center gap-1.5 font-bold"
-                      >
-                        Register Now ↗
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="border-t border-border pt-3">
-                      <span className="text-[11px] text-muted-foreground italic">Registration opens soon</span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="card p-12 text-center space-y-2">
-              <Trophy size={32} className="mx-auto text-muted-foreground/40" />
-              <p className="text-[14px] font-medium text-foreground">No upcoming hackathons right now</p>
-              <p className="text-[12px] text-muted-foreground">Check back soon for upcoming student hackathons and competitions.</p>
-            </div>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── BOOKMARKS ─────────────────────────────────────── */}
       {currentTab === "bookmarks" && (

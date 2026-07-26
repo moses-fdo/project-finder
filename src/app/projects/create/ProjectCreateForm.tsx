@@ -20,7 +20,7 @@ const CATEGORIES = [
 ];
 
 const PROJECT_TYPES = [
-  "Hackathon",
+  "Event / Hackathon",
   "Side Project",
   "Academic / Course",
   "Open Source",

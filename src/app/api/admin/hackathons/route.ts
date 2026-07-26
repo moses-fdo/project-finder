@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const hackathons = await prisma.hackathon.findMany({
+    const hackathons = await prisma.event.findMany({
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(hackathons);
@@ -25,16 +25,16 @@ export async function POST(req: Request) {
 
     const { title, description, date, location, teamSize, prize, link } = await req.json();
 
-    if (!title || !description || !date || !location) {
-      return NextResponse.json({ error: "Title, description, date, and location are required." }, { status: 400 });
+    if (!title || !description) {
+      return NextResponse.json({ error: "Title and description are required." }, { status: 400 });
     }
 
-    const hackathon = await prisma.hackathon.create({
+    const hackathon = await prisma.event.create({
       data: {
         title: title.trim(),
         description: description.trim(),
-        date: date.trim(),
-        location: location.trim(),
+        date: date ? date.trim() : "TBA",
+        location: location ? location.trim() : null,
         teamSize: teamSize ? teamSize.trim() : "1 - 4 Members",
         prize: prize ? prize.trim() : null,
         link: link ? link.trim() : null,

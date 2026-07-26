@@ -14,18 +14,18 @@ export default async function Home() {
   let users = 0;
   let projects = 0;
   let openProjects = 0;
-  let hackathons = 0;
+  let events = 0;
 
   try {
     users        = await prisma.user.count();
     projects     = await prisma.project.count();
     openProjects = await prisma.project.count({ where: { status: "OPEN" } });
-    hackathons   = await prisma.hackathon.count();
+    events       = await prisma.event.count();
   } catch {
     // DB unavailable — render page with zeros rather than 500ing
   }
 
   return (
-    <LandingPage stats={{ users, projects, openProjects, hackathons }} />
+    <LandingPage stats={{ users, projects, openProjects, events, hackathons: events }} />
   );
 }

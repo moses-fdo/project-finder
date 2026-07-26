@@ -132,7 +132,7 @@ export default function AppShell({
     { label: "Projects",       icon: FolderOpen, href: "/dashboard?tab=projects",       active: isTabActive("projects") },
     { label: "Discover",       icon: Search,     href: "/projects",                     active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
     { label: "Collaborators",  icon: Users,      href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
-    { label: "Hackathons",     icon: Trophy,     href: "/dashboard?tab=hackathons",     active: isTabActive("hackathons") },
+    { label: "Events",         icon: Trophy,     href: "/dashboard?tab=events",         active: isTabActive("events") || isTabActive("hackathons") },
     { label: "Bookmarks",      icon: Bookmark,   href: "/dashboard?tab=bookmarks",      active: isTabActive("bookmarks") },
   ];
 
@@ -638,7 +638,7 @@ export default function AppShell({
                     router.push(`/projects?q=${encodeURIComponent(searchQuery.trim())}`);
                   }
                 }}
-                placeholder="Search projects, skills, hackathons… (Press Enter)"
+                placeholder="Search projects, skills, events… (Press Enter)"
                 className="w-full bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
               <kbd className="text-[10px] font-mono text-muted-foreground bg-secondary border border-border px-1.5 py-0.5 rounded">ESC</kbd>
@@ -669,7 +669,7 @@ export default function AppShell({
               {[
                 { label: "Discover Projects", href: "/projects", icon: Search },
                 { label: "Create New Project", href: "/projects/create", icon: FolderOpen },
-                { label: "Hackathons", href: "/dashboard?tab=hackathons", icon: Trophy },
+                { label: "Events & Competitions", href: "/dashboard?tab=events", icon: Trophy },
                 { label: "My Applications", href: "/dashboard?tab=applications", icon: Send },
                 { label: "Profile Settings", href: "/dashboard?tab=profile", icon: Settings },
               ]
@@ -693,7 +693,7 @@ export default function AppShell({
                 [
                   { label: "Discover Projects", href: "/projects", icon: Search },
                   { label: "Create New Project", href: "/projects/create", icon: FolderOpen },
-                  { label: "Hackathons", href: "/dashboard?tab=hackathons", icon: Trophy },
+                  { label: "Events & Competitions", href: "/dashboard?tab=events", icon: Trophy },
                   { label: "My Applications", href: "/dashboard?tab=applications", icon: Send },
                   { label: "Profile Settings", href: "/dashboard?tab=profile", icon: Settings },
                 ].filter((item) => item.label.toLowerCase().includes(searchQuery.toLowerCase().trim())).length === 0 && (

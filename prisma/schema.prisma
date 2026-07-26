@@ -113,17 +113,27 @@ model Bookmark {
   @@id([userId, projectId])
 }
 
-model Hackathon {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  date        String
-  location    String
-  teamSize    String   @default("1 - 4 Members")
-  prize       String?
-  link        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Event {
+  id              Int      @id @default(autoincrement())
+  title           String
+  organizer       String?
+  organizerType   String?
+  location        String?
+  city            String?
+  state           String?
+  country         String?
+  mode            String?
+  registrationFee String?
+  startDate       String?
+  endDate         String?
+  date            String?
+  teamSize        String   @default("1 - 4 Members")
+  prize           String?
+  link            String?
+  source          String?
+  description     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model AllowedEmail {

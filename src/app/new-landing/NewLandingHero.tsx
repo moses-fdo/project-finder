@@ -14,7 +14,8 @@ interface Stats {
   users: number;
   projects: number;
   openProjects: number;
-  hackathons: number;
+  events?: number;
+  hackathons?: number;
 }
 interface Props { stats: Stats }
 
@@ -34,11 +35,11 @@ const HOW = [
   },
   {
     title: "Ship together",
-    body: "Team assembled. Hackathon registered. Build something you'd actually want to use.",
+    body: "Team assembled. Event registered. Build something you'd actually want to use.",
   },
 ];
 
-export default function LandingPage({ stats = { users: 0, projects: 0, openProjects: 0, hackathons: 0 } }: Props) {
+export default function LandingPage({ stats = { users: 0, projects: 0, openProjects: 0, events: 0, hackathons: 0 } }: Props) {
   const navRef    = useRef<HTMLElement>(null);
   const heroRef   = useRef<HTMLDivElement>(null);
   const statsRef  = useRef<HTMLDivElement>(null);
@@ -49,11 +50,13 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
   const line3Ref  = useRef<HTMLSpanElement>(null);
   const subRef    = useRef<HTMLParagraphElement>(null);
 
+  const eventCount = stats.events ?? stats.hackathons ?? 0;
+
   const statCards = [
     { value: stats.users,        label: "students",         suffix: "+" },
     { value: stats.openProjects, label: "open projects",    suffix: ""  },
     { value: stats.projects,     label: "total projects",   suffix: "+" },
-    { value: stats.hackathons,   label: "hackathons",       suffix: ""  },
+    { value: eventCount,         label: "events & hackathons", suffix: "" },
   ];
 
   useEffect(() => {

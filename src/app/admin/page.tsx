@@ -19,7 +19,7 @@ export default async function AdminPage() {
 
     users,
     projects,
-    hackathons,
+    events,
     allowedEmails,
     idVerificationRequests,
     abuseLogs,
@@ -55,7 +55,7 @@ export default async function AdminPage() {
       orderBy: { createdAt: "desc" },
     }),
 
-    prisma.hackathon.findMany({
+    prisma.event.findMany({
       orderBy: { createdAt: "desc" },
     }),
 
@@ -90,7 +90,8 @@ export default async function AdminPage() {
       stats={stats}
       users={users}
       projects={projects}
-      hackathons={hackathons}
+      events={events}
+      hackathons={events}
       allowedEmails={allowedEmails}
       idVerificationRequests={idVerificationRequests}
       abuseLogs={abuseLogs}

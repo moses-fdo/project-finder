@@ -14,20 +14,19 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized. Admin privileges required." }, { status: 403 });
     }
 
-    const { id } = await params;
-    const hackathonId = Number(id);
-
-    if (isNaN(hackathonId)) {
-      return NextResponse.json({ error: "Invalid hackathon ID." }, { status: 400 });
+    const resolvedParams = await params;
+    const eventId = Number(resolvedParams.id);
+    if (isNaN(eventId)) {
+      return NextResponse.json({ error: "Invalid event ID." }, { status: 400 });
     }
 
     await prisma.event.delete({
-      where: { id: hackathonId },
+      where: { id: eventId },
     });
 
-    return NextResponse.json({ message: "Hackathon deleted successfully." });
+    return NextResponse.json({ message: "Event deleted successfully." });
   } catch (error) {
-    console.error("Delete hackathon error:", error);
+    console.error("Delete event error:", error);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
