@@ -29,3 +29,27 @@ export async function PATCH() {
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const session = await auth();
+    const currentUser = session?.user;
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "You must be logged in." }, { status: 401 });
+    }
+
+    const currentUserId = Number((currentUser as any).id);
+
+    await prisma.notification.deleteMany({
+      where: {
+        userId: currentUserId,
+      },
+    });
+
+    return NextResponse.json({ message: "All notifications cleared." });
+  } catch (error: any) {
+    console.error("Clear notifications error:", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
+}

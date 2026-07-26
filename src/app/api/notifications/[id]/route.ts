@@ -42,3 +42,43 @@ export async function PATCH(
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    const currentUser = session?.user;
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "You must be logged in." }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const notificationId = Number(id);
+
+    const notification = await prisma.notification.findUnique({
+      where: { id: notificationId },
+    });
+
+    if (!notification) {
+      return NextResponse.json({ error: "Notification not found." }, { status: 404 });
+    }
+
+    const currentUserId = Number((currentUser as any).id);
+
+    if (notification.userId !== currentUserId) {
+      return NextResponse.json({ error: "You are not authorized to delete this notification." }, { status: 403 });
+    }
+
+    await prisma.notification.delete({
+      where: { id: notificationId },
+    });
+
+    return NextResponse.json({ message: "Notification deleted." });
+  } catch (error: any) {
+    console.error("Delete notification error:", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
+}

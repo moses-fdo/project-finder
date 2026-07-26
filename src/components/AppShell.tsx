@@ -24,6 +24,7 @@ import {
   Check,
   CheckCheck,
   ShieldAlert,
+  Trash2,
 } from "lucide-react";
 
 import { getNotificationLink } from "@/lib/notifications";
@@ -113,6 +114,16 @@ export default function AppShell({
     try { await fetch("/api/notifications", { method: "PATCH" }); } catch { /* silent */ }
   };
 
+  const deleteNotif = async (id: number) => {
+    setLocalNotifs(prev => prev.filter(n => n.id !== id));
+    try { await fetch(`/api/notifications/${id}`, { method: "DELETE" }); } catch { /* silent */ }
+  };
+
+  const clearAllNotifs = async () => {
+    setLocalNotifs([]);
+    try { await fetch("/api/notifications", { method: "DELETE" }); } catch { /* silent */ }
+  };
+
   const isTabActive = (itemTab: string) =>
     pathname === "/dashboard" && tab === itemTab;
 
@@ -144,15 +155,27 @@ export default function AppShell({
             </span>
           )}
         </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={markAllRead}
-            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          >
-            <CheckCheck size={12} strokeWidth={1.75} />
-            Mark all read
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllRead}
+              className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <CheckCheck size={12} strokeWidth={1.75} />
+              Read all
+            </button>
+          )}
+          {localNotifs.length > 0 && (
+            <button
+              onClick={clearAllNotifs}
+              className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+              title="Clear all inbox messages"
+            >
+              <Trash2 size={12} strokeWidth={1.75} />
+              Clear all
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="max-h-[360px] overflow-y-auto divide-y divide-border">
@@ -165,7 +188,7 @@ export default function AppShell({
           localNotifs.map((n) => (
             <div
               key={n.id}
-              className="flex items-start gap-3 px-4 py-3 transition-colors cursor-pointer hover:bg-secondary/50"
+              className="flex items-start gap-3 px-4 py-3 transition-colors cursor-pointer hover:bg-secondary/50 group"
               onClick={() => {
                 if (!n.read) markRead(n.id);
                 setInboxOpen(false);
@@ -182,16 +205,26 @@ export default function AppShell({
                   )}
                 </p>
               </div>
-              {!n.read && (
+              <div className="flex items-center gap-1 shrink-0">
+                {!n.read && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
+                    className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                    title="Mark as read"
+                    aria-label="Mark as read"
+                  >
+                    <Check size={11} strokeWidth={2} />
+                  </button>
+                )}
                 <button
-                  onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
-                  className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
-                  title="Mark as read"
-                  aria-label="Mark as read"
+                  onClick={(e) => { e.stopPropagation(); deleteNotif(n.id); }}
+                  className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                  title="Clear message"
+                  aria-label="Clear message"
                 >
-                  <Check size={11} strokeWidth={2} />
+                  <Trash2 size={11} strokeWidth={1.75} />
                 </button>
-              )}
+              </div>
             </div>
           ))
         )}
