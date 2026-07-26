@@ -90,6 +90,19 @@ export default async function ProjectPage({ params }: PageProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
+          {/* Apply widget — shown at top on mobile only, hidden on desktop (lives in sidebar there) */}
+          <div className="lg:hidden">
+            <ProjectDetailClient
+              projectId={projectId}
+              isOwner={isOwner}
+              hasApplied={hasApplied}
+              applicationStatus={applicationStatus}
+              projectStatus={project.status}
+              initialBookmarked={initialBookmarked}
+              ownerEmail={project.owner.email}
+            />
+          </div>
+
           {/* ── Main column ──────────────────────────────────── */}
           <div className="lg:col-span-8 space-y-5">
 
@@ -185,10 +198,10 @@ export default async function ProjectPage({ params }: PageProps) {
 
           </div>
 
-          {/* ── Sidebar column ───────────────────────────────── */}
-          <div className="lg:col-span-4 space-y-4">
+          {/* ── Sidebar column — hidden on mobile, widget shown above instead ── */}
+          <div className="hidden lg:block lg:col-span-4 space-y-4">
 
-            {/* Apply / bookmark / contact widget — fully interactive client component */}
+            {/* Apply / bookmark / contact widget */}
             <ProjectDetailClient
               projectId={projectId}
               isOwner={isOwner}

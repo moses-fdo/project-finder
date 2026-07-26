@@ -36,6 +36,8 @@ export default async function DashboardPage({
     bookmarks,
     hackathons,
     recommendedProjects,
+    receivedInvitations,
+    sentInvitations,
   ] = await Promise.all([
     // 0: Unread count
     prisma.notification.count({
@@ -175,6 +177,47 @@ export default async function DashboardPage({
       },
       orderBy: { createdAt: "desc" },
     }),
+    // 10: Received invitations
+    prisma.invitation.findMany({
+      where: { receiverId: currentUserId },
+      take: 20,
+      select: {
+        id: true,
+        message: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        project: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            status: true,
+            owner: { select: { id: true, name: true, department: true } },
+            skills: { select: { id: true, name: true } },
+          },
+        },
+        sender: {
+          select: { id: true, name: true, department: true, email: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    // 11: Sent invitations
+    prisma.invitation.findMany({
+      where: { senderId: currentUserId },
+      take: 20,
+      select: {
+        id: true,
+        message: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        project: { select: { id: true, title: true } },
+        receiver: { select: { id: true, name: true, department: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   // Derived fast sidebars
@@ -196,6 +239,8 @@ export default async function DashboardPage({
         bookmarks={bookmarks}
         hackathons={hackathons}
         recommendedProjects={recommendedProjects}
+        receivedInvitations={receivedInvitations}
+        sentInvitations={sentInvitations}
         myProjectsSidebar={myProjectsSidebar}
         myApplicationsSidebar={myApplicationsSidebar}
         myBookmarksSidebar={myBookmarksSidebar}

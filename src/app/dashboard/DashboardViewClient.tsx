@@ -23,6 +23,9 @@ import {
   Copy,
   CheckCheck,
   MapPin,
+  Mail,
+  Send,
+  UserPlus,
   LucideIcon
 } from "lucide-react";
 
@@ -37,6 +40,8 @@ interface DashboardViewClientProps {
   bookmarks?: any[];
   hackathons?: any[];
   recommendedProjects?: any[];
+  receivedInvitations?: any[];
+  sentInvitations?: any[];
   myProjectsSidebar?: any[];
   myApplicationsSidebar?: any[];
   myBookmarksSidebar?: any[];
@@ -87,6 +92,8 @@ export default function DashboardViewClient({
   bookmarks = [],
   hackathons = [],
   recommendedProjects = [],
+  receivedInvitations = [],
+  sentInvitations = [],
   myProjectsSidebar = [],
   myApplicationsSidebar = [],
   myBookmarksSidebar = [],
@@ -136,7 +143,89 @@ export default function DashboardViewClient({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
+  // Invitations state
+  const [receivedNotifs, setReceivedNotifs] = useState<any[]>(receivedInvitations || []);
+  const [sentNotifs,     setSentNotifs]     = useState<any[]>(sentInvitations || []);
+  const [invitationSubTab, setInvitationSubTab] = useState<"received" | "sent">("received");
+  const [inviteModalOpen,  setInviteModalOpen]   = useState(false);
+  const [inviteTargetUser, setInviteTargetUser] = useState<any | null>(null);
+  const [inviteProjectId,  setInviteProjectId]  = useState<string>("");
+  const [inviteMessage,    setInviteMessage]    = useState("");
+  const [inviteRole,       setInviteRole]       = useState("");
+  const [inviteSending,    setInviteSending]    = useState(false);
+
   const refresh = () => startTransition(() => router.refresh());
+
+  const handleRespondInvitation = async (invId: number, status: "ACCEPTED" | "DECLINED") => {
+    setActionError(""); setActionSuccess(""); setLoadingId(`inv-${invId}`);
+    try {
+      const res = await fetch(`/api/invitations/${invId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update invitation.");
+      setActionSuccess(`Invitation ${status.toLowerCase()}!`);
+      setReceivedNotifs(prev => prev.map(inv => inv.id === invId ? { ...inv, status } : inv));
+      refresh();
+    } catch (e: any) {
+      setActionError(e.message || "Failed to update invitation.");
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleCancelInvitation = async (invId: number) => {
+    if (!confirm("Cancel this invitation?")) return;
+    setActionError(""); setActionSuccess(""); setLoadingId(`del-inv-${invId}`);
+    try {
+      const res = await fetch(`/api/invitations/${invId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to cancel invitation.");
+      setActionSuccess("Invitation cancelled.");
+      setSentNotifs(prev => prev.filter(inv => inv.id !== invId));
+      refresh();
+    } catch (e: any) {
+      setActionError(e.message || "Failed to cancel invitation.");
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleSendInvitation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteProjectId || !inviteTargetUser) return;
+    setActionError(""); setActionSuccess(""); setInviteSending(true);
+    try {
+      const res = await fetch("/api/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: Number(inviteProjectId),
+          receiverId: Number(inviteTargetUser.id),
+          message: inviteMessage,
+          role: inviteRole,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send invitation.");
+      setActionSuccess(`Invitation sent to ${inviteTargetUser.name}!`);
+      setInviteModalOpen(false);
+      setInviteTargetUser(null);
+      setInviteMessage("");
+      setInviteRole("");
+      setInviteProjectId("");
+      if (data.invitation) {
+        setSentNotifs(prev => [data.invitation, ...prev]);
+      }
+      refresh();
+    } catch (e: any) {
+      setActionError(e.message || "Failed to send invitation.");
+    } finally {
+      setInviteSending(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
@@ -284,8 +373,8 @@ export default function DashboardViewClient({
                   : "Start by posting your first project."}
               </p>
             </div>
-            <Link href="/projects/create" className="btn-primary text-[12px] py-2 px-3.5 shrink-0 hidden sm:flex items-center gap-1.5">
-              <Plus size={13} strokeWidth={2} /> New project
+            <Link href="/projects/create" className="btn-primary text-[12px] py-2 px-3.5 shrink-0 flex items-center gap-1.5">
+              <Plus size={13} strokeWidth={2} /> New
             </Link>
           </div>
 
@@ -373,7 +462,7 @@ export default function DashboardViewClient({
           </div>
 
           {/* Recent activity */}
-          <div className="space-y-3 hidden md:block">
+          <div className="space-y-3">
             <h2 className="text-[13px] font-bold text-foreground">Recent activity</h2>
             <div className="card overflow-hidden divide-y divide-border">
               {recentNotifications && recentNotifications.length > 0 ? (
@@ -499,6 +588,12 @@ export default function DashboardViewClient({
           setCollabSkill={setCollabSkill}
           collabStatus={collabStatus}
           setCollabStatus={setCollabStatus}
+          hasProjects={projects.length > 0}
+          onInviteUser={(user: any) => {
+            setInviteTargetUser(user);
+            setInviteProjectId(projects[0]?.id?.toString() || "");
+            setInviteModalOpen(true);
+          }}
         />
       )}
 
@@ -820,6 +915,333 @@ export default function DashboardViewClient({
         </div>
       )}
 
+      {/* ── INVITATIONS VIEW ──────────────────────────────── */}
+      {currentTab === "invitations" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+            <div>
+              <h2 className="text-[17px] font-bold text-foreground tracking-tight flex items-center gap-2">
+                <Mail size={18} strokeWidth={2} />
+                Project Invitations
+              </h2>
+              <p className="text-[12px] text-muted-foreground mt-0.5">
+                Manage collaboration invitations sent to you or sent by you.
+              </p>
+            </div>
+            {projects.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setInviteTargetUser(null);
+                  setInviteProjectId(projects[0]?.id?.toString() || "");
+                  setInviteModalOpen(true);
+                }}
+                className="btn-primary text-[12px] py-1.5 px-3.5 flex items-center gap-1.5 shrink-0 cursor-pointer"
+              >
+                <UserPlus size={13} strokeWidth={2} /> Send Invitation
+              </button>
+            )}
+          </div>
+
+          {/* Sub-tab switcher */}
+          <div className="flex items-center gap-2 border-b border-border pb-1">
+            <button
+              type="button"
+              onClick={() => setInvitationSubTab("received")}
+              className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
+                invitationSubTab === "received"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Received
+              {receivedNotifs.filter(i => i.status === "PENDING").length > 0 && (
+                <span className="h-4 min-w-[16px] px-1.5 rounded-full bg-foreground text-background text-[9px] font-bold flex items-center justify-center">
+                  {receivedNotifs.filter(i => i.status === "PENDING").length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setInvitationSubTab("sent")}
+              className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
+                invitationSubTab === "sent"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Sent ({sentNotifs.length})
+            </button>
+          </div>
+
+          {/* RECEIVED TAB */}
+          {invitationSubTab === "received" && (
+            <div className="space-y-4">
+              {receivedNotifs.length > 0 ? (
+                <div className="space-y-3">
+                  {receivedNotifs.map((inv) => (
+                    <div key={inv.id} className="card p-5 space-y-3 border-border hover:border-muted-foreground/25 transition-all">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <h3 className="text-[14px] font-semibold text-foreground">
+                              <Link href={`/projects/${inv.project.id}`} className="hover:underline underline-offset-2">
+                                {inv.project.title}
+                              </Link>
+                            </h3>
+                            <span className={inv.project.status === "OPEN" ? "badge badge-green" : "badge badge-red"}>
+                              {inv.project.status}
+                            </span>
+                            {inv.role && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                                Role: {inv.role}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            Invited by <strong className="text-foreground">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 self-start sm:self-center">
+                          {inv.status === "PENDING" ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleRespondInvitation(inv.id, "ACCEPTED")}
+                                disabled={loadingId !== null}
+                                className="btn-primary text-[12px] py-1.5 px-3 gap-1 cursor-pointer"
+                              >
+                                <Check size={12} strokeWidth={2} /> Accept
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRespondInvitation(inv.id, "DECLINED")}
+                                disabled={loadingId !== null}
+                                className="btn-secondary text-[12px] py-1.5 px-3 gap-1 cursor-pointer"
+                              >
+                                <X size={12} strokeWidth={2} /> Decline
+                              </button>
+                            </div>
+                          ) : inv.status === "ACCEPTED" ? (
+                            <span className="badge badge-green">Accepted</span>
+                          ) : (
+                            <span className="badge badge-red">Declined</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {inv.message && (
+                        <div className="text-[12px] text-foreground bg-secondary/60 rounded-lg p-3 border border-border italic leading-relaxed">
+                          &ldquo;{inv.message}&rdquo;
+                        </div>
+                      )}
+
+                      {inv.project.skills && inv.project.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {inv.project.skills.map((s: any) => (
+                            <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                              {s.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="card p-12 text-center space-y-2">
+                  <Mail size={32} className="mx-auto text-muted-foreground/40" />
+                  <p className="text-[14px] font-medium text-foreground">No invitations received yet</p>
+                  <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
+                    When project owners invite you to join their projects, their invitations will appear here.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SENT TAB */}
+          {invitationSubTab === "sent" && (
+            <div className="space-y-4">
+              {sentNotifs.length > 0 ? (
+                <div className="space-y-3">
+                  {sentNotifs.map((inv) => (
+                    <div key={inv.id} className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-[13px] font-semibold text-foreground">
+                            Invite to {inv.receiver?.name}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            ({inv.receiver?.department})
+                          </span>
+                          {inv.role && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-secondary text-foreground border border-border">
+                              {inv.role}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-foreground hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString()}
+                        </p>
+                        {inv.message && (
+                          <p className="text-[11px] text-muted-foreground italic mt-1.5 line-clamp-1">
+                            &ldquo;{inv.message}&rdquo;
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+                        <span className={inv.status === "ACCEPTED" ? "badge badge-green" : inv.status === "DECLINED" ? "badge badge-red" : "badge badge-yellow"}>
+                          {inv.status}
+                        </span>
+                        {inv.status === "PENDING" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancelInvitation(inv.id)}
+                            disabled={loadingId !== null}
+                            className="btn-ghost p-1.5 text-destructive hover:bg-destructive/10 cursor-pointer rounded-lg"
+                            title="Cancel invitation"
+                          >
+                            <Trash2 size={13} strokeWidth={1.75} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="card p-12 text-center space-y-2">
+                  <Send size={32} className="mx-auto text-muted-foreground/40" />
+                  <p className="text-[14px] font-medium text-foreground">No invitations sent</p>
+                  <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
+                    You haven&apos;t sent any project invitations yet. Browse the Collaborations directory to find students and invite them!
+                  </p>
+                  <Link href="/dashboard?tab=collaborations" className="btn-secondary text-[12px] py-2 px-4 inline-flex mt-2">
+                    Find Collaborators →
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Send Invitation Modal */}
+      {inviteModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card w-full max-w-md p-6 space-y-4 bg-card shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <UserPlus size={18} className="text-foreground" />
+                <h3 className="text-[15px] font-bold text-foreground">
+                  {inviteTargetUser ? `Invite ${inviteTargetUser.name}` : "Send Project Invitation"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInviteModalOpen(false)}
+                className="btn-ghost p-1 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendInvitation} className="space-y-4">
+              {!inviteTargetUser ? (
+                <div>
+                  <label className="block section-label mb-1.5">Recipient Student</label>
+                  <select
+                    required
+                    value={inviteTargetUser?.id || ""}
+                    onChange={(e) => {
+                      const u = collaborations.find((c: any) => c.id === Number(e.target.value));
+                      setInviteTargetUser(u || null);
+                    }}
+                    className="forge-input cursor-pointer"
+                  >
+                    <option value="">Select a student…</option>
+                    {collaborations.map((c: any) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.department || "Student"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg bg-secondary/50 border border-border flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-[13px]">
+                    {inviteTargetUser.name[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-semibold text-foreground">{inviteTargetUser.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{inviteTargetUser.department}</p>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block section-label mb-1.5">Select Your Project</label>
+                <select
+                  required
+                  value={inviteProjectId}
+                  onChange={(e) => setInviteProjectId(e.target.value)}
+                  className="forge-input cursor-pointer"
+                >
+                  <option value="">Select project…</option>
+                  {projects.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title} ({p.status})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block section-label mb-1.5">Proposed Role (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Frontend Engineer, UI Designer, ML Dev"
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="forge-input"
+                />
+              </div>
+
+              <div>
+                <label className="block section-label mb-1.5">Personal Message (Optional)</label>
+                <textarea
+                  rows={3}
+                  placeholder="Hey, we'd love for you to join our project team!"
+                  value={inviteMessage}
+                  onChange={(e) => setInviteMessage(e.target.value)}
+                  className="forge-input resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setInviteModalOpen(false)}
+                  className="btn-secondary text-[12px] py-1.5 px-3 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={inviteSending || !inviteProjectId || !inviteTargetUser}
+                  className="btn-primary text-[12px] py-1.5 px-4 font-bold cursor-pointer flex items-center gap-1.5"
+                >
+                  {inviteSending ? "Sending…" : "Send Invitation"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ── NOTIFICATIONS ─────────────────────────────────── */}
       {currentTab === "notifications" && (
         <div className="space-y-5">
@@ -1076,6 +1498,8 @@ interface CFProps {
   setCollabSkill: (v: string) => void;
   collabStatus: "all" | "open" | "busy";
   setCollabStatus: (v: "all" | "open" | "busy") => void;
+  hasProjects?: boolean;
+  onInviteUser?: (user: any) => void;
 }
 
 function CollaborationsFinder({
@@ -1084,6 +1508,8 @@ function CollaborationsFinder({
   collabDept,   setCollabDept,
   collabSkill,  setCollabSkill,
   collabStatus, setCollabStatus,
+  hasProjects = false,
+  onInviteUser,
 }: CFProps) {
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
@@ -1320,6 +1746,18 @@ function CollaborationsFinder({
                   </div>
 
                   <div className="flex items-center gap-1">
+                    {/* Invite to project */}
+                    {hasProjects && onInviteUser && (
+                      <button
+                        type="button"
+                        onClick={() => onInviteUser(u)}
+                        className="btn-primary text-[11px] py-1 px-2.5 flex items-center gap-1 cursor-pointer"
+                        title="Invite to your project"
+                      >
+                        <UserPlus size={11} strokeWidth={2} /> Invite
+                      </button>
+                    )}
+
                     {/* Copy email */}
                     <button
                       onClick={() => copyEmail(u.id, u.email ?? "")}

@@ -29,6 +29,8 @@ model User {
   notifications  Notification[]
   bookmarks      Bookmark[]
   skills         Skill[]         @relation("UserSkills")
+  sentInvitations     Invitation[] @relation("SentInvitations")
+  receivedInvitations Invitation[] @relation("ReceivedInvitations")
 }
 
 model Project {
@@ -48,6 +50,7 @@ model Project {
   skills         Skill[]         @relation("ProjectSkills")
   applications   Application[]
   bookmarks      Bookmark[]
+  invitations    Invitation[]
 }
 
 model Skill {
@@ -71,11 +74,28 @@ model Application {
   @@unique([projectId, userId])
 }
 
+model Invitation {
+  id          Int      @id @default(autoincrement())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   Int
+  sender      User     @relation("SentInvitations", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId    Int
+  receiver    User     @relation("ReceivedInvitations", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId  Int
+  message     String?
+  role        String?
+  status      String   @default("PENDING") // "PENDING" | "ACCEPTED" | "DECLINED"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([projectId, receiverId])
+}
+
 model Notification {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  type      String   // "APPLICATION_RECEIVED" | "APPLICATION_ACCEPTED" | "APPLICATION_REJECTED" | "SYSTEM"
+  type      String   // "APPLICATION_RECEIVED" | "APPLICATION_ACCEPTED" | "APPLICATION_REJECTED" | "INVITATION_RECEIVED" | "INVITATION_ACCEPTED" | "INVITATION_DECLINED" | "SYSTEM"
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())

@@ -155,7 +155,7 @@ export default function ProjectCard({ project, initialBookmarked = false }: Proj
         {/* View link */}
         <Link
           href={`/projects/${project.id}`}
-          className="btn-ghost flex items-center gap-1 text-[12px] px-2.5 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="btn-ghost flex items-center gap-1 text-[12px] px-2.5 py-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
           tabIndex={0}
           aria-label={`View ${project.title}`}
         >

@@ -110,6 +110,7 @@ body {
   padding: 0;
   letter-spacing: -0.011em;
   line-height: 1.5;
+  overflow-x: hidden;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -662,7 +663,13 @@ body {
   color: var(--foreground);
 }
 
-/* ─── Landing — scroll hint dot ────────────────────────── */
+/* ─── Mobile nav clearance — applied to AppShell wrapper ─── */
+
+@media (max-width: 767px) {
+  .mobile-scroll-pad {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
 
 @keyframes scroll-dot {
   0%   { transform: translateY(-100%); opacity: 0; }

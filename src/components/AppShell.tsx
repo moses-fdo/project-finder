@@ -349,7 +349,7 @@ export default function AppShell({
       </aside>
 
       {/* ── Main column ─────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 mobile-main-col">
+      <div className="flex-1 flex flex-col min-w-0">
 
         {/* Desktop header */}
         <header className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card/95 backdrop-blur-sm sticky top-0 z-40">
@@ -424,11 +424,11 @@ export default function AppShell({
               )}
             </button>
 
-            {/* Inbox dropdown — fixed to avoid overflow-clipping from header */}
+            {/* Inbox dropdown — fixed position clears the sticky header */}
             {inboxOpen && (
               <div
                 className="fixed right-4 w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-xl shadow-xl z-[60] animate-fade-in overflow-hidden"
-                style={{ top: '4rem' }}
+                style={{ top: '3.5rem' }}
               >
                 {inboxDropdownContent}
               </div>
@@ -436,17 +436,18 @@ export default function AppShell({
           </div>
         </header>
 
-        {/* Page content — padded so it never hides under the fixed mobile nav */}
-        <div className="flex-1 pb-[calc(64px+env(safe-area-inset-bottom,0px))] md:pb-0">
+        {/* Page content */}
+        <div className="flex-1 mobile-scroll-pad">
           {children}
         </div>
       </div>
 
       {/* ── Mobile bottom nav ───────────────────────────── */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md flex items-end justify-around z-50 md:hidden"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
+      <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md z-50 md:hidden">
+        <div
+          className="flex items-center justify-around h-16"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
         {[
           { href: "/dashboard?tab=home", icon: HomeIcon, label: "Home", active: isTabActive("home") },
           { href: "/projects", icon: Search, label: "Discover", active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
@@ -479,6 +480,7 @@ export default function AppShell({
           </div>
           <span className="text-[10px] font-medium">Profile</span>
         </button>
+        </div>
       </nav>
 
       {/* ── Mobile profile sheet ─────────────────────────── */}
