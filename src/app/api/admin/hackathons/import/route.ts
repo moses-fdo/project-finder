@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const rawRows = rowsToObjects(sheetRows as unknown[][]);
+    const rawRows = rowsToObjects(sheetRows as unknown as unknown[][]);
 
     if (rawRows.length === 0) {
       return NextResponse.json(

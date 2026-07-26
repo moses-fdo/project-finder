@@ -113,6 +113,14 @@ body {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+/* ─── Logo Typography ────────────────────────────────────── */
+
+.font-logo {
+  font-family: var(--font-bricolage), var(--font-space-grotesk), var(--font-outfit), sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
 /* ─── Scrollbar ─────────────────────────────────────────── */
 
 ::-webkit-scrollbar {

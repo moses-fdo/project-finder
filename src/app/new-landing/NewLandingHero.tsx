@@ -193,13 +193,7 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
               <rect width="26" height="26" rx="6" fill="oklch(0.55 0.28 272)"/>
               <path d="M6 6h6v6H6zM14 6h6v6H14zM6 14h6v6H6zM14 14h6v6H14z" fill="white"/>
             </svg>
-            <span
-              style={{
-                fontSize: "15px", fontWeight: 700, letterSpacing: "-0.02em",
-                color: "oklch(0.97 0.005 260)",
-                fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif",
-              }}
-            >
+            <span className="text-[16px] font-logo text-white">
               Colabro
             </span>
           </div>
@@ -209,22 +203,23 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
               href="/login"
               style={{
                 fontSize: "13px", fontWeight: 500, padding: "6px 14px",
-                color: "oklch(0.97 0.005 260 / 0.55)",
+                color: "oklch(0.97 0.005 260 / 0.75)",
                 borderRadius: "8px",
                 transition: "color 0.15s, background 0.15s",
               }}
-              className="hover:text-white hover:bg-white/8"
+              className="hover:text-white hover:bg-white/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.55_0.28_272)]"
             >
               Sign in
             </Link>
             <Link
               href="/signup"
-              className="inline-flex items-center gap-1.5"
+              className="inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.55_0.28_272)] focus-visible:ring-offset-2"
               style={{
-                fontSize: "13px", fontWeight: 600, padding: "7px 16px",
+                fontSize: "13px", fontWeight: 700, padding: "7px 18px",
                 background: "oklch(0.55 0.28 272)",
                 color: "white", borderRadius: "8px",
-                transition: "opacity 0.15s",
+                boxShadow: "0 0 20px oklch(0.55 0.28 272 / 0.4)",
+                transition: "opacity 0.15s, transform 0.15s, box-shadow 0.15s",
               }}
             >
               Get started <ArrowRight size={13} />
@@ -280,9 +275,9 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
               style={{
                 fontSize: "17px",
                 lineHeight: 1.65,
-                color: "oklch(0.97 0.005 260 / 0.58)",
+                color: "oklch(0.97 0.005 260 / 0.72)",
                 maxWidth: "52ch",
-                marginBottom: "3.5rem",
+                marginBottom: "2.75rem",
                 textWrap: "pretty",
               }}
             >
@@ -314,7 +309,7 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
                   >
                     {fmt(s.value)}{s.suffix}
                   </span>
-                  <span style={{ fontSize: "13px", color: "oklch(0.97 0.005 260 / 0.38)", fontWeight: 500 }}>
+                  <span style={{ fontSize: "13px", color: "oklch(0.97 0.005 260 / 0.60)", fontWeight: 500 }}>
                     {s.label}
                   </span>
                 </div>
@@ -472,16 +467,16 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
               <rect width="26" height="26" rx="6" fill="oklch(0.55 0.28 272)"/>
               <path d="M6 6h6v6H6zM14 6h6v6H14zM6 14h6v6H6zM14 14h6v6H14z" fill="white"/>
             </svg>
-            <span style={{ fontSize: "13px", fontWeight: 700, color: "oklch(0.97 0.005 260 / 0.55)" }}>
+            <span className="text-[14px] font-logo text-white/80">
               Colabro
             </span>
           </div>
-          <span style={{ fontSize: "12px", color: "oklch(0.97 0.005 260 / 0.25)" }}>
+          <span style={{ fontSize: "12px", color: "oklch(0.97 0.005 260 / 0.60)" }}>
             &#169; {new Date().getFullYear()} &#8212; Campus Collaboration Platform
           </span>
-          <div className="flex gap-5" style={{ fontSize: "12px", color: "oklch(0.97 0.005 260 / 0.35)" }}>
-            <Link href="/login"  className="hover:text-white/70 transition-colors">Sign in</Link>
-            <Link href="/signup" className="hover:text-white/70 transition-colors">Register</Link>
+          <div className="flex gap-5" style={{ fontSize: "12px", color: "oklch(0.97 0.005 260 / 0.70)" }}>
+            <Link href="/login"  className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white">Sign in</Link>
+            <Link href="/signup" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white">Register</Link>
           </div>
         </footer>
 

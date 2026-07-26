@@ -57,6 +57,8 @@ export default function AppShell({
   const [profileOpen, setProfileOpen] = useState(false);
   const [inboxOpen,   setInboxOpen]   = useState(false);
   const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
+  const [searchModalOpen,   setSearchModalOpen]   = useState(false);
+  const [searchQuery,       setSearchQuery]       = useState("");
   const [localNotifs, setLocalNotifs] = useState<NotificationItem[]>(stableNotifs);
 
   const profileRef   = useRef<HTMLDivElement>(null);
@@ -75,8 +77,21 @@ export default function AppShell({
       const insideMobile  = inboxMobile.current?.contains(target)  ?? false;
       if (!insideDesktop && !insideMobile) setInboxOpen(false);
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchModalOpen(prev => !prev);
+      }
+      if (e.key === "Escape") {
+        setSearchModalOpen(false);
+      }
+    }
     document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handle);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const initials    = (user?.name || "U")[0].toUpperCase();
@@ -200,10 +215,7 @@ export default function AppShell({
         <div className="h-14 border-b border-border px-4 flex items-center gap-2">
           <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
             <ColabroLogo size={28} />
-            <span
-              className="text-[14px] font-bold tracking-tight text-foreground truncate"
-              style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}
-            >
+            <span className="text-[16px] font-logo text-foreground truncate">
               Colabro
             </span>
           </Link>
@@ -236,7 +248,7 @@ export default function AppShell({
 
           {/* Spaces */}
           <div>
-            <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-1.5">
+            <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/85 mb-1.5">
               My Space
             </p>
             <div className="space-y-px">
@@ -263,7 +275,7 @@ export default function AppShell({
           {/* Admin */}
           {(user as any)?.role === "ADMIN" && (
             <div>
-              <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-1.5">
+              <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/85 mb-1.5">
                 Admin
               </p>
               <Link
@@ -343,16 +355,14 @@ export default function AppShell({
         <header className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card/95 backdrop-blur-sm sticky top-0 z-40">
           <div className="relative w-64">
             <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search projects, skills…"
-              onClick={() => router.push("/projects")}
-              readOnly
-              className="w-full pl-9 pr-12 py-1.5 bg-secondary/50 border border-border rounded-lg text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-muted-foreground/40 transition-colors cursor-pointer"
-            />
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-              <kbd className="text-[10px] font-mono text-muted-foreground bg-card border border-border px-1.5 py-0.5 rounded shadow-sm">⌘K</kbd>
-            </span>
+            <button
+              type="button"
+              onClick={() => setSearchModalOpen(true)}
+              className="w-full text-left pl-9 pr-2.5 py-1.5 bg-secondary/50 border border-border rounded-lg text-[12px] text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer flex items-center justify-between"
+            >
+              <span className="truncate">Search projects, skills…</span>
+              <kbd className="text-[10px] font-mono text-muted-foreground bg-card border border-border px-1.5 py-0.5 rounded shadow-sm shrink-0 ml-1">⌘K</kbd>
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -393,10 +403,7 @@ export default function AppShell({
         <header className="flex md:hidden h-14 border-b border-border items-center justify-between px-4 bg-card sticky top-0 z-40">
           <Link href="/dashboard" className="flex items-center gap-2">
             <ColabroLogo size={28} />
-            <span
-              className="text-[14px] font-bold tracking-tight text-foreground"
-              style={{ fontFamily: "var(--font-bricolage), var(--font-outfit), sans-serif" }}
-            >
+            <span className="text-[16px] font-logo text-foreground">
               Colabro
             </span>
           </Link>
@@ -478,7 +485,12 @@ export default function AppShell({
             className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm md:hidden"
             onClick={() => setMobileProfileOpen(false)}
           />
-          <div className="fixed bottom-0 left-0 right-0 z-[70] bg-card rounded-t-2xl shadow-2xl md:hidden animate-slide-up">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Profile settings"
+            className="fixed bottom-0 left-0 right-0 z-[70] bg-card rounded-t-2xl shadow-2xl md:hidden animate-slide-up"
+          >
             <div className="flex justify-center pt-3 pb-1">
               <div className="h-1 w-10 rounded-full bg-border" />
             </div>
@@ -533,6 +545,100 @@ export default function AppShell({
             <div className="h-6" />
           </div>
         </>
+      )}
+
+      {/* ── ⌘K Command Palette Modal ───────────────────────── */}
+      {searchModalOpen && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-20 px-4 animate-fade-in"
+          onClick={() => setSearchModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search projects and command palette"
+            className="w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+              <Search size={16} className="text-muted-foreground shrink-0" />
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    setSearchModalOpen(false);
+                    router.push(`/projects?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }
+                }}
+                placeholder="Search projects, skills, hackathons… (Press Enter)"
+                className="w-full bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              <kbd className="text-[10px] font-mono text-muted-foreground bg-secondary border border-border px-1.5 py-0.5 rounded">ESC</kbd>
+            </div>
+
+            <div className="p-2 max-h-80 overflow-y-auto space-y-1">
+              {searchQuery.trim() && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchModalOpen(false);
+                    router.push(`/projects?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mb-1"
+                >
+                  <span className="flex items-center gap-2.5 truncate">
+                    <Search size={15} className="shrink-0" />
+                    Search projects for &quot;{searchQuery.trim()}&quot;
+                  </span>
+                  <span className="text-[11px] shrink-0 ml-2">Press Enter ↵</span>
+                </button>
+              )}
+
+              <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/85">
+                {searchQuery.trim() ? "Matching Actions" : "Quick Navigation"}
+              </p>
+
+              {[
+                { label: "Discover Projects", href: "/projects", icon: Search },
+                { label: "Create New Project", href: "/projects/create", icon: FolderOpen },
+                { label: "Hackathons", href: "/dashboard?tab=hackathons", icon: Trophy },
+                { label: "My Applications", href: "/dashboard?tab=applications", icon: Send },
+                { label: "Profile Settings", href: "/dashboard?tab=profile", icon: Settings },
+              ]
+                .filter((item) => item.label.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+                .map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => { setSearchModalOpen(false); setSearchQuery(""); router.push(item.href); }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium text-foreground hover:bg-secondary transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <item.icon size={15} className="text-muted-foreground" />
+                      {item.label}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">Jump →</span>
+                  </button>
+                ))}
+
+              {searchQuery.trim() &&
+                [
+                  { label: "Discover Projects", href: "/projects", icon: Search },
+                  { label: "Create New Project", href: "/projects/create", icon: FolderOpen },
+                  { label: "Hackathons", href: "/dashboard?tab=hackathons", icon: Trophy },
+                  { label: "My Applications", href: "/dashboard?tab=applications", icon: Send },
+                  { label: "Profile Settings", href: "/dashboard?tab=profile", icon: Settings },
+                ].filter((item) => item.label.toLowerCase().includes(searchQuery.toLowerCase().trim())).length === 0 && (
+                  <div className="px-3 py-6 text-center text-muted-foreground text-[12px]">
+                    No matching quick actions. Press Enter to search all projects.
+                  </div>
+                )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

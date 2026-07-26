@@ -33,7 +33,7 @@ export default async function Navbar() {
                 <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
               </svg>
             </div>
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">
+            <span className="text-[16px] font-logo text-foreground">
               Colabro
             </span>
           </Link>

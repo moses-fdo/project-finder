@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Outfit, Bricolage_Grotesque } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, Bricolage_Grotesque, Space_Grotesk } from "next/font/google";
 import { Suspense } from "react";
 import NavigationProgress from "@/components/NavigationProgress";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -29,6 +29,13 @@ const bricolage = Bricolage_Grotesque({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+  weight: ["600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Colabro \u2013 Campus Project & Hackathon Collaboration Platform",
   description:
@@ -44,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakarta.variable} ${outfit.variable} ${bricolage.variable} h-full`}
+      className={`${plusJakarta.variable} ${outfit.variable} ${bricolage.variable} ${spaceGrotesk.variable} h-full`}
       style={{ fontFamily: "var(--font-plus-jakarta), system-ui, -apple-system, sans-serif" }}
       suppressHydrationWarning
     >
