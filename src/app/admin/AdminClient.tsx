@@ -24,7 +24,6 @@ import {
   ShieldCheck,
   FileCheck,
   FileText,
-  MessageSquareDiff,
 } from "lucide-react";
 
 interface Stats {
@@ -34,21 +33,6 @@ interface Stats {
   totalNotifications: number;
 }
 
-interface AbuseLog {
-  id: number;
-  userId: number;
-  timestamp: string | Date;
-  reason: string | null;
-  count: number;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    department: string | null;
-    year: number | null;
-  };
-}
-
 interface AdminClientProps {
   stats: Stats;
   users: any[];
@@ -56,7 +40,6 @@ interface AdminClientProps {
   hackathons?: any[];
   allowedEmails?: any[];
   idVerificationRequests?: any[];
-  abuseLogs?: AbuseLog[];
 }
 
 export default function AdminClient({
@@ -66,12 +49,11 @@ export default function AdminClient({
   hackathons = [],
   allowedEmails = [],
   idVerificationRequests = [],
-  abuseLogs = [],
 }: AdminClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects" | "hackathons" | "allowedEmails" | "idVerifications" | "moderation">("overview");
+  const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects" | "hackathons" | "allowedEmails" | "idVerifications">("overview");
   const [userSearch, setUserSearch] = useState("");
   const [projSearch, setProjSearch] = useState("");
   const [loadingId,  setLoadingId]  = useState<string | null>(null);
@@ -89,10 +71,6 @@ export default function AdminClient({
   const [idRequests, setIdRequests]             = useState<any[]>(idVerificationRequests || []);
   const [idSearch, setIdSearch]                 = useState("");
   const [previewIdImage, setPreviewIdImage]     = useState<{ name: string; image: string } | null>(null);
-
-  // Abuse Logs state
-  const [abuseLogList, setAbuseLogList]         = useState<AbuseLog[]>(abuseLogs || []);
-  const [abuseSearch, setAbuseSearch]           = useState("");
 
   // Hackathon form state
   const [showAddHackathon, setShowAddHackathon] = useState(false);
@@ -358,48 +336,6 @@ export default function AdminClient({
 
   const pendingIdCount = idRequests.filter(r => r.status === "PENDING").length;
 
-  const filteredAbuseLogs = abuseLogList.filter((log) => {
-    const q = abuseSearch.toLowerCase();
-    return (
-      !q ||
-      log.user.name.toLowerCase().includes(q) ||
-      log.user.email.toLowerCase().includes(q) ||
-      (log.reason && log.reason.toLowerCase().includes(q))
-    );
-  });
-
-  const handleClearAbuseLog = async (id: number) => {
-    if (!confirm("Clear this abuse log entry?")) return;
-    setLoadingId(`abuse-${id}`);
-    try {
-      const res = await fetch(`/api/admin/abuse-logs?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to clear log.");
-      showFeedback("ok", "Log entry cleared.");
-      setAbuseLogList(prev => prev.filter(l => l.id !== id));
-    } catch (err: any) {
-      showFeedback("err", err.message);
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  const handleClearAllAbuseLogs = async () => {
-    if (!confirm("Clear ALL abuse log entries? This cannot be undone.")) return;
-    setLoadingId("abuse-all");
-    try {
-      const res = await fetch("/api/admin/abuse-logs", { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to clear logs.");
-      showFeedback("ok", "All abuse logs cleared.");
-      setAbuseLogList([]);
-    } catch (err: any) {
-      showFeedback("err", err.message);
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
   const tabs = [
     { id: "overview"        as const, label: "Overview",                        icon: TrendingUp },
     { id: "users"           as const, label: `Users (${users.length})`,         icon: Users      },
@@ -407,7 +343,6 @@ export default function AdminClient({
     { id: "hackathons"      as const, label: `Hackathons (${hackathons.length})`, icon: Trophy   },
     { id: "allowedEmails"   as const, label: `Allowed Emails (${allowedList.length})`, icon: ShieldCheck },
     { id: "idVerifications" as const, label: `ID Verifications (${pendingIdCount > 0 ? `${pendingIdCount} Pending` : idRequests.length})`, icon: FileCheck },
-    { id: "moderation"      as const, label: `Moderation (${abuseLogList.length})`, icon: MessageSquareDiff },
   ];
 
   return (
@@ -1013,130 +948,6 @@ export default function AdminClient({
                 ))
               )}
             </div>
-          </div>
-        )}
-
-        {/* ════════════════════════════════════════════════════ */}
-        {/* MODERATION ─────────────────────────────────────── */}
-        {activeTab === "moderation" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-[17px] font-bold text-foreground">Message Moderation</h2>
-                <p className="text-[12px] text-muted-foreground mt-0.5">
-                  Review flagged and blocked message attempts across the platform.
-                </p>
-              </div>
-              {abuseLogList.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleClearAllAbuseLogs}
-                  disabled={loadingId === "abuse-all"}
-                  className="btn-ghost text-[12px] py-2 px-3.5 flex items-center gap-1.5 cursor-pointer text-destructive hover:bg-destructive/10 border border-destructive/30 rounded-lg shrink-0"
-                >
-                  <Trash2 size={13} />
-                  {loadingId === "abuse-all" ? "Clearing…" : "Clear All Logs"}
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-[12px] text-muted-foreground">
-                <span className="font-semibold text-foreground">{filteredAbuseLogs.length}</span> log entr{filteredAbuseLogs.length !== 1 ? "ies" : "y"}
-                {abuseSearch && " matching"}
-              </p>
-              <div className="relative w-64">
-                <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                <input
-                  type="text"
-                  value={abuseSearch}
-                  onChange={(e) => setAbuseSearch(e.target.value)}
-                  placeholder="Search user, email, reason…"
-                  className="forge-input pl-8 text-[12px]"
-                />
-              </div>
-            </div>
-
-            {filteredAbuseLogs.length === 0 ? (
-              <div className="card p-12 text-center space-y-2">
-                <MessageSquareDiff size={32} className="mx-auto text-muted-foreground/40" />
-                <p className="text-[14px] font-medium text-foreground">No flagged messages</p>
-                <p className="text-[12px] text-muted-foreground">The abuse classifier hasn&apos;t blocked any messages yet.</p>
-              </div>
-            ) : (
-              <div className="card overflow-hidden">
-                <div className="divide-y divide-border">
-                  {filteredAbuseLogs.map((log) => {
-                    const flaggedWords = log.reason
-                      ? log.reason.replace(/^flagged:/, "").split(",").filter(Boolean)
-                      : [];
-                    const isPhrase = log.reason === "abusive_phrase" || (!log.reason?.startsWith("flagged:") && log.reason);
-                    return (
-                      <div key={log.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="h-8 w-8 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center shrink-0 text-[12px] font-semibold text-destructive">
-                            {((log.user?.name || "U").trim()[0] || "U").toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Link
-                                href={`/profile/${log.user.id}`}
-                                className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2"
-                              >
-                                {log.user.name}
-                              </Link>
-                              <span className="badge badge-red flex items-center gap-1">
-                                <ShieldAlert size={9} />
-                                {log.count} blocked attempt{log.count !== 1 ? "s" : ""}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                              {log.user.email}{log.user.department ? ` · ${log.user.department}` : ""}{log.user.year ? ` · Year ${log.user.year}` : ""}
-                            </p>
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              {flaggedWords.length > 0
-                                ? flaggedWords.map((w, i) => (
-                                    <span key={i} className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                                      {w}
-                                    </span>
-                                  ))
-                                : isPhrase && (
-                                    <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
-                                      abusive phrase
-                                    </span>
-                                  )}
-                            </div>
-                            <p className="text-[10px] text-muted-foreground mt-1.5">
-                              Last flagged {new Date(log.timestamp).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-                          <Link
-                            href={`/profile/${log.user.id}`}
-                            className="btn-ghost text-[12px] p-2"
-                            title="View profile"
-                          >
-                            <ExternalLink size={13} strokeWidth={1.75} />
-                          </Link>
-                          <button
-                            onClick={() => handleClearAbuseLog(log.id)}
-                            disabled={loadingId !== null}
-                            className="btn-ghost p-2 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                            title="Clear this log entry"
-                          >
-                            {loadingId === `abuse-${log.id}`
-                              ? <span className="text-[11px]">…</span>
-                              : <Trash2 size={13} strokeWidth={1.75} />}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         )}
 

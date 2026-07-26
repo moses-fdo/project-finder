@@ -31,7 +31,6 @@ model User {
   skills         Skill[]         @relation("UserSkills")
   sentInvitations     Invitation[] @relation("SentInvitations")
   receivedInvitations Invitation[] @relation("ReceivedInvitations")
-  abuseLog       AbusiveMessageLog[]
 }
 
 model Project {
@@ -145,16 +144,4 @@ model IdVerificationRequest {
   adminNote   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
-
-model AbusiveMessageLog {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  timestamp DateTime @default(now())
-  reason    String?
-  count     Int      @default(1)
-
-  @@index([userId])
-  @@index([timestamp])
 }
