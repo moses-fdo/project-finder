@@ -706,3 +706,19 @@ body {
 .animate-slide-up {
   animation: slide-up 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
+
+/* ─── AppShell mobile layout ───────────────────────────── */
+
+/*
+ * Pad the main scroll column by the bottom nav height + device safe area.
+ * On md+ (sidebar layout) the padding is zeroed.
+ */
+.mobile-main-col {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .mobile-main-col {
+    padding-bottom: 0;
+  }
+}

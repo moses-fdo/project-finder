@@ -349,7 +349,7 @@ export default function AppShell({
       </aside>
 
       {/* ── Main column ─────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 mobile-main-col">
 
         {/* Desktop header */}
         <header className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card/95 backdrop-blur-sm sticky top-0 z-40">
@@ -408,28 +408,43 @@ export default function AppShell({
             </span>
           </Link>
 
-          <div className="flex items-center gap-2 relative" ref={inboxMobile}>
+          <div className="flex items-center gap-1 relative" ref={inboxMobile}>
             <ThemeToggle />
+
+            {/* Inbox trigger — 44×44 touch target */}
             <button
               onClick={() => setInboxOpen(prev => !prev)}
-              className="relative p-1.5 text-muted-foreground hover:text-foreground rounded-lg transition-colors cursor-pointer"
+              className="relative flex items-center justify-center w-11 h-11 text-muted-foreground hover:text-foreground rounded-xl transition-colors cursor-pointer"
               aria-label="Open inbox"
+              aria-expanded={inboxOpen}
             >
               <Inbox size={18} strokeWidth={1.75} />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+                <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-destructive" />
               )}
             </button>
 
-            <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden">
-              {user?.image
-                ? <Image src={user.image} alt={user.name || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
-                : <span className="text-[11px] font-bold text-foreground">{initials}</span>
-              }
-            </div>
+            {/* Avatar — tappable, opens profile sheet */}
+            <button
+              type="button"
+              onClick={() => setMobileProfileOpen(true)}
+              className="flex items-center justify-center w-11 h-11 rounded-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              aria-label="Open profile"
+            >
+              <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
+                {user?.image
+                  ? <Image src={user.image} alt={user.name || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
+                  : <span className="text-[11px] font-bold text-foreground">{initials}</span>
+                }
+              </div>
+            </button>
 
+            {/* Inbox dropdown — fixed to avoid overflow-clipping from header */}
             {inboxOpen && (
-              <div className="absolute right-0 top-[calc(100%+8px)] w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden">
+              <div
+                className="fixed right-4 w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-xl shadow-xl z-[60] animate-fade-in overflow-hidden"
+                style={{ top: '4rem' }}
+              >
                 {inboxDropdownContent}
               </div>
             )}
@@ -437,13 +452,16 @@ export default function AppShell({
         </header>
 
         {/* Page content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1">
           {children}
         </div>
       </div>
 
       {/* ── Mobile bottom nav ───────────────────────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-card/95 backdrop-blur-md flex items-center justify-around z-50 md:hidden pb-safe">
+      <nav
+        className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md flex items-end justify-around z-50 md:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
         {[
           { href: "/dashboard?tab=home", icon: HomeIcon, label: "Home", active: isTabActive("home") },
           { href: "/projects", icon: Search, label: "Discover", active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
@@ -452,7 +470,7 @@ export default function AppShell({
           <Link
             key={label}
             href={href}
-            className={`flex flex-col items-center justify-center gap-0.5 w-14 py-1 rounded-xl transition-colors ${
+            className={`flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-2 rounded-xl transition-colors ${
               active ? "text-foreground" : "text-muted-foreground"
             }`}
           >
@@ -464,7 +482,7 @@ export default function AppShell({
         <button
           type="button"
           onClick={() => setMobileProfileOpen(true)}
-          className={`flex flex-col items-center justify-center gap-0.5 w-14 py-1 rounded-xl transition-colors ${
+          className={`flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-2 rounded-xl transition-colors ${
             isTabActive("profile") ? "text-foreground" : "text-muted-foreground"
           }`}
         >
