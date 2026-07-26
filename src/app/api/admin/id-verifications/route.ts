@@ -80,6 +80,27 @@ export async function PATCH(req: Request) {
       }
     }
 
+    // Send in-app notification if user account exists
+    const targetUser = await prisma.user.findUnique({
+      where: { email: verificationReq.email.toLowerCase().trim() },
+    });
+
+    if (targetUser) {
+      await prisma.notification.create({
+        data: {
+          userId: targetUser.id,
+          type: "SYSTEM",
+          message:
+            status === "APPROVED"
+              ? `🎉 Your Student ID verification has been approved! Welcome to Colabro.`
+              : `❌ Your Student ID verification was rejected. ${
+                  adminNote ? `Reason: ${adminNote}` : "Please re-upload a clear Student ID photo."
+                }`,
+          link: "/dashboard",
+        },
+      });
+    }
+
     return NextResponse.json({
       message: `Verification request ${status.toLowerCase()} successfully!`,
       request: updatedRequest,

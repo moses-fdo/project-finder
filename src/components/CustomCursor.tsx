@@ -93,7 +93,7 @@ export default function CustomCursor() {
           pointerEvents: "none",
           zIndex: 99999,
           willChange: "transform",
-          transition: "transform 0.08s ease",
+          transition: "transform 0.02s ease-out",
         }}
       >
         <svg
