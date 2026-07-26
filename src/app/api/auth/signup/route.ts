@@ -53,8 +53,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
-    if (!email.endsWith("@karunya.edu.in")) {
-      return NextResponse.json({ error: "Only institutional email addresses are allowed." }, { status: 400 });
+    const cleanEmail = email.toLowerCase().trim();
+    const domain = cleanEmail.split("@")[1] || "";
+    let isAllowed =
+      cleanEmail.endsWith("@karunya.edu.in") ||
+      domain.includes(".edu") ||
+      domain.includes(".ac.");
+
+    if (!isAllowed) {
+      const allowedEntry = await prisma.allowedEmail.findUnique({
+        where: { email: cleanEmail },
+      });
+      if (allowedEntry) {
+        isAllowed = true;
+      }
+    }
+
+    if (!isAllowed) {
+      return NextResponse.json(
+        { error: "Only institutional emails or admin-approved emails are allowed." },
+        { status: 400 }
+      );
     }
 
     if (password.length < 6) {

@@ -21,6 +21,7 @@ import {
   FileSpreadsheet,
   Download,
   Upload,
+  ShieldCheck,
 } from "lucide-react";
 
 interface Stats {
@@ -35,17 +36,26 @@ interface AdminClientProps {
   users: any[];
   projects: any[];
   hackathons?: any[];
+  allowedEmails?: any[];
 }
 
-export default function AdminClient({ stats, users, projects, hackathons = [] }: AdminClientProps) {
+export default function AdminClient({ stats, users, projects, hackathons = [], allowedEmails = [] }: AdminClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects" | "hackathons">("overview");
+  const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects" | "hackathons" | "allowedEmails">("overview");
   const [userSearch, setUserSearch] = useState("");
   const [projSearch, setProjSearch] = useState("");
   const [loadingId,  setLoadingId]  = useState<string | null>(null);
   const [feedback,   setFeedback]   = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  // Allowed Emails state
+  const [allowedList, setAllowedList]           = useState<any[]>(allowedEmails || []);
+  const [allowedSearch, setAllowedSearch]       = useState("");
+  const [showAddAllowedModal, setShowAddAllowedModal] = useState(false);
+  const [newEmail, setNewEmail]                 = useState("");
+  const [newNote, setNewNote]                   = useState("");
+  const [addingEmail, setAddingEmail]           = useState(false);
 
   // Hackathon form state
   const [showAddHackathon, setShowAddHackathon] = useState(false);
@@ -199,6 +209,50 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
     }
   };
 
+  const handleAddAllowedEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail.trim()) return;
+    setAddingEmail(true);
+    try {
+      const res = await fetch("/api/admin/allowed-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newEmail, note: newNote }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add email.");
+      showFeedback("ok", `Added ${newEmail} to allowed emails list!`);
+      setShowAddAllowedModal(false);
+      setNewEmail("");
+      setNewNote("");
+      if (data.allowedEmail) {
+        setAllowedList(prev => [data.allowedEmail, ...prev]);
+      }
+      refresh();
+    } catch (err: any) {
+      showFeedback("err", err.message);
+    } finally {
+      setAddingEmail(false);
+    }
+  };
+
+  const handleDeleteAllowedEmail = async (id: number, email: string) => {
+    if (!confirm(`Remove ${email} from allowed list?`)) return;
+    setLoadingId(`allow-${id}`);
+    try {
+      const res = await fetch(`/api/admin/allowed-emails?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to remove email.");
+      showFeedback("ok", `Removed ${email} from allowed list.`);
+      setAllowedList(prev => prev.filter(item => item.id !== id));
+      refresh();
+    } catch (err: any) {
+      showFeedback("err", err.message);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
   /* ── filtered lists ────────────────────────────────────── */
   const filteredUsers = users.filter((u) => {
     const q = userSearch.toLowerCase();
@@ -210,6 +264,11 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
     return !q || p.title.toLowerCase().includes(q) || p.owner?.name.toLowerCase().includes(q);
   });
 
+  const filteredAllowed = allowedList.filter((item) => {
+    const q = allowedSearch.toLowerCase();
+    return !q || item.email.toLowerCase().includes(q) || (item.note && item.note.toLowerCase().includes(q));
+  });
+
   const statCards = [
     { label: "Total users",        value: stats.totalUsers,        icon: Users,      color: "text-blue-500"   },
     { label: "Total projects",      value: stats.totalProjects,      icon: FolderOpen, color: "text-green-500"  },
@@ -218,10 +277,11 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
   ];
 
   const tabs = [
-    { id: "overview"   as const, label: "Overview",                        icon: TrendingUp },
-    { id: "users"      as const, label: `Users (${users.length})`,         icon: Users      },
-    { id: "projects"   as const, label: `Projects (${projects.length})`,   icon: FolderOpen },
-    { id: "hackathons" as const, label: `Hackathons (${hackathons.length})`, icon: Trophy   },
+    { id: "overview"      as const, label: "Overview",                        icon: TrendingUp },
+    { id: "users"         as const, label: `Users (${users.length})`,         icon: Users      },
+    { id: "projects"      as const, label: `Projects (${projects.length})`,   icon: FolderOpen },
+    { id: "hackathons"    as const, label: `Hackathons (${hackathons.length})`, icon: Trophy   },
+    { id: "allowedEmails" as const, label: `Allowed Emails (${allowedList.length})`, icon: ShieldCheck },
   ];
 
   return (
@@ -655,6 +715,76 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
           </div>
         )}
 
+        {/* ════════════════════════════════════════════════════ */}
+        {/* ALLOWED EMAILS (NON-COLLEGE IDS) ──────────────────── */}
+        {activeTab === "allowedEmails" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-[17px] font-bold text-foreground">Non-College Allowed Emails</h2>
+                <p className="text-[12px] text-muted-foreground mt-0.5">
+                  Whitelist non-college email addresses (Gmail, Yahoo, external mentors) so they can register and log in.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddAllowedModal(true)}
+                className="btn-primary text-[12px] py-2 px-4 flex items-center gap-1.5 cursor-pointer font-bold shrink-0"
+              >
+                <Plus size={14} /> Add Non-College Email
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-[12px] text-muted-foreground">
+                <span className="font-semibold text-foreground">{filteredAllowed.length}</span> whitelisted email{filteredAllowed.length !== 1 ? "s" : ""}
+              </p>
+              <div className="relative w-64">
+                <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={allowedSearch}
+                  onChange={(e) => setAllowedSearch(e.target.value)}
+                  placeholder="Search allowed emails…"
+                  className="forge-input pl-8 text-[12px]"
+                />
+              </div>
+            </div>
+
+            <div className="card overflow-hidden">
+              <div className="divide-y divide-border">
+                {filteredAllowed.length === 0 ? (
+                  <p className="px-5 py-10 text-center text-[12px] text-muted-foreground">No allowed emails added yet.</p>
+                ) : filteredAllowed.map((item) => (
+                  <div key={item.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[13px] font-semibold text-foreground">{item.email}</span>
+                        <span className="badge badge-green flex items-center gap-1">
+                          <ShieldCheck size={10} /> Whitelisted
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {item.note ? `Note: ${item.note} · ` : ""}Added by {item.addedBy || "Admin"} on {new Date(item.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAllowedEmail(item.id, item.email)}
+                      disabled={loadingId === `allow-${item.id}`}
+                      className="btn-ghost p-2 text-destructive hover:bg-destructive/10 cursor-pointer self-start sm:self-center"
+                      title={`Remove ${item.email}`}
+                    >
+                      {loadingId === `allow-${item.id}` ? "…" : <Trash2 size={14} />}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* ── CREATE HACKATHON MODAL ────────────────────────────── */}
@@ -878,6 +1008,77 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
                   className="btn-primary text-[12px] py-2 px-5 cursor-pointer font-bold bg-green-600 hover:bg-green-700 text-white"
                 >
                   {importing ? "Importing Sheet…" : "Import Hackathons"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── ADD ALLOWED EMAIL MODAL ─────────────────────────── */}
+      {showAddAllowedModal && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card w-full max-w-[440px] p-6 space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-bold text-foreground">Whitelist Non-College Email</h3>
+                  <p className="text-[11px] text-muted-foreground">Grant platform sign-in access</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddAllowedModal(false)}
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddAllowedEmail} className="space-y-4">
+              <div>
+                <label className="block section-label mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. mentor.john@gmail.com"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="forge-input"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Users with this email address will be allowed to sign up and log in via Google or email/password.
+                </p>
+              </div>
+
+              <div>
+                <label className="block section-label mb-1">Note / Reason (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. External Mentor, Industry Partner, Guest Dev"
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  className="forge-input"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowAddAllowedModal(false)}
+                  className="btn-secondary text-[12px] py-2 px-4 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingEmail || !newEmail.trim()}
+                  className="btn-primary text-[12px] py-2 px-5 cursor-pointer font-bold"
+                >
+                  {addingEmail ? "Adding…" : "Add Email"}
                 </button>
               </div>
             </form>

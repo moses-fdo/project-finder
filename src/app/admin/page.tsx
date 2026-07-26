@@ -20,6 +20,7 @@ export default async function AdminPage() {
     users,
     projects,
     hackathons,
+    allowedEmails,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.project.count(),
@@ -55,6 +56,10 @@ export default async function AdminPage() {
     prisma.hackathon.findMany({
       orderBy: { createdAt: "desc" },
     }),
+
+    prisma.allowedEmail.findMany({
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const stats = { totalUsers, totalProjects, totalApplications, totalNotifications };
@@ -65,6 +70,7 @@ export default async function AdminPage() {
       users={users}
       projects={projects}
       hackathons={hackathons}
+      allowedEmails={allowedEmails}
     />
   );
 }

@@ -21,12 +21,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const email = user.email.toLowerCase().trim();
         const domain = email.split("@")[1] || "";
-        const isEdu =
+        let isAllowed =
           domain.includes(".edu") ||
           domain.includes(".ac.") ||
           domain.endsWith(".edu");
 
-        if (!isEdu) {
+        if (!isAllowed) {
+          const allowedEntry = await prisma.allowedEmail.findUnique({
+            where: { email },
+          });
+          if (allowedEntry) {
+            isAllowed = true;
+          }
+        }
+
+        if (!isAllowed) {
           return "/login?error=EduEmailRequired";
         }
 
