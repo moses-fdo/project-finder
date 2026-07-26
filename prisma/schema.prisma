@@ -36,6 +36,11 @@ model Project {
   title          String
   description    String
   status         String          @default("OPEN") // "OPEN" | "FULL" | "CLOSED"
+  category       String?         // e.g. "Web", "Mobile", "AI/ML", "IoT", "Research", "Design"
+  projectType    String?         // "Hackathon", "Research", "Side Project", "Open Source", "Academic"
+  experienceLevel String?        // "Beginner", "Intermediate", "Advanced", "Any"
+  teamSize       Int?            // max team members
+  duration       String?         // e.g. "1 week", "1 month", "Ongoing"
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   owner          User            @relation("UserProjects", fields: [ownerId], references: [id], onDelete: Cascade)

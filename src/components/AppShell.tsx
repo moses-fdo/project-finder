@@ -424,21 +424,6 @@ export default function AppShell({
               )}
             </button>
 
-            {/* Avatar — tappable, opens profile sheet */}
-            <button
-              type="button"
-              onClick={() => setMobileProfileOpen(true)}
-              className="flex items-center justify-center w-11 h-11 rounded-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              aria-label="Open profile"
-            >
-              <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
-                {user?.image
-                  ? <Image src={user.image} alt={user.name || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
-                  : <span className="text-[11px] font-bold text-foreground">{initials}</span>
-                }
-              </div>
-            </button>
-
             {/* Inbox dropdown — fixed to avoid overflow-clipping from header */}
             {inboxOpen && (
               <div
@@ -451,8 +436,8 @@ export default function AppShell({
           </div>
         </header>
 
-        {/* Page content */}
-        <div className="flex-1">
+        {/* Page content — padded so it never hides under the fixed mobile nav */}
+        <div className="flex-1 pb-[calc(64px+env(safe-area-inset-bottom,0px))] md:pb-0">
           {children}
         </div>
       </div>
@@ -537,6 +522,29 @@ export default function AppShell({
                   Admin Portal
                 </Link>
               )}
+
+              {/* My Space nav — visible only on mobile */}
+              <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                My Space
+              </p>
+              {spaceItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setMobileProfileOpen(false)}
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[13px] font-medium transition-colors ${
+                    item.active
+                      ? "bg-secondary text-foreground font-semibold"
+                      : "text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  <item.icon size={16} strokeWidth={item.active ? 2.25 : 1.75} />
+                  {item.label}
+                </Link>
+              ))}
+
+              <div className="h-px bg-border mx-1 my-1" />
+
               <Link
                 href="/dashboard?tab=profile"
                 onClick={() => setMobileProfileOpen(false)}
@@ -547,8 +555,6 @@ export default function AppShell({
               </Link>
               <ThemeToggleRow />
             </div>
-
-            <div className="h-px bg-border mx-4 my-1" />
 
             <div className="px-3 pb-2">
               <button

@@ -8,13 +8,28 @@ export async function POST(req: Request) {
     const currentUser = session?.user;
 
     if (!currentUser) {
-      return NextResponse.json({ error: "You must be logged in to create a project." }, { status: 401 });
+      return NextResponse.json(
+        { error: "You must be logged in to create a project." },
+        { status: 401 }
+      );
     }
 
-    const { title, description, skills } = await req.json();
+    const {
+      title,
+      description,
+      skills,
+      category,
+      projectType,
+      experienceLevel,
+      teamSize,
+      duration,
+    } = await req.json();
 
     if (!title || !description || !skills || !Array.isArray(skills)) {
-      return NextResponse.json({ error: "Title, description, and skills are required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Title, description, and skills are required." },
+        { status: 400 }
+      );
     }
 
     const currentUserId = Number((currentUser as any).id);
@@ -25,16 +40,19 @@ export async function POST(req: Request) {
         description,
         status: "OPEN",
         ownerId: currentUserId,
+        category:        category        || null,
+        projectType:     projectType     || null,
+        experienceLevel: experienceLevel || null,
+        teamSize:        teamSize        ? Number(teamSize) : null,
+        duration:        duration        || null,
         skills: {
           connectOrCreate: skills.map((name: string) => ({
-            where: { name },
+            where:  { name },
             create: { name },
           })),
         },
       },
-      include: {
-        skills: true,
-      },
+      include: { skills: true },
     });
 
     return NextResponse.json({ message: "Project created successfully.", project });
