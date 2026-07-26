@@ -30,7 +30,7 @@ export default async function CreateProjectPage() {
           </p>
         </div>
 
-        <ProjectCreateForm />
+        <ProjectCreateForm userId={Number((session.user as any).id)} />
       </main>
     </AppShell>
   );

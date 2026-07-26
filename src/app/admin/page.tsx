@@ -22,6 +22,7 @@ export default async function AdminPage() {
     hackathons,
     allowedEmails,
     idVerificationRequests,
+    abuseLogs,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.project.count(),
@@ -65,6 +66,21 @@ export default async function AdminPage() {
     prisma.idVerificationRequest.findMany({
       orderBy: { createdAt: "desc" },
     }),
+
+    prisma.abusiveMessageLog.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            department: true,
+            year: true,
+          },
+        },
+      },
+      orderBy: { timestamp: "desc" },
+    }),
   ]);
 
   const stats = { totalUsers, totalProjects, totalApplications, totalNotifications };
@@ -77,6 +93,7 @@ export default async function AdminPage() {
       hackathons={hackathons}
       allowedEmails={allowedEmails}
       idVerificationRequests={idVerificationRequests}
+      abuseLogs={abuseLogs}
     />
   );
 }

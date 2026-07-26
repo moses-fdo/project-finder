@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useAbuseCheck } from "@/components/moderation/useAbuseCheck";
+import AbuseWarningPopup from "@/components/moderation/AbuseWarningPopup";
 
 const CATEGORIES = [
   "Web / Full-Stack",
@@ -43,7 +45,7 @@ const DURATIONS = [
   "Ongoing",
 ];
 
-export default function ProjectCreateForm() {
+export default function ProjectCreateForm({ userId }: { userId: number }) {
   const router = useRouter();
 
   const [title,           setTitle]           = useState("");
@@ -57,10 +59,25 @@ export default function ProjectCreateForm() {
   const [loading,         setLoading]         = useState(false);
   const [error,           setError]           = useState("");
 
+  // Abuse moderation state
+  const { checkText, isChecking } = useAbuseCheck({ userId });
+  const [showAbusePopup, setShowAbusePopup] = useState(false);
+  const [flaggedWords, setFlaggedWords]     = useState<string[]>([]);
+  const descRef = useRef<HTMLTextAreaElement>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    // ── Abuse check on description before creating ──
+    const abuseResult = await checkText(description);
+    if (abuseResult.abusive) {
+      setFlaggedWords(abuseResult.flaggedWords);
+      setShowAbusePopup(true);
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/projects", {
@@ -123,6 +140,7 @@ export default function ProjectCreateForm() {
           </label>
           <textarea
             id="proj-desc"
+            ref={descRef}
             required
             rows={6}
             placeholder="Describe the scope, goals, and what you're building. Be specific — collaborators decide to apply based on this."
@@ -262,14 +280,25 @@ export default function ProjectCreateForm() {
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || isChecking}
             className="btn-primary text-[13px] py-2 px-5"
           >
-            {loading ? "Publishing…" : "Publish project"}
+            {isChecking ? "Checking…" : loading ? "Publishing…" : "Publish project"}
           </button>
         </div>
 
       </form>
+
+      {/* ── Abuse Warning Popup ── */}
+      <AbuseWarningPopup
+        isOpen={showAbusePopup}
+        flaggedWords={flaggedWords}
+        onClose={() => setShowAbusePopup(false)}
+        onRevise={() => {
+          setShowAbusePopup(false);
+          descRef.current?.focus();
+        }}
+      />
     </div>
   );
 }
