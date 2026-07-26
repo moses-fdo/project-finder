@@ -571,7 +571,7 @@ export default function DashboardViewClient({
             {[
               { href: "/projects/create", icon: Plus,   label: "New project" },
               { href: "/projects",        icon: Search, label: "Discover" },
-              { href: "/dashboard?tab=collaborations", icon: Users, label: "Collabs" },
+              { href: "/dashboard?tab=collaborators", icon: Users, label: "Collaborators" },
             ].map(({ href, icon: Icon, label }) => (
               <Link key={label} href={href} className="flex flex-col items-center gap-1.5 p-3 card hover:border-muted-foreground/25 transition-all">
                 <div className="h-9 w-9 rounded-lg bg-secondary border border-border flex items-center justify-center">
@@ -586,9 +586,9 @@ export default function DashboardViewClient({
       )}
 
 
-      {/* ── COLLABORATIONS — people finder ────────────────── */}
-      {currentTab === "collaborations" && (
-        <CollaborationsFinder
+      {/* ── COLLABORATORS — people finder ────────────────── */}
+      {(currentTab === "collaborators" || currentTab === "collaborations") && (
+        <CollaboratorsFinder
           people={collaborations}
           collabSearch={collabSearch}
           setCollabSearch={setCollabSearch}
@@ -1136,9 +1136,9 @@ export default function DashboardViewClient({
                   <Send size={32} className="mx-auto text-muted-foreground/40" />
                   <p className="text-[14px] font-medium text-foreground">No invitations sent</p>
                   <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
-                    You haven&apos;t sent any project invitations yet. Browse the Collaborations directory to find students and invite them!
+                    You haven&apos;t sent any project invitations yet. Browse the Collaborators directory to find students and invite them!
                   </p>
-                  <Link href="/dashboard?tab=collaborations" className="btn-secondary text-[12px] py-2 px-4 inline-flex mt-2">
+                  <Link href="/dashboard?tab=collaborators" className="btn-secondary text-[12px] py-2 px-4 inline-flex mt-2">
                     Find Collaborators →
                   </Link>
                 </div>
@@ -1519,9 +1519,9 @@ export default function DashboardViewClient({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CollaborationsFinder — standalone sub-component
+   CollaboratorsFinder — Bento Grid profile directory
    Receives already-fetched people array and filter state from parent.
-   All filtering is done client-side (no extra network call).
+   All filtering is done client-side.
 ═══════════════════════════════════════════════════════════════ */
 
 interface CFProps {
@@ -1538,7 +1538,7 @@ interface CFProps {
   onInviteUser?: (user: any) => void;
 }
 
-function CollaborationsFinder({
+function CollaboratorsFinder({
   people,
   collabSearch, setCollabSearch,
   collabDept,   setCollabDept,
@@ -1607,11 +1607,16 @@ function CollaborationsFinder({
     <div className="space-y-6">
 
       {/* Header */}
-      <div>
-        <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Find collaborators</h2>
-        <p className="text-[12px] text-muted-foreground mt-0.5">
-          Browse verified students and find people with the skills you need.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-[19px] font-bold text-foreground tracking-tight flex items-center gap-2">
+            <Users size={20} className="text-primary" />
+            Collaborators
+          </h2>
+          <p className="text-[12px] text-muted-foreground mt-0.5">
+            Discover verified student collaborators with the skills you need for your projects.
+          </p>
+        </div>
       </div>
 
       {/* Search + filters */}
@@ -1623,7 +1628,7 @@ function CollaborationsFinder({
             type="text"
             value={collabSearch}
             onChange={(e) => setCollabSearch(e.target.value)}
-            placeholder="Search by name, skill, department, or bio…"
+            placeholder="Search collaborators by name, skill, department, or bio…"
             className="forge-input pl-9 w-full"
           />
         </div>
@@ -1691,32 +1696,186 @@ function CollaborationsFinder({
 
         {/* Result count */}
         <p className="text-[11px] text-muted-foreground">
-          {filtered.length} {filtered.length === 1 ? "person" : "people"} found
+          {filtered.length} {filtered.length === 1 ? "collaborator" : "collaborators"} found
           {collabSearch || collabDept || collabSkill || collabStatus !== "all" ? " matching your filters" : ""}
         </p>
       </div>
 
-      {/* People grid */}
+      {/* Bento Grid */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((u: any) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((u: any, idx: number) => {
             const open = isOpenToWork(u);
             const initial = u.name[0].toUpperCase();
             const openProjectCount = (u.projects || []).filter((p: any) => p.status === "OPEN").length;
+            
+            // Asymmetric Bento layout: Every 4th card (when list > 2) is a Featured Bento Card
+            const isFeatured = filtered.length > 2 && idx % 4 === 0;
 
+            if (isFeatured) {
+              return (
+                <div
+                  key={u.id}
+                  className="md:col-span-2 card p-6 flex flex-col justify-between gap-5 bg-gradient-to-br from-card via-card to-secondary/30 border border-border/80 hover:border-foreground/25 hover:shadow-lg transition-all duration-300 group rounded-2xl relative overflow-hidden"
+                >
+                  {/* Subtle decorative glow */}
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none group-hover:bg-primary/10 transition-all" />
+
+                  {/* Top Header Row */}
+                  <div className="flex flex-wrap items-start justify-between gap-4 z-10">
+                    <div className="flex items-center gap-3.5">
+                      <div className="relative shrink-0">
+                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-foreground/10 to-primary/20 p-0.5 flex items-center justify-center">
+                          <div className="h-full w-full rounded-[14px] bg-card flex items-center justify-center font-bold text-[16px] text-foreground">
+                            {initial}
+                          </div>
+                        </div>
+                        <span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card ${open ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[15px] font-bold text-foreground tracking-tight">
+                            <Link href={`/profile/${u.id}`} className="hover:underline underline-offset-2">
+                              {u.name}
+                            </Link>
+                          </h3>
+                          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            Featured
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                          <span>Year {u.year}</span>
+                          <span>•</span>
+                          <span className="font-medium text-foreground/80">{u.department}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Availability Status */}
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
+                      open
+                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                        : "bg-muted border-border text-muted-foreground"
+                    }`}>
+                      <span className={`h-2 w-2 rounded-full ${open ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/50"}`} />
+                      {open ? "Available to Collab" : "Busy"}
+                    </div>
+                  </div>
+
+                  {/* Content grid inside featured bento card */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 z-10">
+                    {/* Bio Section */}
+                    <div className="sm:col-span-2 bg-secondary/40 border border-border/40 rounded-xl p-3.5 flex flex-col justify-center">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">About</p>
+                      {u.bio ? (
+                        <p className="text-[12px] text-foreground/90 leading-relaxed line-clamp-3">
+                          {u.bio}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground/60 italic">No bio added yet.</p>
+                      )}
+                    </div>
+
+                    {/* Active project stats box */}
+                    <div className="bg-secondary/40 border border-border/40 rounded-xl p-3.5 flex flex-col justify-between">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Status</p>
+                      <div className="mt-2">
+                        <span className="text-[18px] font-bold text-foreground">{openProjectCount}</span>
+                        <p className="text-[11px] text-muted-foreground">
+                          {openProjectCount === 1 ? "Open project" : "Open projects"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Skills Section */}
+                  <div className="space-y-1.5 z-10">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Skills & Expertise</p>
+                    {u.skills.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {u.skills.map((s: any) => (
+                          <span
+                            key={s.id}
+                            className={`text-[10px] font-medium px-2 py-0.5 rounded-lg bg-card border border-border text-foreground transition-all cursor-pointer hover:border-foreground/30 hover:bg-accent ${
+                              collabSkill === s.name ? "border-primary text-primary bg-primary/10" : ""
+                            }`}
+                            onClick={() => setCollabSkill(collabSkill === s.name ? "" : s.name)}
+                            title={`Filter by ${s.name}`}
+                          >
+                            {s.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-muted-foreground/50 italic">No skills listed.</p>
+                    )}
+                  </div>
+
+                  {/* Card Actions Footer */}
+                  <div className="flex items-center justify-between border-t border-border/60 pt-3.5 z-10">
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <MapPin size={12} strokeWidth={1.75} className="shrink-0 text-muted-foreground" />
+                      <span>{u.department.split(" ").slice(0, 2).join(" ")}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {hasProjects && onInviteUser && (
+                        <button
+                          type="button"
+                          onClick={() => onInviteUser(u)}
+                          className="btn-primary text-[11px] py-1.5 px-3 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                          title="Invite to your project"
+                        >
+                          <UserPlus size={12} strokeWidth={2} /> Invite
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => copyEmail(u.id, u.email ?? "")}
+                        className="btn-secondary text-[11px] py-1.5 px-2.5 flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                        title="Copy email address"
+                        aria-label={`Copy ${u.name}'s email`}
+                      >
+                        {copiedId === u.id ? (
+                          <>
+                            <CheckCheck size={13} strokeWidth={2} className="text-emerald-500" />
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={13} strokeWidth={1.75} />
+                            <span>Email</span>
+                          </>
+                        )}
+                      </button>
+
+                      <Link
+                        href={`/profile/${u.id}`}
+                        className="btn-secondary text-[11px] py-1.5 px-3 font-medium"
+                      >
+                        View profile →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // Standard Bento Card (1 col span)
             return (
               <div
                 key={u.id}
-                className="card p-5 flex flex-col gap-4 hover:border-muted-foreground/25 transition-all group"
+                className="card p-5 flex flex-col justify-between gap-4 border border-border/80 hover:border-foreground/20 hover:shadow-md transition-all duration-200 group rounded-2xl bg-card"
               >
-                {/* Top row: avatar + availability badge */}
+                {/* Header: avatar + name + availability */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-secondary border border-border flex items-center justify-center font-semibold text-[15px] text-foreground shrink-0">
+                    <div className="h-10 w-10 rounded-xl bg-secondary border border-border flex items-center justify-center font-bold text-[14px] text-foreground shrink-0 group-hover:border-foreground/30 transition-colors">
                       {initial}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-[13px] font-semibold text-foreground leading-snug truncate">
+                      <h3 className="text-[13px] font-bold text-foreground leading-snug truncate">
                         <Link href={`/profile/${u.id}`} className="hover:underline underline-offset-2">
                           {u.name}
                         </Link>
@@ -1727,90 +1886,90 @@ function CollaborationsFinder({
                     </div>
                   </div>
 
-                  {/* Availability dot + label */}
                   <div className={`flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide ${
                     open
-                      ? "bg-success/10 border-success/20 text-green-600 dark:text-green-400"
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                       : "bg-muted border-border text-muted-foreground"
                   }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${open ? "bg-success" : "bg-muted-foreground/50"}`} />
+                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${open ? "bg-emerald-500" : "bg-muted-foreground/50"}`} />
                     {open ? "Available" : "Busy"}
                   </div>
                 </div>
 
-                {/* Bio */}
-                {u.bio ? (
-                  <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
-                    {u.bio}
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-muted-foreground/50 italic">No bio added yet.</p>
-                )}
+                {/* Bio snippet container */}
+                <div className="bg-secondary/30 rounded-xl p-2.5 border border-border/30">
+                  {u.bio ? (
+                    <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+                      {u.bio}
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground/50 italic">No bio added yet.</p>
+                  )}
+                </div>
 
                 {/* Skills */}
-                {u.skills.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {u.skills.slice(0, 5).map((s: any) => (
-                      <span
-                        key={s.id}
-                        className={`text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground transition-colors cursor-pointer hover:bg-accent ${
-                          collabSkill === s.name ? "border-foreground/30 text-foreground bg-accent" : ""
-                        }`}
-                        onClick={() => setCollabSkill(collabSkill === s.name ? "" : s.name)}
-                        title={`Filter by ${s.name}`}
-                      >
-                        {s.name}
-                      </span>
-                    ))}
-                    {u.skills.length > 5 && (
-                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
-                        +{u.skills.length - 5}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-[10px] text-muted-foreground/50 italic">No skills listed.</p>
-                )}
+                <div className="space-y-1">
+                  {u.skills.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {u.skills.slice(0, 4).map((s: any) => (
+                        <span
+                          key={s.id}
+                          className={`text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-secondary border border-border text-muted-foreground transition-colors cursor-pointer hover:bg-accent hover:text-foreground ${
+                            collabSkill === s.name ? "border-primary text-primary bg-primary/10" : ""
+                          }`}
+                          onClick={() => setCollabSkill(collabSkill === s.name ? "" : s.name)}
+                          title={`Filter by ${s.name}`}
+                        >
+                          {s.name}
+                        </span>
+                      ))}
+                      {u.skills.length > 4 && (
+                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-secondary border border-border text-muted-foreground">
+                          +{u.skills.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-muted-foreground/50 italic">No skills listed.</p>
+                  )}
+                </div>
 
-                {/* Footer: running projects + actions */}
-                <div className="flex items-center justify-between border-t border-border pt-3 mt-auto gap-2">
+                {/* Footer: status + actions */}
+                <div className="flex items-center justify-between border-t border-border/60 pt-3 mt-auto gap-2">
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <MapPin size={10} strokeWidth={1.75} className="shrink-0" />
                     {openProjectCount > 0
-                      ? `${openProjectCount} open project${openProjectCount > 1 ? "s" : ""}`
-                      : "No active projects"}
+                      ? `${openProjectCount} project${openProjectCount > 1 ? "s" : ""}`
+                      : "0 projects"}
                   </div>
 
                   <div className="flex items-center gap-1">
-                    {/* Invite to project */}
                     {hasProjects && onInviteUser && (
                       <button
                         type="button"
                         onClick={() => onInviteUser(u)}
-                        className="btn-primary text-[11px] py-1 px-2.5 flex items-center gap-1 cursor-pointer"
+                        className="btn-primary text-[11px] py-1 px-2 flex items-center gap-1 cursor-pointer"
                         title="Invite to your project"
                       >
                         <UserPlus size={11} strokeWidth={2} /> Invite
                       </button>
                     )}
 
-                    {/* Copy email */}
                     <button
                       onClick={() => copyEmail(u.id, u.email ?? "")}
-                      className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground"
+                      className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg"
                       title="Copy email address"
                       aria-label={`Copy ${u.name}'s email`}
                     >
                       {copiedId === u.id
-                        ? <CheckCheck size={13} strokeWidth={2} className="text-success" />
+                        ? <CheckCheck size={13} strokeWidth={2} className="text-emerald-500" />
                         : <Copy size={13} strokeWidth={1.75} />
                       }
                     </button>
 
-                    {/* View profile */}
                     <Link
                       href={`/profile/${u.id}`}
-                      className="btn-secondary text-[11px] py-1 px-2.5"
+                      className="btn-secondary text-[11px] py-1 px-2.5 rounded-lg"
                     >
                       View profile
                     </Link>
@@ -1821,11 +1980,11 @@ function CollaborationsFinder({
           })}
         </div>
       ) : (
-        <div className="card p-14 text-center">
+        <div className="card p-14 text-center rounded-2xl">
           <div className="flex justify-center mb-3">
             <Users size={28} strokeWidth={1.5} className="text-muted-foreground/40" />
           </div>
-          <p className="text-[14px] font-medium text-foreground mb-1">No people found</p>
+          <p className="text-[14px] font-medium text-foreground mb-1">No collaborators found</p>
           <p className="text-[12px] text-muted-foreground">
             Try clearing your filters or broadening your search.
           </p>
@@ -1834,3 +1993,5 @@ function CollaborationsFinder({
     </div>
   );
 }
+
+
