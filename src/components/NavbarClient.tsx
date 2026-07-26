@@ -25,7 +25,7 @@ export default function NavbarClient({ user, unreadNotifications }: NavbarClient
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const initials = (user.name || "U")[0].toUpperCase();
+  const initials = ((user?.name || "U").trim()[0] || "U").toUpperCase();
 
   return (
     <div className="flex items-center gap-1 relative" ref={profileRef}>

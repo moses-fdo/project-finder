@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import OnboardingModal from "@/components/OnboardingModal";
+import { getNotificationLink } from "@/lib/notifications";
 import {
   Check,
   X,
@@ -467,13 +468,17 @@ export default function DashboardViewClient({
             <div className="card overflow-hidden divide-y divide-border">
               {recentNotifications && recentNotifications.length > 0 ? (
                 recentNotifications.slice(0, 4).map((notif) => (
-                  <div key={notif.id} className="flex items-center gap-3 px-4 py-3 text-[12px] hover:bg-secondary/20 transition-colors">
-                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30 shrink-0" />
+                  <Link
+                    key={notif.id}
+                    href={getNotificationLink(notif)}
+                    className="flex items-center gap-3 px-4 py-3 text-[12px] hover:bg-secondary/20 transition-colors"
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${notif.read ? "bg-muted-foreground/30" : "bg-foreground"}`} />
                     <span className="text-foreground flex-1 truncate leading-snug">{notif.message}</span>
                     <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
                       {new Date(notif.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                     </span>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p className="px-4 py-6 text-[12px] text-muted-foreground text-center">No recent activity.</p>
@@ -1265,17 +1270,20 @@ export default function DashboardViewClient({
               {localNotifications.map((notif) => (
                 <div
                   key={notif.id}
-                  onClick={() => !notif.read && markNotifRead(notif.id)}
-                  className={[
-                    "card p-4 transition-all",
-                    notif.read ? "opacity-50" : "cursor-pointer hover:border-muted-foreground/30",
-                  ].join(" ")}
+                  onClick={() => {
+                    if (!notif.read) markNotifRead(notif.id);
+                    router.push(getNotificationLink(notif));
+                  }}
+                  className="card p-4 transition-all cursor-pointer hover:border-muted-foreground/40 hover:bg-secondary/20"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-2.5">
-                      {!notif.read && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-foreground mt-1.5 shrink-0" aria-hidden="true" />
-                      )}
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${
+                          notif.read ? "bg-transparent" : "bg-foreground"
+                        }`}
+                        aria-hidden="true"
+                      />
                       <p className="text-[13px] text-foreground leading-relaxed">{notif.message}</p>
                     </div>
                     <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0 pt-0.5">

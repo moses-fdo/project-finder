@@ -48,7 +48,7 @@ export default async function DashboardPage({
       where: { userId: currentUserId },
       orderBy: { createdAt: "desc" },
       take: 10,
-      select: { id: true, message: true, read: true, createdAt: true },
+      select: { id: true, type: true, message: true, link: true, read: true, createdAt: true },
     }),
     // 2: Profile data
     prisma.user.findUnique({
@@ -116,7 +116,7 @@ export default async function DashboardPage({
     prisma.notification.findMany({
       where: { userId: currentUserId },
       take: 15,
-      select: { id: true, type: true, message: true, read: true, createdAt: true },
+      select: { id: true, type: true, message: true, link: true, read: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
     // 6: Collaborations directory

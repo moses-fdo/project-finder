@@ -52,7 +52,7 @@ export default function ProjectCard({ project, initialBookmarked = false }: Proj
     day: "numeric",
   });
 
-  const ownerInitial = project.owner.name[0].toUpperCase();
+  const ownerInitial = ((project?.owner?.name || "U").trim()[0] || "U").toUpperCase();
 
   const toggleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault();

@@ -218,7 +218,7 @@ export default async function ProjectPage({ params }: PageProps) {
 
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-[13px] text-foreground shrink-0">
-                  {project.owner.name[0].toUpperCase()}
+                  {((project.owner?.name || "U").trim()[0] || "U").toUpperCase()}
                 </div>
                 <div>
                   <h4 className="text-[13px] font-semibold text-foreground">

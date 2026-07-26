@@ -97,6 +97,7 @@ model Notification {
   userId    Int
   type      String   // "APPLICATION_RECEIVED" | "APPLICATION_ACCEPTED" | "APPLICATION_REJECTED" | "INVITATION_RECEIVED" | "INVITATION_ACCEPTED" | "INVITATION_DECLINED" | "SYSTEM"
   message   String
+  link      String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }

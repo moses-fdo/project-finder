@@ -137,6 +137,7 @@ export async function POST(req: Request) {
         userId: rId,
         type: "INVITATION_RECEIVED",
         message: `${senderName} invited you to collaborate on project "${project.title}".`,
+        link: "/dashboard?tab=invitations",
       },
     });
 

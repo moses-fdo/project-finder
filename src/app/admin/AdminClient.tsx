@@ -333,7 +333,7 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
                   <div key={u.id} className="px-5 py-3 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0 text-[11px] font-semibold text-foreground">
-                        {u.name[0].toUpperCase()}
+                        {((u?.name || "U").trim()[0] || "U").toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium text-foreground truncate">{u.name}</p>
@@ -414,7 +414,7 @@ export default function AdminClient({ stats, users, projects, hackathons = [] }:
                   <div key={u.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="h-8 w-8 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0 text-[12px] font-semibold text-foreground">
-                        {u.name[0].toUpperCase()}
+                        {((u?.name || "U").trim()[0] || "U").toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

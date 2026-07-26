@@ -53,6 +53,7 @@ export async function PATCH(
         userId: invitation.senderId,
         type: `INVITATION_${status}`,
         message: `${invitation.receiver.name} ${actionWord} your invitation to join "${invitation.project.title}".`,
+        link: "/dashboard?tab=invitations",
       },
     });
 

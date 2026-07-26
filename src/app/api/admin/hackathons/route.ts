@@ -49,6 +49,7 @@ export async function POST(req: Request) {
           userId: u.id,
           type: "SYSTEM",
           message: `🏆 New Hackathon Announced: ${hackathon.title}!`,
+          link: "/dashboard?tab=hackathons",
         })),
       });
     }

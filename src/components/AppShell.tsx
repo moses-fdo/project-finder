@@ -26,9 +26,13 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
+import { getNotificationLink } from "@/lib/notifications";
+
 interface NotificationItem {
   id: number;
   message: string;
+  type?: string | null;
+  link?: string | null;
   read: boolean;
   createdAt: string | Date;
 }
@@ -94,7 +98,7 @@ export default function AppShell({
     };
   }, []);
 
-  const initials    = (user?.name || "U")[0].toUpperCase();
+  const initials = ((user?.name || "U").trim()[0] || "U").toUpperCase();
   const unreadCount = inboxNotifications
     ? localNotifs.filter((n) => !n.read).length
     : unreadNotifications;
@@ -161,10 +165,12 @@ export default function AppShell({
           localNotifs.map((n) => (
             <div
               key={n.id}
-              className={`flex items-start gap-3 px-4 py-3 transition-colors ${
-                n.read ? "opacity-50" : "cursor-pointer hover:bg-secondary/50"
-              }`}
-              onClick={() => !n.read && markRead(n.id)}
+              className="flex items-start gap-3 px-4 py-3 transition-colors cursor-pointer hover:bg-secondary/50"
+              onClick={() => {
+                if (!n.read) markRead(n.id);
+                setInboxOpen(false);
+                router.push(getNotificationLink(n));
+              }}
             >
               <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-transparent" : "bg-foreground"}`} />
               <div className="flex-1 min-w-0">

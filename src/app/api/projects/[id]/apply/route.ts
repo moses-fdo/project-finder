@@ -77,6 +77,7 @@ export async function POST(
           userId: project.ownerId,
           type: "APPLICATION_RECEIVED",
           message: `${currentUser.name ?? "Someone"} applied to collaborate on "${project.title}".`,
+          link: "/dashboard?tab=projects",
         },
       }),
     ]);

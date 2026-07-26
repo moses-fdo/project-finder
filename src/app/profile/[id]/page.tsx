@@ -60,7 +60,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             {/* Avatar + name card */}
             <div className="card p-6 text-center">
               <div className="h-16 w-16 rounded-full bg-secondary border border-border flex items-center justify-center font-semibold text-[22px] text-foreground mx-auto mb-4">
-                {user.name[0].toUpperCase()}
+                {((user?.name || "U").trim()[0] || "U").toUpperCase()}
               </div>
               <h1 className="text-[16px] font-semibold text-foreground mb-0.5">{user.name}</h1>
               <p className="text-[12px] text-muted-foreground mb-3">
@@ -136,7 +136,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             {/* Projects */}
             <div>
               <h2 className="text-[15px] font-semibold text-foreground mb-4">
-                Projects by {user.name.split(" ")[0]}
+                Projects by {user?.name ? user.name.trim().split(" ")[0] : "User"}
               </h2>
 
               {user.projects.length > 0 ? (

@@ -51,6 +51,7 @@ export async function PATCH(
         userId: application.userId,
         type: `APPLICATION_${status}`,
         message: `Your application to collaborate on "${application.project.title}" has been ${status.toLowerCase()}.`,
+        link: "/dashboard?tab=applications",
       },
     });
 
