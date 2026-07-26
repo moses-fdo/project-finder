@@ -48,9 +48,6 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
   const line2Ref  = useRef<HTMLSpanElement>(null);
   const line3Ref  = useRef<HTMLSpanElement>(null);
   const subRef    = useRef<HTMLParagraphElement>(null);
-  const ctasRef   = useRef<HTMLDivElement>(null);
-  const primaryRef   = useRef<HTMLAnchorElement>(null);
-  const secondaryRef = useRef<HTMLAnchorElement>(null);
 
   const statCards = [
     { value: stats.users,        label: "students",         suffix: "+" },
@@ -73,10 +70,10 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
       { yPercent: 0, duration: 1.0, ease: "expo.out", stagger: 0.09, delay: 0.2 }
     );
 
-    /* ── Sub-copy and CTAs ── */
-    gsap.fromTo([subRef.current, ctasRef.current],
+    /* ── Sub-copy ── */
+    gsap.fromTo(subRef.current,
       { y: 28, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.75, ease: "power2.out", stagger: 0.12, delay: 0.85 }
+      { y: 0, opacity: 1, duration: 0.75, ease: "power2.out", delay: 0.85 }
     );
 
     /* ── Inline stats: count up when in view ── */
@@ -133,31 +130,8 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
       );
     }
 
-    /* ── Magnetic buttons ── */
-    const cleanups: (() => void)[] = [];
-    ([primaryRef, secondaryRef] as React.RefObject<HTMLAnchorElement>[]).forEach(ref => {
-      const el = ref.current;
-      if (!el) return;
-      const onMove = (e: MouseEvent) => {
-        const r = el.getBoundingClientRect();
-        gsap.to(el, {
-          x: (e.clientX - (r.left + r.width  / 2)) * 0.28,
-          y: (e.clientY - (r.top  + r.height / 2)) * 0.28,
-          duration: 0.25, ease: "power2.out",
-        });
-      };
-      const onLeave = () => gsap.to(el, { x: 0, y: 0, duration: 0.55, ease: "power3.out" });
-      el.addEventListener("mousemove",  onMove);
-      el.addEventListener("mouseleave", onLeave);
-      cleanups.push(() => {
-        el.removeEventListener("mousemove",  onMove);
-        el.removeEventListener("mouseleave", onLeave);
-      });
-    });
-
     return () => {
       ScrollTrigger.getAll().forEach(t => t.kill());
-      cleanups.forEach(fn => fn());
     };
   }, []);
 
@@ -308,7 +282,7 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
                 lineHeight: 1.65,
                 color: "oklch(0.97 0.005 260 / 0.58)",
                 maxWidth: "52ch",
-                marginBottom: "2.25rem",
+                marginBottom: "3.5rem",
                 textWrap: "pretty",
               }}
             >
@@ -316,39 +290,6 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
               and ship together — from weekend hackathons to semester-long research.
               No cold emails. No Discord rabbit holes.
             </p>
-
-            {/* CTAs */}
-            <div ref={ctasRef} className="flex items-center gap-3 flex-wrap mb-16">
-              <Link
-                ref={primaryRef}
-                href="/signup"
-                className="inline-flex items-center gap-2 group"
-                style={{
-                  fontSize: "14px", fontWeight: 700, padding: "12px 24px",
-                  background: "oklch(0.55 0.28 272)",
-                  color: "white", borderRadius: "10px",
-                  transition: "opacity 0.15s, transform 0.15s",
-                  boxShadow: "0 0 32px oklch(0.55 0.28 272 / 0.35)",
-                }}
-              >
-                Create free account
-                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <Link
-                ref={secondaryRef}
-                href="/login"
-                style={{
-                  fontSize: "14px", fontWeight: 500, padding: "12px 24px",
-                  color: "oklch(0.97 0.005 260 / 0.55)",
-                  border: "1px solid oklch(0.97 0.005 260 / 0.12)",
-                  borderRadius: "10px",
-                  transition: "color 0.15s, border-color 0.15s, background 0.15s",
-                }}
-                className="hover:text-white hover:border-white/25 hover:bg-white/5"
-              >
-                Sign in
-              </Link>
-            </div>
 
             {/* Inline stats — not a hero-metric card grid; woven into a natural sentence */}
             <div

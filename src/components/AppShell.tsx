@@ -197,7 +197,7 @@ export default function AppShell({
       <aside className="hidden md:flex flex-col w-60 border-r border-border bg-card shrink-0 h-screen sticky top-0">
 
         {/* Logo row */}
-        <div className="h-14 border-b border-border px-4 flex items-center justify-between gap-2">
+        <div className="h-14 border-b border-border px-4 flex items-center gap-2">
           <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
             <ColabroLogo size={28} />
             <span
@@ -207,7 +207,6 @@ export default function AppShell({
               Colabro
             </span>
           </Link>
-          <ThemeToggle />
         </div>
 
         {/* Nav */}
