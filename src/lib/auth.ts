@@ -12,6 +12,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: googleId,
       clientSecret: googleSecret,
+      authorization: {
+        params: {
+          prompt: "select_account",
+        },
+      },
     }),
   ],
   callbacks: {
