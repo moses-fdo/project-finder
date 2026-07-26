@@ -45,3 +45,4 @@ next-env.d.ts
 # prisma
 /prisma/dev.db
 /src/generated/prisma
+SCALING_GUIDE.md

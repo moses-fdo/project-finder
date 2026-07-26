@@ -106,6 +106,7 @@ export default function DashboardViewClient({
   const router = useRouter();
   const [, startTransition] = useTransition();
 
+  const [nowMs] = useState(() => Date.now());
   const [projects, setProjects] = useState(initialProjects);
   const [editingProject, setEditingProject] = useState<any | null>(null);
 
@@ -615,7 +616,6 @@ export default function DashboardViewClient({
       {/* ── EVENTS VIEW ─────────────────────────────────────── */}
       {(currentTab === "events" || currentTab === "hackathons") && (() => {
         const eventsList = (events && events.length > 0) ? events : hackathons;
-        const nowMs = Date.now();
 
         const activeEvents = eventsList.filter((h: any) => {
           if (!h.endDate) return true;

@@ -129,7 +129,6 @@ export default function AppShell({
 
   const navItems = [
     { label: "Home",           icon: HomeIcon,   href: "/dashboard?tab=home",           active: isTabActive("home") },
-    { label: "Projects",       icon: FolderOpen, href: "/dashboard?tab=projects",       active: isTabActive("projects") },
     { label: "Discover",       icon: Search,     href: "/projects",                     active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
     { label: "Collaborators",  icon: Users,      href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
     { label: "Events",         icon: Trophy,     href: "/dashboard?tab=events",         active: isTabActive("events") || isTabActive("hackathons") },

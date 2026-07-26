@@ -69,6 +69,7 @@ export default function AdminClient({
 
   const eventsList = events.length > 0 ? events : hackathons;
 
+  const [nowMs] = useState(() => Date.now());
   const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects" | "events" | "hackathons" | "allowedEmails" | "idVerifications" | "moderation">("overview");
   const [userSearch, setUserSearch] = useState("");
   const [projSearch, setProjSearch] = useState("");
@@ -798,7 +799,7 @@ export default function AdminClient({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {eventsList.map((h: any) => {
                   const locationStr = [h.location, h.city, h.state, h.country].filter(Boolean).join(", ") || h.location || "Online";
-                  const isEnded = h.endDate ? new Date(h.endDate).getTime() < Date.now() : false;
+                  const isEnded = h.endDate ? new Date(h.endDate).getTime() < nowMs : false;
 
                   return (
                     <div key={h.id} className="card p-5 space-y-4 flex flex-col justify-between border-border relative">
