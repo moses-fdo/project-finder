@@ -70,11 +70,13 @@ export default function ProjectCreateForm({ userId }: { userId: number }) {
     setLoading(true);
     setError("");
 
-    // ── Abuse check on description before creating ──
-    const abuseResult = await checkText(description);
+    // ── Abuse check on title, description, and skills before creating ──
+    const combinedContent = [title, description, skills].filter(Boolean).join(" \n ");
+    const abuseResult = await checkText(combinedContent);
     if (abuseResult.abusive) {
       setFlaggedWords(abuseResult.flaggedWords);
       setShowAbusePopup(true);
+      setError("Your post contains inappropriate language and cannot be published. Please revise flagged content.");
       setLoading(false);
       return;
     }

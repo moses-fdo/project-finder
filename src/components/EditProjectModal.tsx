@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { useAbuseCheck } from "@/components/moderation/useAbuseCheck";
+import AbuseWarningPopup from "@/components/moderation/AbuseWarningPopup";
 
 interface EditProjectModalProps {
   isOpen: boolean;
@@ -37,6 +39,11 @@ export default function EditProjectModal({
 
   const [prevProjectId, setPrevProjectId] = useState(project.id);
 
+  // Abuse moderation state
+  const { checkText, isChecking } = useAbuseCheck();
+  const [showAbusePopup, setShowAbusePopup] = useState(false);
+  const [flaggedWords, setFlaggedWords] = useState<string[]>([]);
+
   if (project.id !== prevProjectId) {
     setPrevProjectId(project.id);
     setTitle(project.title);
@@ -57,6 +64,17 @@ export default function EditProjectModal({
 
     setSubmitting(true);
     setFeedback(null);
+
+    // ── Abuse check on title, description, and skills ──
+    const combinedContent = [title, description, skillsInput].filter(Boolean).join(" ");
+    const abuseResult = await checkText(combinedContent);
+    if (abuseResult.abusive) {
+      setFlaggedWords(abuseResult.flaggedWords);
+      setShowAbusePopup(true);
+      setFeedback({ type: "err", message: "Inappropriate language detected. Updates blocked." });
+      setSubmitting(false);
+      return;
+    }
 
     const skillsArray = skillsInput
       .split(",")
@@ -203,6 +221,13 @@ export default function EditProjectModal({
           </div>
         </form>
       </div>
+
+      <AbuseWarningPopup
+        isOpen={showAbusePopup}
+        flaggedWords={flaggedWords}
+        onClose={() => setShowAbusePopup(false)}
+        onRevise={() => setShowAbusePopup(false)}
+      />
     </div>
   );
 }

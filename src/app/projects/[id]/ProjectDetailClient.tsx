@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquare, Check, X, Clock, Settings, Bookmark, Copy, CheckCheck, Pencil } from "lucide-react";
 import EditProjectModal from "@/components/EditProjectModal";
+import { useAbuseCheck } from "@/components/moderation/useAbuseCheck";
+import AbuseWarningPopup from "@/components/moderation/AbuseWarningPopup";
 
 interface ProjectDetailClientProps {
   projectId: number;
@@ -42,6 +44,11 @@ export default function ProjectDetailClient({
   const [bmLoading, setBmLoading]     = useState(false);
 
   const [copied, setCopied]           = useState(false);
+
+  // Abuse moderation state
+  const { checkText, isChecking } = useAbuseCheck();
+  const [showAbusePopup, setShowAbusePopup] = useState(false);
+  const [flaggedWords, setFlaggedWords] = useState<string[]>([]);
 
   const router = useRouter();
 
@@ -85,6 +92,16 @@ export default function ProjectDetailClient({
     e.preventDefault();
     setSubmitting(true);
     setApplyError("");
+
+    // ── Abuse check on application message ──
+    const abuseResult = await checkText(message);
+    if (abuseResult.abusive) {
+      setFlaggedWords(abuseResult.flaggedWords);
+      setShowAbusePopup(true);
+      setApplyError("Inappropriate language detected in message. Application blocked.");
+      setSubmitting(false);
+      return;
+    }
     try {
       const res = await fetch(`/api/projects/${projectId}/apply`, {
         method: "POST",
@@ -308,6 +325,13 @@ export default function ProjectDetailClient({
           </div>
         </div>
       )}
+
+      <AbuseWarningPopup
+        isOpen={showAbusePopup}
+        flaggedWords={flaggedWords}
+        onClose={() => setShowAbusePopup(false)}
+        onRevise={() => setShowAbusePopup(false)}
+      />
     </>
   );
 }

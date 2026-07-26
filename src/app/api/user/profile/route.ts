@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getErrorMessage } from "@/lib/error";
+import { checkAbuseServer } from "@/lib/moderation";
 
 export async function PATCH(req: Request) {
   try {
@@ -24,6 +25,21 @@ export async function PATCH(req: Request) {
         { error: "Invalid user ID." },
         { status: 400 }
       );
+    }
+
+    // ── Server-side moderation check ──
+    const textToCheck = [name, bio, Array.isArray(skills) ? skills.join(" ") : ""].filter(Boolean).join(" ");
+    if (textToCheck) {
+      const abuseResult = await checkAbuseServer(textToCheck, currentUserId);
+      if (abuseResult.abusive) {
+        return NextResponse.json(
+          {
+            error: "Your profile details contain inappropriate language.",
+            flaggedWords: abuseResult.flaggedWords,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const updateData: any = {};
