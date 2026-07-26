@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkAbuseServer } from "@/lib/moderation";
 
 export async function POST(req: Request) {
   try {
@@ -33,6 +34,20 @@ export async function POST(req: Request) {
     }
 
     const currentUserId = Number((currentUser as any).id);
+
+    // ── Server-side moderation check ──
+    const combinedContent = [title, description, skills.join(" ")].filter(Boolean).join(" ");
+    const abuseResult = await checkAbuseServer(combinedContent, currentUserId);
+
+    if (abuseResult.abusive) {
+      return NextResponse.json(
+        {
+          error: "Your project contains inappropriate language and cannot be published.",
+          flaggedWords: abuseResult.flaggedWords,
+        },
+        { status: 400 }
+      );
+    }
 
     const project = await prisma.project.create({
       data: {

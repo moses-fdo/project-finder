@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
 import bcrypt from "bcryptjs";
+import { checkAbuseServer } from "@/lib/moderation";
 
 async function sendOtpEmail(email: string, name: string, code: string) {
   if (resend) {
@@ -51,6 +52,15 @@ export async function POST(req: Request) {
 
     if (!name || !email || !password || !department || !year) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+
+    // ── Server-side moderation check on name ──
+    const abuseResult = await checkAbuseServer(name);
+    if (abuseResult.abusive) {
+      return NextResponse.json(
+        { error: "The provided name contains inappropriate language." },
+        { status: 400 }
+      );
     }
 
     const cleanEmail = email.toLowerCase().trim();

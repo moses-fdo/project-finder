@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkAbuseServer } from "@/lib/moderation";
 
 export async function POST(
   req: Request,
@@ -36,6 +37,18 @@ export async function POST(
 
     if (!message || message.length === 0) {
       return NextResponse.json({ error: "Please write a message explaining how you can contribute." }, { status: 400 });
+    }
+
+    // ── Server-side moderation check ──
+    const abuseResult = await checkAbuseServer(message, currentUserId);
+    if (abuseResult.abusive) {
+      return NextResponse.json(
+        {
+          error: "Your application message contains inappropriate language.",
+          flaggedWords: abuseResult.flaggedWords,
+        },
+        { status: 400 }
+      );
     }
 
     const project = await prisma.project.findUnique({

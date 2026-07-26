@@ -43,9 +43,12 @@ export function useAbuseCheck(options: UseAbuseCheckOptions = {}) {
 
         const result: AbuseCheckResult & { error?: string } = await res.json();
 
+        const flagged = result.flaggedWords || [];
+        const isAbusive = Boolean(result.abusive || flagged.length > 0);
+
         const finalResult: AbuseCheckResult = {
-          abusive: result.abusive || false,
-          flaggedWords: result.flaggedWords || [],
+          abusive: isAbusive,
+          flaggedWords: flagged,
           confidence: result.confidence || 0,
         };
 

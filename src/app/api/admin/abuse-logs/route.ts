@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Aggregate summary stats
-    const totalBlocked = logs.reduce((sum, l) => sum + l.count, 0);
-    const uniqueUsers = new Set(logs.map((l) => l.userId)).size;
+    const totalBlocked = logs.reduce((sum: number, l: any) => sum + l.count, 0);
+    const uniqueUsers = new Set(logs.map((l: any) => l.userId)).size;
 
     return NextResponse.json({
       logs,

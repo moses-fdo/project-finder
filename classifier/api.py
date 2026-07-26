@@ -141,25 +141,17 @@ async def classify(request: ClassifyRequest):
     score = compute_abusive_score(text)
     
     # Decision logic:
-    # - Abusive if score > threshold OR any abusive phrase found
-    # - Always abusive if flagged words exist (lexicon match)
-    # - But require a minimum threshold to avoid trivial false positives
+    # - ALWAYS abusive if any flagged words exist (lexicon match) or abusive phrase found
+    # - Abusive if score >= threshold
     THRESHOLD = 0.14
-    MIN_WORDS_FOR_FLAG = 1  # at least this many flagged words to be sure
     
     is_abusive = False
     confidence = 0.0
     
-    if has_phrase:
+    if len(flagged_words) > 0 or has_phrase:
         is_abusive = True
-        confidence = max(0.75, score)
-    elif len(flagged_words) >= MIN_WORDS_FOR_FLAG and score >= THRESHOLD:
-        is_abusive = True
-        confidence = score
-    elif len(flagged_words) >= 2:  # multiple flagged words is a strong signal
-        is_abusive = True
-        confidence = max(score, 0.5)
-    elif score >= 0.3:
+        confidence = max(0.9, score)
+    elif score >= THRESHOLD:
         is_abusive = True
         confidence = score
     

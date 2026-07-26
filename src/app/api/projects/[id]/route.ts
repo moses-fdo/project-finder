@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkAbuseServer } from "@/lib/moderation";
 
 export async function PATCH(
   req: Request,
@@ -31,6 +32,24 @@ export async function PATCH(
 
     if (project.ownerId !== currentUserId && !isAdmin) {
       return NextResponse.json({ error: "You are not authorized to update this project." }, { status: 403 });
+    }
+
+    // ── Server-side moderation check ──
+    const textToCheck = [
+      title || project.title,
+      description || project.description,
+      Array.isArray(skills) ? skills.join(" ") : "",
+    ].filter(Boolean).join(" ");
+
+    const abuseResult = await checkAbuseServer(textToCheck, currentUserId);
+    if (abuseResult.abusive) {
+      return NextResponse.json(
+        {
+          error: "Your update contains inappropriate language and cannot be saved.",
+          flaggedWords: abuseResult.flaggedWords,
+        },
+        { status: 400 }
+      );
     }
 
     const updateData: any = {};
