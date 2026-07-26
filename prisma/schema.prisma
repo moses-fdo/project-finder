@@ -132,3 +132,16 @@ model AllowedEmail {
   addedBy   String?
   createdAt DateTime @default(now())
 }
+
+model IdVerificationRequest {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  collegeName String
+  department  String?
+  idCardImage String
+  status      String   @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  adminNote   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

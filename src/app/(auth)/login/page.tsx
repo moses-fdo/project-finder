@@ -4,15 +4,18 @@ import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
+import StudentIdModal from "@/components/StudentIdModal";
+
 function LoginFormContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showIdModal, setShowIdModal] = useState(false);
 
   const searchParams = useSearchParams();
   const errorParam   = searchParams.get("error");
 
   let defaultError = "";
   if (errorParam === "EduEmailRequired") {
-    defaultError = "Access Restricted: Please sign in with an official student or institutional educational email address (.edu, .edu.in, .ac.in, etc.).";
+    defaultError = "Access Restricted: Institutional .edu email or admin verification required.";
   } else if (errorParam && errorParam !== "Configuration") {
     defaultError = "Sign-in failed. Please try again.";
   }
@@ -24,15 +27,26 @@ function LoginFormContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background">
-      <div className="w-full max-w-[360px]">
+      <div className="w-full max-w-[400px]">
 
-        <div className="card p-7 text-center">
-          <h1 className="text-[18px] font-semibold text-foreground mb-1">Welcome back</h1>
-          <p className="text-[12px] text-muted-foreground mb-6">Sign in with your EduEmail account to continue</p>
+        <div className="card p-7 text-center space-y-4">
+          <div>
+            <h1 className="text-[18px] font-semibold text-foreground mb-1">Welcome back to Colabro</h1>
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              Have an official college email? Sign in directly with Google for instant access.
+            </p>
+          </div>
 
           {defaultError && (
-            <div className="p-3 mb-5 text-[12px] text-left rounded-md bg-destructive/10 text-destructive border border-destructive/20">
-              {defaultError}
+            <div className="p-3 text-[12px] text-left rounded-md bg-destructive/10 text-destructive border border-destructive/20 space-y-1.5">
+              <p className="font-semibold">{defaultError}</p>
+              <button
+                type="button"
+                onClick={() => setShowIdModal(true)}
+                className="text-[11px] underline font-bold hover:text-foreground cursor-pointer"
+              >
+                Don&apos;t have a .edu email? Upload Student ID Card →
+              </button>
             </div>
           )}
 
@@ -49,9 +63,23 @@ function LoginFormContent() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
             </svg>
-            {googleLoading ? "Connecting to Google..." : "Continue with Google"}
+            {googleLoading ? "Connecting to Google..." : "Continue with Google (.edu / .ac)"}
           </button>
+
+          {/* Student ID Verification prompt */}
+          <div className="pt-3 border-t border-border text-center space-y-1">
+            <p className="text-[11px] text-muted-foreground">Don&apos;t have a .edu email address?</p>
+            <button
+              type="button"
+              onClick={() => setShowIdModal(true)}
+              className="text-[12px] font-semibold text-primary hover:underline cursor-pointer"
+            >
+              🪪 Upload Student ID Card for Verification
+            </button>
+          </div>
         </div>
+
+        <StudentIdModal isOpen={showIdModal} onClose={() => setShowIdModal(false)} />
       </div>
     </div>
   );

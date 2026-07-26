@@ -22,6 +22,8 @@ import {
   Download,
   Upload,
   ShieldCheck,
+  FileCheck,
+  FileText,
 } from "lucide-react";
 
 interface Stats {
@@ -37,13 +39,21 @@ interface AdminClientProps {
   projects: any[];
   hackathons?: any[];
   allowedEmails?: any[];
+  idVerificationRequests?: any[];
 }
 
-export default function AdminClient({ stats, users, projects, hackathons = [], allowedEmails = [] }: AdminClientProps) {
+export default function AdminClient({
+  stats,
+  users,
+  projects,
+  hackathons = [],
+  allowedEmails = [],
+  idVerificationRequests = [],
+}: AdminClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects" | "hackathons" | "allowedEmails">("overview");
+  const [activeTab, setActiveTab]   = useState<"overview" | "users" | "projects" | "hackathons" | "allowedEmails" | "idVerifications">("overview");
   const [userSearch, setUserSearch] = useState("");
   const [projSearch, setProjSearch] = useState("");
   const [loadingId,  setLoadingId]  = useState<string | null>(null);
@@ -56,6 +66,11 @@ export default function AdminClient({ stats, users, projects, hackathons = [], a
   const [newEmail, setNewEmail]                 = useState("");
   const [newNote, setNewNote]                   = useState("");
   const [addingEmail, setAddingEmail]           = useState(false);
+
+  // ID Verification requests state
+  const [idRequests, setIdRequests]             = useState<any[]>(idVerificationRequests || []);
+  const [idSearch, setIdSearch]                 = useState("");
+  const [previewIdImage, setPreviewIdImage]     = useState<{ name: string; image: string } | null>(null);
 
   // Hackathon form state
   const [showAddHackathon, setShowAddHackathon] = useState(false);
@@ -253,6 +268,39 @@ export default function AdminClient({ stats, users, projects, hackathons = [], a
     }
   };
 
+  /* ── ID Verification Approval / Rejection ─────────────────── */
+  const handleUpdateIdVerification = async (id: number, status: "APPROVED" | "REJECTED", email: string) => {
+    const action = status === "APPROVED" ? "approve" : "reject";
+    let adminNote: string | undefined;
+    if (status === "REJECTED") {
+      const note = prompt(`Enter rejection reason for ${email} (optional):`);
+      if (note === null) return;
+      adminNote = note;
+    }
+
+    setLoadingId(`idverif-${id}`);
+    try {
+      const res = await fetch("/api/admin/id-verifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status, adminNote }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action} request.`);
+
+      showFeedback("ok", `Student ID for ${email} has been ${status.toLowerCase()}!`);
+      setIdRequests(prev => prev.map(item => item.id === id ? { ...item, status, adminNote: adminNote || null } : item));
+      if (status === "APPROVED") {
+        setAllowedList(prev => [{ id: Date.now(), email, note: "Approved Student ID", addedBy: "Admin", createdAt: new Date() }, ...prev]);
+      }
+      refresh();
+    } catch (err: any) {
+      showFeedback("err", err.message);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
   /* ── filtered lists ────────────────────────────────────── */
   const filteredUsers = users.filter((u) => {
     const q = userSearch.toLowerCase();
@@ -269,6 +317,16 @@ export default function AdminClient({ stats, users, projects, hackathons = [], a
     return !q || item.email.toLowerCase().includes(q) || (item.note && item.note.toLowerCase().includes(q));
   });
 
+  const filteredIdRequests = idRequests.filter((req) => {
+    const q = idSearch.toLowerCase();
+    return (
+      !q ||
+      req.name.toLowerCase().includes(q) ||
+      req.email.toLowerCase().includes(q) ||
+      req.collegeName.toLowerCase().includes(q)
+    );
+  });
+
   const statCards = [
     { label: "Total users",        value: stats.totalUsers,        icon: Users,      color: "text-blue-500"   },
     { label: "Total projects",      value: stats.totalProjects,      icon: FolderOpen, color: "text-green-500"  },
@@ -276,12 +334,15 @@ export default function AdminClient({ stats, users, projects, hackathons = [], a
     { label: "Notifications sent",  value: stats.totalNotifications, icon: Bell,       color: "text-purple-500" },
   ];
 
+  const pendingIdCount = idRequests.filter(r => r.status === "PENDING").length;
+
   const tabs = [
-    { id: "overview"      as const, label: "Overview",                        icon: TrendingUp },
-    { id: "users"         as const, label: `Users (${users.length})`,         icon: Users      },
-    { id: "projects"      as const, label: `Projects (${projects.length})`,   icon: FolderOpen },
-    { id: "hackathons"    as const, label: `Hackathons (${hackathons.length})`, icon: Trophy   },
-    { id: "allowedEmails" as const, label: `Allowed Emails (${allowedList.length})`, icon: ShieldCheck },
+    { id: "overview"        as const, label: "Overview",                        icon: TrendingUp },
+    { id: "users"           as const, label: `Users (${users.length})`,         icon: Users      },
+    { id: "projects"        as const, label: `Projects (${projects.length})`,   icon: FolderOpen },
+    { id: "hackathons"      as const, label: `Hackathons (${hackathons.length})`, icon: Trophy   },
+    { id: "allowedEmails"   as const, label: `Allowed Emails (${allowedList.length})`, icon: ShieldCheck },
+    { id: "idVerifications" as const, label: `ID Verifications (${pendingIdCount > 0 ? `${pendingIdCount} Pending` : idRequests.length})`, icon: FileCheck },
   ];
 
   return (
@@ -785,6 +846,111 @@ export default function AdminClient({ stats, users, projects, hackathons = [], a
           </div>
         )}
 
+        {/* ════════════════════════════════════════════════════ */}
+        {/* ID VERIFICATIONS ─────────────────────────────────── */}
+        {activeTab === "idVerifications" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-[17px] font-bold text-foreground">Student ID Verification Requests</h2>
+                <p className="text-[12px] text-muted-foreground mt-0.5">
+                  Review student ID cards uploaded by students without institutional .edu emails.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-[12px] text-muted-foreground">
+                <span className="font-semibold text-foreground">{filteredIdRequests.length}</span> request{filteredIdRequests.length !== 1 ? "s" : ""}
+              </p>
+              <div className="relative w-64">
+                <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={idSearch}
+                  onChange={(e) => setIdSearch(e.target.value)}
+                  placeholder="Search student, email, college…"
+                  className="forge-input pl-8 text-[12px]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredIdRequests.length === 0 ? (
+                <div className="col-span-full card p-10 text-center text-[12px] text-muted-foreground">
+                  No ID verification requests found.
+                </div>
+              ) : (
+                filteredIdRequests.map((req) => (
+                  <div key={req.id} className="card p-5 space-y-4 flex flex-col justify-between border-border">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-[14px] font-bold text-foreground">{req.name}</h3>
+                            <span
+                              className={`badge ${
+                                req.status === "PENDING"
+                                  ? "badge-yellow"
+                                  : req.status === "APPROVED"
+                                  ? "badge-green"
+                                  : "badge-red"
+                              }`}
+                            >
+                              {req.status}
+                            </span>
+                          </div>
+                          <p className="text-[12px] text-muted-foreground">{req.email}</p>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {new Date(req.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-secondary/50 rounded-lg text-[11px] space-y-1">
+                        <p className="text-foreground font-medium">🏫 {req.collegeName}</p>
+                        {req.department && <p className="text-muted-foreground">📚 {req.department}</p>}
+                        {req.adminNote && <p className="text-destructive font-mono mt-1">Note: {req.adminNote}</p>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewIdImage({ name: req.name, image: req.idCardImage })}
+                        className="btn-secondary text-[11px] py-1.5 px-3 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <FileText size={12} /> View Student ID Card
+                      </button>
+
+                      {req.status === "PENDING" && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateIdVerification(req.id, "REJECTED", req.email)}
+                            disabled={loadingId === `idverif-${req.id}`}
+                            className="btn-ghost text-[11px] py-1.5 px-3 text-destructive hover:bg-destructive/10 cursor-pointer"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateIdVerification(req.id, "APPROVED", req.email)}
+                            disabled={loadingId === `idverif-${req.id}`}
+                            className="btn-primary text-[11px] py-1.5 px-3 font-bold bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                          >
+                            Approve
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* ── CREATE HACKATHON MODAL ────────────────────────────── */}
@@ -1082,6 +1248,46 @@ export default function AdminClient({ stats, users, projects, hackathons = [], a
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── PREVIEW STUDENT ID CARD MODAL ─────────────────── */}
+      {previewIdImage && (
+        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card w-full max-w-[600px] p-6 space-y-4 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h3 className="text-[16px] font-bold text-foreground">Student ID Card</h3>
+                <p className="text-[11px] text-muted-foreground">{previewIdImage.name}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewIdImage(null)}
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-2 bg-secondary/30 rounded-xl overflow-hidden text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewIdImage.image}
+                alt={`Student ID of ${previewIdImage.name}`}
+                className="max-h-[450px] mx-auto rounded-lg object-contain shadow-md"
+              />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setPreviewIdImage(null)}
+                className="btn-secondary text-[12px] py-1.5 px-4 cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -21,6 +21,7 @@ export default async function AdminPage() {
     projects,
     hackathons,
     allowedEmails,
+    idVerificationRequests,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.project.count(),
@@ -60,6 +61,10 @@ export default async function AdminPage() {
     prisma.allowedEmail.findMany({
       orderBy: { createdAt: "desc" },
     }),
+
+    prisma.idVerificationRequest.findMany({
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const stats = { totalUsers, totalProjects, totalApplications, totalNotifications };
@@ -71,6 +76,7 @@ export default async function AdminPage() {
       projects={projects}
       hackathons={hackathons}
       allowedEmails={allowedEmails}
+      idVerificationRequests={idVerificationRequests}
     />
   );
 }
