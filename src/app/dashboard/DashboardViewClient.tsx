@@ -1607,93 +1607,126 @@ function CollaborationsFinder({
     <div className="space-y-6">
 
       {/* Header */}
-      <div>
-        <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Find collaborators</h2>
-        <p className="text-[12px] text-muted-foreground mt-0.5">
-          Browse verified students and find people with the skills you need.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/50 pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-[18px] font-semibold text-foreground tracking-tight">Find collaborators</h2>
+            <span className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground text-[11px] font-medium border border-border/60">
+              {filtered.length}
+            </span>
+          </div>
+          <p className="text-[12px] text-muted-foreground mt-0.5">
+            Connect with verified students across campus and build project teams.
+          </p>
+        </div>
       </div>
 
-      {/* Search + filters */}
-      <div className="space-y-3">
-        {/* Search input */}
-        <div className="relative">
-          <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            value={collabSearch}
-            onChange={(e) => setCollabSearch(e.target.value)}
-            placeholder="Search by name, skill, department, or bio…"
-            className="forge-input pl-9 w-full"
-          />
-        </div>
+      {/* Search + filter toolbar */}
+      <div className="space-y-3 bg-secondary/40 p-3.5 rounded-xl border border-border/60">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+          
+          {/* Search input (spans 6 cols on md) */}
+          <div className="relative md:col-span-6">
+            <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={collabSearch}
+              onChange={(e) => setCollabSearch(e.target.value)}
+              placeholder="Search by name, skill, department, or bio…"
+              className="forge-input pl-9 w-full bg-card"
+            />
+            {collabSearch && (
+              <button
+                onClick={() => setCollabSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-md"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
 
-        {/* Filter row */}
-        <div className="flex flex-wrap gap-2 items-center">
-
-          {/* Availability pills */}
-          <div className="flex items-center gap-1 p-1 bg-secondary rounded-lg border border-border">
+          {/* Availability toggle pills (spans 3 cols on md) */}
+          <div className="md:col-span-3 flex items-center justify-between p-1 bg-card rounded-lg border border-border">
             {(["all", "open", "busy"] as const).map((val) => (
               <button
                 key={val}
                 onClick={() => setCollabStatus(val)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                className={`flex-1 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer text-center ${
                   collabStatus === val
-                    ? "bg-card text-foreground shadow-sm border border-border"
+                    ? "bg-secondary text-foreground shadow-xs border border-border/80"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {val === "all" ? "Everyone" : val === "open" ? "Available" : "Busy"}
+                {val === "all" ? "All" : val === "open" ? "Available" : "Busy"}
               </button>
             ))}
           </div>
 
-          {/* Department select */}
-          <select
-            value={collabDept}
-            onChange={(e) => setCollabDept(e.target.value)}
-            className="text-[12px] py-1.5 pl-2.5 pr-7 bg-card border border-border rounded-md text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary transition-colors appearance-none"
-            style={selectBg}
-          >
-            <option value="">All departments</option>
-            {allDepts.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-
-          {/* Skill select */}
-          <select
-            value={collabSkill}
-            onChange={(e) => setCollabSkill(e.target.value)}
-            className="text-[12px] py-1.5 pl-2.5 pr-7 bg-card border border-border rounded-md text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary transition-colors appearance-none"
-            style={selectBg}
-          >
-            <option value="">All skills</option>
-            {allSkills.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-
-          {/* Active filter pills */}
-          {collabDept && (
-            <button
-              onClick={() => setCollabDept("")}
-              className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-secondary text-foreground border border-border hover:bg-accent transition-colors"
+          {/* Department & Skill Selects (spans 3 cols on md) */}
+          <div className="md:col-span-3 grid grid-cols-2 gap-2">
+            <select
+              value={collabDept}
+              onChange={(e) => setCollabDept(e.target.value)}
+              className="text-[11.5px] py-1.5 pl-2.5 pr-6 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
+              style={selectBg}
             >
-              {collabDept} <X size={10} strokeWidth={2} />
-            </button>
-          )}
-          {collabSkill && (
-            <button
-              onClick={() => setCollabSkill("")}
-              className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-secondary text-foreground border border-border hover:bg-accent transition-colors"
+              <option value="">Departments</option>
+              {allDepts.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+
+            <select
+              value={collabSkill}
+              onChange={(e) => setCollabSkill(e.target.value)}
+              className="text-[11.5px] py-1.5 pl-2.5 pr-6 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
+              style={selectBg}
             >
-              {collabSkill} <X size={10} strokeWidth={2} />
-            </button>
-          )}
+              <option value="">Skills</option>
+              {allSkills.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
         </div>
 
-        {/* Result count */}
-        <p className="text-[11px] text-muted-foreground">
-          {filtered.length} {filtered.length === 1 ? "person" : "people"} found
-          {collabSearch || collabDept || collabSkill || collabStatus !== "all" ? " matching your filters" : ""}
-        </p>
+        {/* Active filter badges */}
+        {(collabDept || collabSkill || collabSearch || collabStatus !== "all") && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
+            <span className="text-[10.5px] text-muted-foreground font-medium mr-1">Active filters:</span>
+            {collabDept && (
+              <button
+                onClick={() => setCollabDept("")}
+                className="inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-md bg-card text-foreground border border-border hover:bg-secondary transition-colors"
+              >
+                Dept: {collabDept} <X size={10} strokeWidth={2} />
+              </button>
+            )}
+            {collabSkill && (
+              <button
+                onClick={() => setCollabSkill("")}
+                className="inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-md bg-card text-foreground border border-border hover:bg-secondary transition-colors"
+              >
+                Skill: {collabSkill} <X size={10} strokeWidth={2} />
+              </button>
+            )}
+            {collabStatus !== "all" && (
+              <button
+                onClick={() => setCollabStatus("all")}
+                className="inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-md bg-card text-foreground border border-border hover:bg-secondary transition-colors"
+              >
+                Status: {collabStatus === "open" ? "Available" : "Busy"} <X size={10} strokeWidth={2} />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setCollabSearch("");
+                setCollabDept("");
+                setCollabSkill("");
+                setCollabStatus("all");
+              }}
+              className="text-[10.5px] text-muted-foreground hover:text-foreground underline ml-auto cursor-pointer"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* People grid */}
@@ -1707,33 +1740,33 @@ function CollaborationsFinder({
             return (
               <div
                 key={u.id}
-                className="card p-4 aspect-square flex flex-col justify-between hover:border-muted-foreground/25 transition-all group overflow-hidden relative"
+                className="card p-4 aspect-square flex flex-col justify-between hover:border-foreground/20 hover:shadow-xs transition-all duration-200 group overflow-hidden relative border border-border bg-card rounded-xl"
               >
-                {/* Top row: avatar + availability badge */}
+                {/* Top row: avatar + info + availability badge */}
                 <div className="flex items-start justify-between gap-2 shrink-0">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-10 w-10 rounded-full bg-secondary border border-border flex items-center justify-center font-semibold text-[14px] text-foreground shrink-0 overflow-hidden">
+                    <div className="h-11 w-11 rounded-full bg-secondary border border-border/80 flex items-center justify-center font-semibold text-[14px] text-foreground shrink-0 overflow-hidden shadow-2xs">
                       {initial}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-[13px] font-semibold text-foreground leading-snug truncate">
+                      <h3 className="text-[13.5px] font-semibold text-foreground leading-snug truncate">
                         <Link href={`/profile/${u.id}`} className="hover:underline underline-offset-2">
                           {u.name}
                         </Link>
                       </h3>
-                      <p className="text-[10px] text-muted-foreground truncate">
+                      <p className="text-[10.5px] text-muted-foreground truncate font-normal mt-0.5">
                         Year {u.year} · {u.department.split(" ").slice(0, 2).join(" ")}
                       </p>
                     </div>
                   </div>
 
-                  {/* Availability dot + label */}
-                  <div className={`flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded-full border text-[8px] font-bold uppercase tracking-wide ${
+                  {/* Availability badge */}
+                  <div className={`flex items-center gap-1.5 shrink-0 px-2 py-0.5 rounded-full border text-[9px] font-medium tracking-wide ${
                     open
-                      ? "bg-success/10 border-success/20 text-green-600 dark:text-green-400"
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                       : "bg-muted border-border text-muted-foreground"
                   }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${open ? "bg-success" : "bg-muted-foreground/50"}`} />
+                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${open ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
                     {open ? "Available" : "Busy"}
                   </div>
                 </div>
@@ -1741,11 +1774,11 @@ function CollaborationsFinder({
                 {/* Middle: Bio & Skills */}
                 <div className="flex flex-col gap-1.5 my-auto overflow-hidden py-1">
                   {u.bio ? (
-                    <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                    <p className="text-[11px] text-muted-foreground/90 leading-relaxed line-clamp-2 min-h-[32px]">
                       {u.bio}
                     </p>
                   ) : (
-                    <p className="text-[10px] text-muted-foreground/50 italic">No bio added yet.</p>
+                    <p className="text-[10.5px] text-muted-foreground/40 italic min-h-[32px]">No bio added yet.</p>
                   )}
 
                   {/* Skills */}
@@ -1754,8 +1787,8 @@ function CollaborationsFinder({
                       {u.skills.slice(0, 3).map((s: any) => (
                         <span
                           key={s.id}
-                          className={`text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground transition-colors cursor-pointer hover:bg-accent truncate max-w-[85px] ${
-                            collabSkill === s.name ? "border-foreground/30 text-foreground bg-accent" : ""
+                          className={`text-[9.5px] font-medium px-2 py-0.5 rounded-md bg-secondary/80 text-foreground/80 border border-border/50 transition-colors cursor-pointer hover:bg-accent hover:text-foreground truncate max-w-[90px] ${
+                            collabSkill === s.name ? "border-foreground/40 text-foreground bg-accent" : ""
                           }`}
                           onClick={() => setCollabSkill(collabSkill === s.name ? "" : s.name)}
                           title={`Filter by ${s.name}`}
@@ -1764,24 +1797,23 @@ function CollaborationsFinder({
                         </span>
                       ))}
                       {u.skills.length > 3 && (
-                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                        <span className="text-[9.5px] font-medium px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border/50">
                           +{u.skills.length - 3}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <p className="text-[10px] text-muted-foreground/50 italic">No skills listed.</p>
+                    <p className="text-[10px] text-muted-foreground/40 italic">No skills listed.</p>
                   )}
                 </div>
 
                 {/* Footer: status + action buttons */}
-                <div className="flex items-center justify-between border-t border-border pt-2.5 mt-auto gap-1 shrink-0">
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate min-w-0">
-                    <MapPin size={10} strokeWidth={1.75} className="shrink-0" />
+                <div className="flex items-center justify-between border-t border-border/60 pt-2.5 mt-auto gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1 text-[10.5px] text-muted-foreground truncate min-w-0 font-medium">
                     <span className="truncate">
                       {openProjectCount > 0
-                        ? `${openProjectCount} proj`
-                        : "No projects"}
+                        ? `${openProjectCount} open proj`
+                        : "Open to team"}
                     </span>
                   </div>
 
@@ -1791,17 +1823,17 @@ function CollaborationsFinder({
                       <button
                         type="button"
                         onClick={() => onInviteUser(u)}
-                        className="btn-primary text-[10px] py-1 px-2 flex items-center gap-1 cursor-pointer"
+                        className="btn-primary text-[10.5px] py-1 px-2.5 flex items-center gap-1 cursor-pointer rounded-md"
                         title="Invite to your project"
                       >
-                        <UserPlus size={10} strokeWidth={2} /> Invite
+                        <UserPlus size={11} strokeWidth={2} /> Invite
                       </button>
                     )}
 
                     {/* Copy email */}
                     <button
                       onClick={() => copyEmail(u.id, u.email ?? "")}
-                      className="btn-ghost p-1 text-muted-foreground hover:text-foreground"
+                      className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-md"
                       title="Copy email address"
                       aria-label={`Copy ${u.name}'s email`}
                     >
@@ -1814,7 +1846,7 @@ function CollaborationsFinder({
                     {/* View profile */}
                     <Link
                       href={`/profile/${u.id}`}
-                      className="btn-secondary text-[10px] py-1 px-2"
+                      className="btn-secondary text-[10.5px] py-1 px-2.5 rounded-md"
                     >
                       Profile
                     </Link>
@@ -1825,13 +1857,13 @@ function CollaborationsFinder({
           })}
         </div>
       ) : (
-        <div className="card p-14 text-center">
+        <div className="card p-14 text-center border border-border/60 bg-card rounded-xl">
           <div className="flex justify-center mb-3">
             <Users size={28} strokeWidth={1.5} className="text-muted-foreground/40" />
           </div>
-          <p className="text-[14px] font-medium text-foreground mb-1">No people found</p>
+          <p className="text-[14px] font-medium text-foreground mb-1">No collaborators found</p>
           <p className="text-[12px] text-muted-foreground">
-            Try clearing your filters or broadening your search.
+            Try clearing your filters or searching with a different term.
           </p>
         </div>
       )}
