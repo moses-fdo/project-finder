@@ -28,7 +28,7 @@ function LoginFormContent() {
 
         <div className="card p-7 text-center">
           <h1 className="text-[18px] font-semibold text-foreground mb-1">Welcome back</h1>
-          <p className="text-[12px] text-muted-foreground mb-6">Sign in with your Google account to continue</p>
+          <p className="text-[12px] text-muted-foreground mb-6">Sign in with your EduEmail account to continue</p>
 
           {defaultError && (
             <div className="p-3 mb-5 text-[12px] text-left rounded-md bg-destructive/10 text-destructive border border-destructive/20">
