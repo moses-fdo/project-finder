@@ -39,7 +39,7 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "Colabro \u2013 Campus Project & Hackathon Collaboration Platform",
   description:
-    "Find collaborators, post projects, and build together. Colabro connects students and developers across campus.",
+    "'Where ideas meet people'. Colabro connects students and developers across campus for project collaboration.",
   keywords: ["Colabro", "Project Collaboration", "Hackathons", "Student Portal", "Team Finder"],
 };
 
