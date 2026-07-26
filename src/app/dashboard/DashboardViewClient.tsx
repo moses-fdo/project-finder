@@ -1814,18 +1814,6 @@ function CollaborationsFinder({
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    {/* Invite to project */}
-                    {hasProjects && onInviteUser && (
-                      <button
-                        type="button"
-                        onClick={() => onInviteUser(u)}
-                        className="btn-primary text-[10.5px] py-1 px-2.5 flex items-center gap-1 cursor-pointer rounded-md"
-                        title="Invite to your project"
-                      >
-                        <UserPlus size={11} strokeWidth={2} /> Invite
-                      </button>
-                    )}
-
                     {/* Copy email */}
                     <button
                       onClick={() => copyEmail(u.id, u.email ?? "")}
@@ -1838,6 +1826,18 @@ function CollaborationsFinder({
                         : <Copy size={12} strokeWidth={1.75} />
                       }
                     </button>
+
+                    {/* Invite to project */}
+                    {hasProjects && onInviteUser && (
+                      <button
+                        type="button"
+                        onClick={() => onInviteUser(u)}
+                        className="btn-primary text-[10.5px] py-1 px-2.5 flex items-center gap-1 cursor-pointer rounded-md"
+                        title="Invite to your project"
+                      >
+                        <UserPlus size={11} strokeWidth={2} /> Invite
+                      </button>
+                    )}
 
                     {/* View profile */}
                     <Link
