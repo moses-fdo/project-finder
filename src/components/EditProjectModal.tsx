@@ -213,10 +213,10 @@ export default function EditProjectModal({
             </button>
             <button
               type="submit"
-              disabled={submitting || !title.trim() || !description.trim()}
+              disabled={submitting || isChecking || !title.trim() || !description.trim()}
               className="btn-primary text-[12px] py-2 px-5 font-bold cursor-pointer"
             >
-              {submitting ? "Saving Changes…" : "Save Changes"}
+              {isChecking ? "Checking…" : submitting ? "Saving Changes…" : "Save Changes"}
             </button>
           </div>
         </form>

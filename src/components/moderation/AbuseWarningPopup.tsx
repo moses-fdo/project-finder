@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, ShieldAlert, ArrowLeft } from "lucide-react";
 
 interface AbuseWarningPopupProps {
   isOpen: boolean;
@@ -20,70 +20,83 @@ export default function AbuseWarningPopup({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }}
         >
           <motion.div
-            className="mx-4 w-full max-w-md rounded-2xl border border-red-500/20 bg-white p-6 shadow-2xl dark:bg-gray-900 dark:border-red-500/30"
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="card w-full max-w-[460px] p-6 space-y-4 border border-border bg-card shadow-2xl"
+            initial={{ scale: 0.95, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            transition={{ type: "spring", damping: 25, stiffness: 350 }}
           >
-            <div className="flex items-start justify-between">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-border pb-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                  <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <div className="h-10 w-10 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 flex items-center justify-center font-bold shrink-0">
+                  <ShieldAlert size={20} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Publish Blocked
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Your description contains inappropriate language
-                  </p>
+                  <h3 className="text-[16px] font-bold text-foreground">Content Blocked</h3>
+                  <p className="text-[12px] text-muted-foreground">Inappropriate or abusive language detected</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={onClose}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+                aria-label="Close"
               >
-                <X className="h-5 w-5" />
+                <X size={16} />
               </button>
             </div>
 
-            <div className="mt-4 rounded-lg bg-red-50 p-4 dark:bg-red-950/30">
-              <p className="text-sm font-medium text-red-800 dark:text-red-300">
-                Please remove or rephrase the following word{flaggedWords.length > 1 ? "s" : ""}{" "}
-                before publishing:
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {flaggedWords.map((word, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700 dark:bg-red-900/50 dark:text-red-300"
-                  >
-                    {word}
-                  </span>
-                ))}
+            {/* Warning Message Box */}
+            <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 space-y-2.5">
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertTriangle size={15} strokeWidth={2} className="shrink-0" />
+                <p className="text-[12px] font-semibold">
+                  Please remove or rephrase the following word{flaggedWords.length > 1 ? "s" : ""} before submitting:
+                </p>
               </div>
+
+              {flaggedWords.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {flaggedWords.map((word, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center rounded-md bg-destructive/15 border border-destructive/30 px-2.5 py-1 text-[11px] font-mono font-semibold text-destructive"
+                    >
+                      {word}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="mt-5 flex gap-3">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Colabro enforces community moderation standards. Submitting abusive text may lead to account penalties or restrictions.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
               <button
+                type="button"
                 onClick={onClose}
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="btn-secondary text-[12px] py-2 px-4 flex-1 justify-center cursor-pointer"
               >
                 Dismiss
               </button>
               <button
+                type="button"
                 onClick={onRevise}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                className="btn-primary text-[12px] py-2 px-4 flex-1 justify-center gap-1.5 bg-destructive hover:bg-destructive/90 text-white cursor-pointer border-none"
               >
-                Revise Description
+                <ArrowLeft size={14} />
+                Revise Content
               </button>
             </div>
           </motion.div>

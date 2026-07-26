@@ -315,10 +315,10 @@ export default function ProjectDetailClient({
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || message.trim().length < 10}
+                  disabled={submitting || isChecking || message.trim().length < 10}
                   className="btn-primary text-[13px] py-2 px-4"
                 >
-                  {submitting ? "Sending…" : "Submit application"}
+                  {isChecking ? "Checking…" : submitting ? "Sending…" : "Submit application"}
                 </button>
               </div>
             </form>

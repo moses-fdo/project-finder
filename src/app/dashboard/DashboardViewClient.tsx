@@ -24,7 +24,6 @@ import {
   Search,
   Copy,
   CheckCheck,
-  MapPin,
   Mail,
   Send,
   UserPlus,
