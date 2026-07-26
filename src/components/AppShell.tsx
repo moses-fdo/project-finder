@@ -125,13 +125,13 @@ export default function AppShell({
   };
 
   const isTabActive = (itemTab: string) =>
-    pathname === "/dashboard" && (tab === itemTab || (itemTab === "collaborators" && tab === "collaborations"));
+    pathname === "/dashboard" && tab === itemTab;
 
   const navItems = [
     { label: "Home",           icon: HomeIcon,   href: "/dashboard?tab=home",           active: isTabActive("home") },
     { label: "Projects",       icon: FolderOpen, href: "/dashboard?tab=projects",       active: isTabActive("projects") },
     { label: "Discover",       icon: Search,     href: "/projects",                     active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
-    { label: "Collaborators",  icon: Users,      href: "/dashboard?tab=collaborators",  active: isTabActive("collaborators") },
+    { label: "Collaborators",  icon: Users,      href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
     { label: "Hackathons",     icon: Trophy,     href: "/dashboard?tab=hackathons",     active: isTabActive("hackathons") },
     { label: "Bookmarks",      icon: Bookmark,   href: "/dashboard?tab=bookmarks",      active: isTabActive("bookmarks") },
   ];
@@ -490,7 +490,7 @@ export default function AppShell({
         {[
           { href: "/dashboard?tab=home", icon: HomeIcon, label: "Home", active: isTabActive("home") },
           { href: "/projects", icon: Search, label: "Discover", active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
-          { href: "/dashboard?tab=collaborators", icon: Users, label: "Collaborators", active: isTabActive("collaborators") },
+          { href: "/dashboard?tab=collaborations", icon: Users, label: "Collaborators", active: isTabActive("collaborations") },
         ].map(({ href, icon: Icon, label, active }) => (
           <Link
             key={label}

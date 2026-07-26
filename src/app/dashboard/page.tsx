@@ -119,7 +119,7 @@ export default async function DashboardPage({
       select: { id: true, type: true, message: true, link: true, read: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
-    // 6: Collaborators directory
+    // 6: Collaborations directory
     prisma.user.findMany({
       where: { id: { not: currentUserId } },
       take: 20,
