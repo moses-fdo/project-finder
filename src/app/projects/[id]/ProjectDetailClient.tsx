@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageSquare, Check, X, Clock, Settings, Bookmark, Copy, CheckCheck } from "lucide-react";
+import { MessageSquare, Check, X, Clock, Settings, Bookmark, Copy, CheckCheck, Pencil } from "lucide-react";
+import EditProjectModal from "@/components/EditProjectModal";
 
 interface ProjectDetailClientProps {
   projectId: number;
@@ -12,6 +13,13 @@ interface ProjectDetailClientProps {
   projectStatus: string;
   initialBookmarked: boolean;
   ownerEmail: string;
+  projectData?: {
+    id: number;
+    title: string;
+    description: string;
+    status: string;
+    skills?: { id?: number; name: string }[];
+  };
 }
 
 export default function ProjectDetailClient({
@@ -22,8 +30,10 @@ export default function ProjectDetailClient({
   projectStatus,
   initialBookmarked,
   ownerEmail,
+  projectData,
 }: ProjectDetailClientProps) {
   const [modalOpen, setModalOpen]     = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [message, setMessage]         = useState("");
   const [submitting, setSubmitting]   = useState(false);
   const [applyError, setApplyError]   = useState("");
@@ -117,21 +127,43 @@ export default function ProjectDetailClient({
   /* ── Owner view ──────────────────────────────────────────── */
   if (isOwner) {
     return (
-      <div className="card p-5 space-y-3">
-        <p className="section-label flex items-center gap-1.5">
-          <Settings size={12} strokeWidth={1.75} />
-          Your project
-        </p>
-        <p className="text-[12px] text-muted-foreground leading-relaxed">
-          Review applications and manage recruitment from your dashboard.
-        </p>
-        <button
-          onClick={() => router.push("/dashboard?tab=projects")}
-          className="btn-secondary w-full justify-center text-[12px] py-2"
-        >
-          Manage applications
-        </button>
-      </div>
+      <>
+        <div className="card p-5 space-y-3">
+          <p className="section-label flex items-center gap-1.5">
+            <Settings size={12} strokeWidth={1.75} />
+            Your project
+          </p>
+          <p className="text-[12px] text-muted-foreground leading-relaxed">
+            Manage your project details or review incoming collaboration applications.
+          </p>
+          <div className="flex flex-col gap-2 pt-1">
+            {projectData && (
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(true)}
+                className="btn-primary w-full justify-center text-[12px] py-2 flex items-center gap-1.5 font-bold cursor-pointer"
+              >
+                <Pencil size={13} />
+                Edit Project Details
+              </button>
+            )}
+            <button
+              onClick={() => router.push("/dashboard?tab=projects")}
+              className="btn-secondary w-full justify-center text-[12px] py-2 cursor-pointer"
+            >
+              Manage applications
+            </button>
+          </div>
+        </div>
+
+        {projectData && (
+          <EditProjectModal
+            isOpen={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            project={projectData}
+          />
+        )}
+      </>
     );
   }
 

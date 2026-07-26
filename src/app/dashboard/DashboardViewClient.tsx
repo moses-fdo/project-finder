@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import OnboardingModal from "@/components/OnboardingModal";
+import EditProjectModal from "@/components/EditProjectModal";
 import { getNotificationLink } from "@/lib/notifications";
 import {
   Check,
@@ -27,7 +28,8 @@ import {
   Mail,
   Send,
   UserPlus,
-  LucideIcon
+  LucideIcon,
+  Pencil
 } from "lucide-react";
 
 interface DashboardViewClientProps {
@@ -85,7 +87,7 @@ function getProjectIcon(title: string): { icon: LucideIcon; bg: string; text: st
 export default function DashboardViewClient({
   activeTab,
   currentUser,
-  projects,
+  projects: initialProjects,
   applications,
   notifications,
   profileData,
@@ -102,6 +104,9 @@ export default function DashboardViewClient({
 }: DashboardViewClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+
+  const [projects, setProjects] = useState(initialProjects);
+  const [editingProject, setEditingProject] = useState<any | null>(null);
 
   // Derive currentTab directly from prop — no effect needed
   const currentTab = activeTab || "home";
@@ -782,6 +787,15 @@ export default function DashboardViewClient({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingProject(project)}
+                        className="btn-secondary text-[12px] py-1.5 px-3 flex items-center gap-1 cursor-pointer"
+                        title="Edit project details"
+                      >
+                        <Pencil size={12} />
+                        Edit
+                      </button>
                       <button
                         onClick={() => statusToggle(project.id, project.status)}
                         disabled={loadingId !== null}
@@ -1486,6 +1500,20 @@ export default function DashboardViewClient({
           }
         }}
       />
+
+      {/* Edit Project Modal */}
+      {editingProject && (
+        <EditProjectModal
+          isOpen={!!editingProject}
+          onClose={() => setEditingProject(null)}
+          project={editingProject}
+          onProjectUpdated={(updated: any) => {
+            setProjects((prev: any[]) =>
+              prev.map((p: any) => (p.id === updated.id ? { ...p, ...updated } : p))
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

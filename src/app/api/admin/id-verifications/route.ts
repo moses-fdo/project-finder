@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendIdVerificationResultEmail } from "@/lib/email";
 
 export async function GET() {
   try {
@@ -79,6 +80,14 @@ export async function PATCH(req: Request) {
         });
       }
     }
+
+    // Send email notification to the student's email address
+    await sendIdVerificationResultEmail({
+      email: verificationReq.email,
+      name: verificationReq.name,
+      status,
+      adminNote,
+    });
 
     // Send in-app notification if user account exists
     const targetUser = await prisma.user.findUnique({

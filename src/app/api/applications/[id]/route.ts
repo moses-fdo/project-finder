@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendApplicationStatusEmail } from "@/lib/email";
 
 export async function PATCH(
   req: Request,
@@ -26,6 +27,7 @@ export async function PATCH(
       where: { id: applicationId },
       include: {
         project: true,
+        user: true,
       },
     });
 
@@ -45,7 +47,7 @@ export async function PATCH(
       data: { status },
     });
 
-    // Notify the applicant
+    // Notify the applicant via in-app notification
     await prisma.notification.create({
       data: {
         userId: application.userId,
@@ -54,6 +56,16 @@ export async function PATCH(
         link: "/dashboard?tab=applications",
       },
     });
+
+    // Send transactional email to applicant
+    if (application.user?.email) {
+      await sendApplicationStatusEmail({
+        email: application.user.email,
+        name: application.user.name || "Student",
+        projectTitle: application.project.title,
+        status,
+      });
+    }
 
     return NextResponse.json({
       message: `Application ${status.toLowerCase()} successfully.`,

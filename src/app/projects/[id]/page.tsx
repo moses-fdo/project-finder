@@ -100,6 +100,7 @@ export default async function ProjectPage({ params }: PageProps) {
               projectStatus={project.status}
               initialBookmarked={initialBookmarked}
               ownerEmail={project.owner.email}
+              projectData={project}
             />
           </div>
 
@@ -210,6 +211,7 @@ export default async function ProjectPage({ params }: PageProps) {
               projectStatus={project.status}
               initialBookmarked={initialBookmarked}
               ownerEmail={project.owner.email}
+              projectData={project}
             />
 
             {/* Owner card */}
