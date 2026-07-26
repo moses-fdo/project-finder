@@ -1740,12 +1740,12 @@ function CollaborationsFinder({
             return (
               <div
                 key={u.id}
-                className="card p-4 aspect-square flex flex-col justify-between hover:border-foreground/20 hover:shadow-xs transition-all duration-200 group overflow-hidden relative border border-border bg-card rounded-xl"
+                className="card p-4 flex flex-col justify-between hover:border-foreground/20 hover:shadow-xs transition-all duration-200 group relative border border-border bg-card rounded-xl gap-3"
               >
                 {/* Top row: avatar + info + availability badge */}
-                <div className="flex items-start justify-between gap-2 shrink-0">
+                <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-11 w-11 rounded-full bg-secondary border border-border/80 flex items-center justify-center font-semibold text-[14px] text-foreground shrink-0 overflow-hidden shadow-2xs">
+                    <div className="h-10 w-10 rounded-full bg-secondary border border-border/80 flex items-center justify-center font-semibold text-[14px] text-foreground shrink-0 overflow-hidden shadow-2xs">
                       {initial}
                     </div>
                     <div className="min-w-0">
@@ -1772,19 +1772,17 @@ function CollaborationsFinder({
                 </div>
 
                 {/* Middle: Bio & Skills */}
-                <div className="flex flex-col gap-1.5 my-auto overflow-hidden py-1">
+                <div className="flex flex-col gap-2">
                   {u.bio ? (
-                    <p className="text-[11px] text-muted-foreground/90 leading-relaxed line-clamp-2 min-h-[32px]">
+                    <p className="text-[11.5px] text-muted-foreground/90 leading-relaxed line-clamp-2">
                       {u.bio}
                     </p>
-                  ) : (
-                    <p className="text-[10.5px] text-muted-foreground/40 italic min-h-[32px]">No bio added yet.</p>
-                  )}
+                  ) : null}
 
                   {/* Skills */}
-                  {u.skills.length > 0 ? (
+                  {u.skills && u.skills.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
-                      {u.skills.slice(0, 3).map((s: any) => (
+                      {u.skills.slice(0, 4).map((s: any) => (
                         <span
                           key={s.id}
                           className={`text-[9.5px] font-medium px-2 py-0.5 rounded-md bg-secondary/80 text-foreground/80 border border-border/50 transition-colors cursor-pointer hover:bg-accent hover:text-foreground truncate max-w-[90px] ${
@@ -1796,19 +1794,17 @@ function CollaborationsFinder({
                           {s.name}
                         </span>
                       ))}
-                      {u.skills.length > 3 && (
+                      {u.skills.length > 4 && (
                         <span className="text-[9.5px] font-medium px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border/50">
-                          +{u.skills.length - 3}
+                          +{u.skills.length - 4}
                         </span>
                       )}
                     </div>
-                  ) : (
-                    <p className="text-[10px] text-muted-foreground/40 italic">No skills listed.</p>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Footer: status + action buttons */}
-                <div className="flex items-center justify-between border-t border-border/60 pt-2.5 mt-auto gap-1.5 shrink-0">
+                <div className="flex items-center justify-between border-t border-border/60 pt-2.5 mt-auto gap-1.5">
                   <div className="flex items-center gap-1 text-[10.5px] text-muted-foreground truncate min-w-0 font-medium">
                     <span className="truncate">
                       {openProjectCount > 0
