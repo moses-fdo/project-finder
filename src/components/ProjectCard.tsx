@@ -147,7 +147,7 @@ export default function ProjectCard({ project, initialBookmarked = false }: Proj
               </Link>
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-              {project.owner.department}
+              {project.owner?.department}
             </p>
           </div>
         </div>

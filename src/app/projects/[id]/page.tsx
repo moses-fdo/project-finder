@@ -60,7 +60,7 @@ export default async function ProjectPage({ params }: PageProps) {
   const Icon = iconInfo.icon;
   const postedTime = getRelativeTimeString(project.createdAt);
 
-  const t = project.title.toLowerCase() + " " + project.description.toLowerCase();
+  const t = (project.title || "").toLowerCase() + " " + (project.description || "").toLowerCase();
   const category =
     t.includes("eco") || t.includes("track") || t.includes("waste") || t.includes("green") || t.includes("environ") ? "Environment"
     : t.includes("study") || t.includes("buddy") ? "Education"

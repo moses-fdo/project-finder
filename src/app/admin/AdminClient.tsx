@@ -340,26 +340,40 @@ export default function AdminClient({
   /* ── filtered lists ────────────────────────────────────── */
   const filteredUsers = users.filter((u) => {
     const q = userSearch.toLowerCase();
-    return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.department?.toLowerCase().includes(q);
+    return (
+      !q ||
+      (u.name || "").toLowerCase().includes(q) ||
+      (u.email || "").toLowerCase().includes(q) ||
+      (u.department || "").toLowerCase().includes(q)
+    );
   });
 
   const filteredProjects = projects.filter((p) => {
     const q = projSearch.toLowerCase();
-    return !q || p.title.toLowerCase().includes(q) || p.owner?.name.toLowerCase().includes(q);
+    return (
+      !q ||
+      (p.title || "").toLowerCase().includes(q) ||
+      (p.owner?.name || "").toLowerCase().includes(q) ||
+      (p.owner?.department || "").toLowerCase().includes(q)
+    );
   });
 
   const filteredAllowed = allowedList.filter((item) => {
     const q = allowedSearch.toLowerCase();
-    return !q || item.email.toLowerCase().includes(q) || (item.note && item.note.toLowerCase().includes(q));
+    return (
+      !q ||
+      (item.email || "").toLowerCase().includes(q) ||
+      (item.note || "").toLowerCase().includes(q)
+    );
   });
 
   const filteredIdRequests = idRequests.filter((req) => {
     const q = idSearch.toLowerCase();
     return (
       !q ||
-      req.name.toLowerCase().includes(q) ||
-      req.email.toLowerCase().includes(q) ||
-      req.collegeName.toLowerCase().includes(q)
+      (req.name || "").toLowerCase().includes(q) ||
+      (req.email || "").toLowerCase().includes(q) ||
+      (req.collegeName || "").toLowerCase().includes(q)
     );
   });
 
@@ -367,9 +381,9 @@ export default function AdminClient({
     const q = abuseSearch.toLowerCase();
     return (
       !q ||
-      log.user.name.toLowerCase().includes(q) ||
-      log.user.email.toLowerCase().includes(q) ||
-      (log.reason && log.reason.toLowerCase().includes(q))
+      (log.user?.name || "").toLowerCase().includes(q) ||
+      (log.user?.email || "").toLowerCase().includes(q) ||
+      (log.reason || "").toLowerCase().includes(q)
     );
   });
 

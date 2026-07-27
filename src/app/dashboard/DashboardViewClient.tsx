@@ -52,7 +52,7 @@ interface DashboardViewClientProps {
 }
 
 function getProjectIcon(title: string): { icon: LucideIcon; bg: string; text: string } {
-  const t = title.toLowerCase();
+  const t = (title || "").toLowerCase();
   if (
     t.includes("eco") ||
     t.includes("track") ||
@@ -1684,12 +1684,12 @@ function CollaborationsFinder({
 
   // Unique department list from the data
   const allDepts = Array.from(
-    new Set(people.map((u: any) => u.department as string))
+    new Set(people.map((u: any) => u.department as string).filter(Boolean))
   ).sort();
 
   // Unique skill list from the data
   const allSkills = Array.from(
-    new Set(people.flatMap((u: any) => u.skills.map((s: any) => s.name as string)))
+    new Set(people.flatMap((u: any) => (u.skills || []).map((s: any) => s?.name as string).filter(Boolean)))
   ).sort();
 
   // Filter logic
@@ -1697,13 +1697,13 @@ function CollaborationsFinder({
     const q = collabSearch.trim().toLowerCase();
     if (
       q &&
-      !u.name.toLowerCase().includes(q) &&
-      !u.department.toLowerCase().includes(q) &&
+      !(u.name || "").toLowerCase().includes(q) &&
+      !(u.department || "").toLowerCase().includes(q) &&
       !(u.bio ?? "").toLowerCase().includes(q) &&
-      !u.skills.some((s: any) => s.name.toLowerCase().includes(q))
+      !(u.skills || []).some((s: any) => (s?.name || "").toLowerCase().includes(q))
     ) return false;
     if (collabDept && u.department !== collabDept) return false;
-    if (collabSkill && !u.skills.some((s: any) => s.name === collabSkill)) return false;
+    if (collabSkill && !(u.skills || []).some((s: any) => s?.name === collabSkill)) return false;
     if (collabStatus === "open" && !isOpenToWork(u)) return false;
     if (collabStatus === "busy" &&  isOpenToWork(u)) return false;
     return true;
