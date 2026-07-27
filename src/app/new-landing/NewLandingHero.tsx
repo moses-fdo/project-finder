@@ -7,7 +7,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
 import LenisScroller from "@/components/animated/LenisScroller";
 import ColabroLogo from "@/components/ColabroLogo";
-import anime from "animejs";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -96,10 +95,12 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
             const target = parseInt(el.dataset.count ?? "0", 10);
             const suf    = el.dataset.suffix ?? "";
             const obj    = { val: 0 };
-            anime({
-              targets: obj, val: target,
-              duration: 1600, easing: "easeOutExpo", delay: 120, round: 1,
-              update() {
+            gsap.to(obj, {
+              val: target,
+              duration: 1.6,
+              delay: 0.12,
+              ease: "power4.out",
+              onUpdate() {
                 const v = obj.val >= 1000
                   ? (obj.val / 1000).toFixed(1).replace(/\.0$/, "") + "k"
                   : String(Math.round(obj.val));
