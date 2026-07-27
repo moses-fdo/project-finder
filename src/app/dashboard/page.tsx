@@ -164,6 +164,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   availability: true,
                   skills: { select: { id: true, name: true } },
                   projects: { select: { id: true, status: true } },
+                  applications: { select: { id: true, status: true } },
                 },
                 orderBy: { createdAt: "desc" },
               })

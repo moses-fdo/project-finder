@@ -2126,8 +2126,8 @@ function CollaborationsFinder({
             const open = isOpenToWork(u);
             const displayName = u.name || u.email?.split("@")[0] || "Student";
             const initial = (displayName[0] || "?").toUpperCase();
-            const projectCount = (u.projects || []).length || (u.id % 7) + 5;
-            const collabCount = (u.id * 3) % 20 + 8;
+            const projectCount = (u.projects || []).length;
+            const collabCount = (u.applications || []).filter((a: any) => a.status === "ACCEPTED").length;
             const lookingForText = u.bio || (u.department ? `${u.department} Projects, AI Hackathons` : "Web & Full Stack Projects");
 
             return (
