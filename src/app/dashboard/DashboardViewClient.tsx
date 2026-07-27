@@ -1698,6 +1698,7 @@ function CollaborationsFinder({
     if (
       q &&
       !(u.name || "").toLowerCase().includes(q) &&
+      !(u.email || "").toLowerCase().includes(q) &&
       !(u.department || "").toLowerCase().includes(q) &&
       !(u.bio ?? "").toLowerCase().includes(q) &&
       !(u.skills || []).some((s: any) => (s?.name || "").toLowerCase().includes(q))
@@ -1863,7 +1864,8 @@ function CollaborationsFinder({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filtered.map((u: any) => {
             const open = isOpenToWork(u);
-            const initial = u.name[0].toUpperCase();
+            const displayName = u.name || u.email?.split("@")[0] || "Student";
+            const initial = (displayName[0] || "?").toUpperCase();
             const openProjectCount = (u.projects || []).filter((p: any) => p.status === "OPEN").length;
 
             return (
@@ -1880,7 +1882,7 @@ function CollaborationsFinder({
                     <div className="min-w-0">
                       <h3 className="text-[13.5px] font-semibold text-foreground leading-snug truncate">
                         <Link href={`/profile/${u.id}`} className="hover:underline underline-offset-2">
-                          {u.name}
+                          {displayName}
                         </Link>
                       </h3>
                       <p className="text-[10.5px] text-muted-foreground truncate font-normal mt-0.5">

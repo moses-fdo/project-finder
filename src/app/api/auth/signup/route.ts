@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email: cleanEmail }
     });
 
     if (existingUser) {
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await prisma.user.update({
-          where: { email },
+          where: { email: cleanEmail },
           data: {
             name,
             password: hashedPassword,
@@ -114,7 +114,7 @@ export async function POST(req: Request) {
           }
         });
 
-        await sendOtpEmail(email, name, otpCode);
+        await sendOtpEmail(cleanEmail, name, otpCode);
 
         return NextResponse.json({ message: "OTP sent. Please verify your email." });
       }
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
     await prisma.user.create({
       data: {
         name,
-        email,
+        email: cleanEmail,
         password: hashedPassword,
         department,
         year: Number(year),
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
       }
     });
 
-    await sendOtpEmail(email, name, otpCode);
+    await sendOtpEmail(cleanEmail, name, otpCode);
 
     return NextResponse.json({ message: "Signup successful. Verification OTP sent." });
   } catch (error: any) {

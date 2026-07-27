@@ -9,8 +9,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and verification code are required." }, { status: 400 });
     }
 
+    const cleanEmail = String(email).toLowerCase().trim();
+
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email: cleanEmail }
     });
 
     if (!user) {
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
 
     // Mark as verified and clear OTP fields
     await prisma.user.update({
-      where: { email },
+      where: { email: cleanEmail },
       data: {
         verified: true,
         otpCode: null,
