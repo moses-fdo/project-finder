@@ -618,16 +618,41 @@ export default function DashboardViewClient({
       {(currentTab === "events" || currentTab === "hackathons") && (() => {
         const eventsList = (events && events.length > 0) ? events : hackathons;
 
+        const parseEventEndDate = (h: any): number | null => {
+          const dateStr = h.endDate || h.date || h.startDate;
+          if (!dateStr) return null;
+
+          let endPart = dateStr;
+          if (dateStr.includes(" - ")) {
+            endPart = dateStr.split(" - ").pop()!.trim();
+          } else if (dateStr.includes(" to ")) {
+            endPart = dateStr.split(" to ").pop()!.trim();
+          } else if (dateStr.includes("→")) {
+            endPart = dateStr.split("→").pop()!.trim();
+          }
+
+          let d = new Date(endPart);
+          if (isNaN(d.getTime())) {
+            d = new Date(`${endPart} ${new Date().getFullYear()}`);
+          }
+          if (isNaN(d.getTime())) return null;
+
+          if (!endPart.includes("T") && !endPart.includes(":")) {
+            d.setHours(23, 59, 59, 999);
+          }
+          return d.getTime();
+        };
+
         const activeEvents = eventsList.filter((h: any) => {
-          if (!h.endDate) return true;
-          const endMs = new Date(h.endDate).getTime();
-          return isNaN(endMs) || endMs >= nowMs;
+          const endMs = parseEventEndDate(h);
+          if (endMs === null) return true;
+          return endMs >= nowMs;
         });
 
         const endedEvents = eventsList.filter((h: any) => {
-          if (!h.endDate) return false;
-          const endMs = new Date(h.endDate).getTime();
-          return !isNaN(endMs) && endMs < nowMs;
+          const endMs = parseEventEndDate(h);
+          if (endMs === null) return false;
+          return endMs < nowMs;
         });
 
         const displayEvents = eventFilter === "active" ? activeEvents : (eventFilter === "ended" ? endedEvents : eventsList);
@@ -681,7 +706,8 @@ export default function DashboardViewClient({
             {displayEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {displayEvents.map((h: any) => {
-                  const isEnded = h.endDate ? new Date(h.endDate).getTime() < nowMs : false;
+                  const endMs = parseEventEndDate(h);
+                  const isEnded = endMs !== null && endMs < nowMs;
                   const locationStr = [h.location, h.city, h.state, h.country].filter(Boolean).join(", ") || h.location || "Online";
 
                   return (

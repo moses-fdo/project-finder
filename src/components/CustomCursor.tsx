@@ -9,21 +9,24 @@ interface Ripple {
 }
 
 export default function CustomCursor() {
-  const [mounted, setMounted]   = useState(false);
-  const [ripples, setRipples]   = useState<Ripple[]>([]);
-  const [isDark, setIsDark]     = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [ripples, setRipples] = useState<Ripple[]>([]);
+  const [isDark, setIsDark] = useState(false);
 
-  const mainRef  = useRef<HTMLDivElement>(null);
-  const posRef   = useRef({ x: -200, y: -200 });
-  const rafRef   = useRef<number | null>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const posRef = useRef({ x: -200, y: -200 });
+  const rafRef = useRef<number | null>(null);
   const clickRef = useRef(false);
 
   useEffect(() => {
-    // Only show on fine-pointer devices (mouse/trackpad, not touch)
+    // Only enable on fine-pointer devices (mouse/trackpad, not touch)
     const mq = window.matchMedia("(pointer: fine)");
     if (!mq.matches) return;
 
-    // Sync dark-mode state
+    setMounted(true);
+
+    // Sync dark-mode state for cursor colors
     const updateTheme = () =>
       setIsDark(document.documentElement.classList.contains("dark"));
     updateTheme();
@@ -35,8 +38,18 @@ export default function CustomCursor() {
 
     const onMove = (e: MouseEvent) => {
       posRef.current = { x: e.clientX, y: e.clientY };
-      // Show cursor as soon as we detect movement — fixes the "already inside window" case
-      setMounted(true);
+
+      // Detect if mouse moved outside window bounds
+      if (
+        e.clientX <= 0 ||
+        e.clientY <= 0 ||
+        e.clientX >= window.innerWidth - 1 ||
+        e.clientY >= window.innerHeight - 1
+      ) {
+        setVisible(false);
+      } else {
+        setVisible(true);
+      }
     };
 
     const onDown = (e: MouseEvent) => {
@@ -50,15 +63,32 @@ export default function CustomCursor() {
       clickRef.current = false;
     };
 
+    const onMouseLeave = (e: MouseEvent) => {
+      // If relatedTarget is null or mouse left the document viewport, hide cursor
+      if (!e.relatedTarget || (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) {
+        setVisible(false);
+      }
+    };
+
+    const onMouseEnter = () => {
+      setVisible(true);
+    };
+
+    const onBlur = () => {
+      setVisible(false);
+    };
+
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mousedown", onDown);
-    window.addEventListener("mouseup",   onUp);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("mouseleave", onMouseLeave);
+    document.addEventListener("mouseenter", onMouseEnter);
 
     const loop = () => {
       if (mainRef.current) {
         const scale = clickRef.current ? 0.82 : 1;
-        mainRef.current.style.transform =
-          `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0) scale(${scale})`;
+        mainRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0) scale(${scale})`;
       }
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -68,21 +98,24 @@ export default function CustomCursor() {
       observer.disconnect();
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("mouseup",   onUp);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("mouseleave", onMouseLeave);
+      document.removeEventListener("mouseenter", onMouseEnter);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 
   if (!mounted) return null;
 
-  // Light mode: black arrow, white outline
-  // Dark mode:  white arrow, black outline
-  const fill    = isDark ? "#ffffff" : "#0a0a0a";
+  // Light mode: black arrow with white halo outline
+  // Dark mode: white arrow with black halo outline
+  const fill = isDark ? "#ffffff" : "#0a0a0a";
   const outline = isDark ? "#000000" : "#ffffff";
 
   return (
     <>
-      {/* Cursor — snaps to mouse, no trail */}
+      {/* Custom Cursor Element */}
       <div
         ref={mainRef}
         aria-hidden="true"
@@ -92,8 +125,9 @@ export default function CustomCursor() {
           left: 0,
           pointerEvents: "none",
           zIndex: 99999,
-          willChange: "transform",
-          transition: "transform 0.02s ease-out",
+          willChange: "transform, opacity",
+          opacity: visible ? 1 : 0,
+          transition: "transform 0.01s ease-out, opacity 0.15s ease-out",
         }}
       >
         <svg
@@ -104,7 +138,7 @@ export default function CustomCursor() {
           xmlns="http://www.w3.org/2000/svg"
           style={{ display: "block" }}
         >
-          {/* Outline halo for contrast on any background */}
+          {/* Contrast halo outline */}
           <path
             d="M2 1.2 L2 20.5 L7.4 15.1 L10.8 22.5 L13.6 21.2 L10.2 13.8 L17 13.8 Z"
             fill={outline}
@@ -113,7 +147,7 @@ export default function CustomCursor() {
             strokeLinejoin="round"
             strokeLinecap="round"
           />
-          {/* Arrow fill */}
+          {/* Main arrow */}
           <path
             d="M2 1.2 L2 20.5 L7.4 15.1 L10.8 22.5 L13.6 21.2 L10.2 13.8 L17 13.8 Z"
             fill={fill}
@@ -124,14 +158,15 @@ export default function CustomCursor() {
       </div>
 
       {/* Click ripples */}
-      {ripples.map((r) => (
-        <span
-          key={r.id}
-          aria-hidden="true"
-          className="click-ripple"
-          style={{ left: `${r.x}px`, top: `${r.y}px` }}
-        />
-      ))}
+      {visible &&
+        ripples.map((r) => (
+          <span
+            key={r.id}
+            aria-hidden="true"
+            className="click-ripple"
+            style={{ left: `${r.x}px`, top: `${r.y}px` }}
+          />
+        ))}
     </>
   );
 }

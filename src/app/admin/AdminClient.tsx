@@ -814,7 +814,21 @@ export default function AdminClient({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {eventsList.map((h: any) => {
                   const locationStr = [h.location, h.city, h.state, h.country].filter(Boolean).join(", ") || h.location || "Online";
-                  const isEnded = h.endDate ? new Date(h.endDate).getTime() < nowMs : false;
+                  const parseEventEndDate = (item: any): number | null => {
+                    const dateStr = item.endDate || item.date || item.startDate;
+                    if (!dateStr) return null;
+                    let endPart = dateStr;
+                    if (dateStr.includes(" - ")) endPart = dateStr.split(" - ").pop()!.trim();
+                    else if (dateStr.includes(" to ")) endPart = dateStr.split(" to ").pop()!.trim();
+                    else if (dateStr.includes("→")) endPart = dateStr.split("→").pop()!.trim();
+                    let d = new Date(endPart);
+                    if (isNaN(d.getTime())) d = new Date(`${endPart} ${new Date().getFullYear()}`);
+                    if (isNaN(d.getTime())) return null;
+                    if (!endPart.includes("T") && !endPart.includes(":")) d.setHours(23, 59, 59, 999);
+                    return d.getTime();
+                  };
+                  const endMs = parseEventEndDate(h);
+                  const isEnded = endMs !== null && endMs < nowMs;
 
                   return (
                     <div key={h.id} className="card p-4 sm:p-5 space-y-4 flex flex-col justify-between border-border relative">
