@@ -474,12 +474,16 @@ export default function DashboardViewClient({
 
         const filteredProjects = projects.filter((p: any) => {
           if (dashSearch) {
-            const q = dashSearch.toLowerCase();
+            const q = dashSearch.trim().toLowerCase();
             const matchTitle = (p.title || "").toLowerCase().includes(q);
             const matchDesc = (p.description || "").toLowerCase().includes(q);
             const matchCategory = (p.category || "").toLowerCase().includes(q);
+            const matchType = (p.projectType || "").toLowerCase().includes(q);
             const matchSkill = p.skills?.some((s: any) => (s.name || "").toLowerCase().includes(q));
-            if (!matchTitle && !matchDesc && !matchCategory && !matchSkill) return false;
+            const matchOwner = (p.owner?.name || "").toLowerCase().includes(q) || (p.owner?.email || "").toLowerCase().includes(q);
+            const matchDept = (p.owner?.department || "").toLowerCase().includes(q);
+            const matchApplicant = p.applications?.some((a: any) => (a.user?.name || "").toLowerCase().includes(q));
+            if (!matchTitle && !matchDesc && !matchCategory && !matchType && !matchSkill && !matchOwner && !matchDept && !matchApplicant) return false;
           }
           if (dashCategory !== "All") {
             const cat = dashCategory.toLowerCase();
@@ -523,6 +527,26 @@ export default function DashboardViewClient({
                 >
                   <Plus size={13} strokeWidth={2} /> New Project
                 </Link>
+              </div>
+
+              {/* Mobile Search Bar */}
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={dashSearch}
+                  onChange={(e) => { setDashSearch(e.target.value); setDashPage(1); }}
+                  placeholder="Search projects, technologies, teammates..."
+                  className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-card border border-border text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                {dashSearch && (
+                  <button
+                    onClick={() => setDashSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
 
               {/* 2. 4 Stat Cards Row */}
@@ -1225,7 +1249,7 @@ export default function DashboardViewClient({
       {/* ── MY PROJECTS ───────────────────────────────────── */}
       {currentTab === "projects" && (
         <ProjectsTab
-          projects={projects}
+          projects={projects.filter((p: any) => p.ownerId === currentUser?.id || p.owner?.id === currentUser?.id)}
           loadingId={loadingId}
           setEditingProject={setEditingProject}
           statusToggle={statusToggle}

@@ -110,11 +110,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             select: { id: true, type: true, message: true, link: true, read: true, createdAt: true },
             orderBy: { createdAt: "desc" },
           }),
-          // 3: User projects (if needed)
+          // 3: Campus projects (all projects uploaded across campus)
           needsProjects
             ? prisma.project.findMany({
-                where: { ownerId: currentUserId },
-                take: 15,
+                take: 100,
                 select: {
                   ...projectCardSelect,
                   applications: {
