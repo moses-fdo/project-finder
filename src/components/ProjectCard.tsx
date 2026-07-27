@@ -33,6 +33,8 @@ function statusBadge(status: string) {
       return <span className="badge badge-yellow">Full</span>;
     case "CLOSED":
       return <span className="badge badge-red">Closed</span>;
+    case "DONE":
+      return <span className="badge badge-green">✓ Done</span>;
     default:
       return <span className="badge badge-gray">{status}</span>;
   }

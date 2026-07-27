@@ -20,13 +20,23 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid event ID." }, { status: 400 });
     }
 
-    await prisma.event.delete({
-      where: { id: eventId },
-    });
+    // Try deleting from Event model first
+    const existingEvent = await prisma.event.findUnique({ where: { id: eventId } });
+    if (existingEvent) {
+      await prisma.event.delete({ where: { id: eventId } });
+      return NextResponse.json({ message: "Event deleted successfully." });
+    }
 
-    return NextResponse.json({ message: "Event deleted successfully." });
-  } catch (error) {
+    // Fallback to Hackathon model
+    const existingHackathon = await prisma.hackathon.findUnique({ where: { id: eventId } });
+    if (existingHackathon) {
+      await prisma.hackathon.delete({ where: { id: eventId } });
+      return NextResponse.json({ message: "Hackathon deleted successfully." });
+    }
+
+    return NextResponse.json({ error: "Event or Hackathon not found." }, { status: 404 });
+  } catch (error: any) {
     console.error("Delete event error:", error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Internal server error." }, { status: 500 });
   }
 }

@@ -101,3 +101,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await auth();
+    const currentUser = session?.user;
+
+    if (!currentUser || (currentUser as any).role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized. Admin privileges required." }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const ids: number[] = body.ids;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "No event IDs provided." }, { status: 400 });
+    }
+
+    const { count } = await prisma.event.deleteMany({
+      where: { id: { in: ids } },
+    });
+
+    return NextResponse.json({ message: `${count} event(s) deleted successfully.`, count });
+  } catch (error) {
+    console.error("Bulk delete events error:", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
+}

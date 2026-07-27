@@ -24,12 +24,16 @@ export default function CustomCursor() {
     const mq = window.matchMedia("(pointer: fine)");
     if (!mq.matches) return;
 
-    setMounted(true);
+    document.documentElement.classList.add("has-custom-cursor");
 
     // Sync dark-mode state for cursor colors
     const updateTheme = () =>
       setIsDark(document.documentElement.classList.contains("dark"));
-    updateTheme();
+
+    const initId = requestAnimationFrame(() => {
+      setMounted(true);
+      updateTheme();
+    });
     const observer = new MutationObserver(updateTheme);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -47,8 +51,10 @@ export default function CustomCursor() {
         e.clientY >= window.innerHeight - 1
       ) {
         setVisible(false);
+        document.documentElement.classList.remove("has-custom-cursor");
       } else {
         setVisible(true);
+        document.documentElement.classList.add("has-custom-cursor");
       }
     };
 
@@ -67,15 +73,18 @@ export default function CustomCursor() {
       // If relatedTarget is null or mouse left the document viewport, hide cursor
       if (!e.relatedTarget || (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) {
         setVisible(false);
+        document.documentElement.classList.remove("has-custom-cursor");
       }
     };
 
     const onMouseEnter = () => {
       setVisible(true);
+      document.documentElement.classList.add("has-custom-cursor");
     };
 
     const onBlur = () => {
       setVisible(false);
+      document.documentElement.classList.remove("has-custom-cursor");
     };
 
     window.addEventListener("mousemove", onMove);
@@ -95,6 +104,8 @@ export default function CustomCursor() {
     rafRef.current = requestAnimationFrame(loop);
 
     return () => {
+      document.documentElement.classList.remove("has-custom-cursor");
+      cancelAnimationFrame(initId);
       observer.disconnect();
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mousedown", onDown);

@@ -6,7 +6,12 @@ import LandingPage from "./new-landing/NewLandingHero";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch {
+    // If JWT session cookie is invalid or expired, catch error gracefully
+  }
   if (session) redirect("/dashboard");
 
   // Run sequentially — Neon serverless wakes one connection at a time,

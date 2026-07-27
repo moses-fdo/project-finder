@@ -191,12 +191,15 @@ body {
 
 .forge-input::placeholder {
   color: var(--muted-foreground);
-  opacity: 0.7;
 }
 
 .forge-input:focus {
   border-color: var(--ring);
-  box-shadow: none;
+}
+
+.forge-input:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
 }
 
 /* ─── Buttons ─────────────────────────────────────────────── */
@@ -505,10 +508,12 @@ body {
   font-family: var(--font-plus-jakarta), system-ui, -apple-system, sans-serif;
 }
 
-/* ─── Custom Cursor & Mouse Click Ripple Animations ── */
+/* ─── Custom Cursor hiding override — only active when CustomCursor is mounted & visible ── */
 @media (pointer: fine) {
-  *, *::before, *::after,
-  body, button, a, input, select, textarea, [role="button"] {
+  html.has-custom-cursor,
+  html.has-custom-cursor *,
+  html.has-custom-cursor *::before,
+  html.has-custom-cursor *::after {
     cursor: none !important;
   }
 }

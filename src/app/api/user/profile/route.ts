@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getErrorMessage } from "@/lib/error";
 import { checkAbuseServer } from "@/lib/moderation";
 
+import { clearUserDashboardCache } from "@/app/dashboard/page";
+
 export async function PATCH(req: Request) {
   try {
     const session = await auth();
@@ -16,7 +18,7 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { name, bio, githubUrl, linkedinUrl, department, year, skills } =
+    const { name, bio, githubUrl, linkedinUrl, department, year, skills, availability, profileImage } =
       await req.json();
 
     const currentUserId = Number((currentUser as any).id);
@@ -49,6 +51,8 @@ export async function PATCH(req: Request) {
     if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl;
     if (department) updateData.department = department;
     if (year) updateData.year = Number(year);
+    if (availability) updateData.availability = availability;
+    if (profileImage !== undefined) updateData.profileImage = profileImage;
 
     if (skills && Array.isArray(skills)) {
       updateData.skills = {
@@ -64,6 +68,8 @@ export async function PATCH(req: Request) {
       where: { id: currentUserId },
       data: updateData,
     });
+
+    clearUserDashboardCache(currentUserId);
 
     return NextResponse.json({
       message: "Profile updated successfully.",

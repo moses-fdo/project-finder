@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export default function NavigationProgress() {
@@ -8,26 +8,33 @@ export default function NavigationProgress() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const prevRouteRef = useRef("");
 
-  // Trigger progress bar whenever route or search params change
+  const currentRoute = `${pathname}?${searchParams.toString()}`;
+
+  // Trigger progress bar ONLY when route string actually changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
-    setProgress(30);
+    if (prevRouteRef.current && prevRouteRef.current !== currentRoute) {
+      setLoading(true);
+      setProgress(30);
 
-    const timer1 = setTimeout(() => setProgress(70), 100);
-    const timer2 = setTimeout(() => setProgress(100), 200);
-    const timer3 = setTimeout(() => {
-      setLoading(false);
-      setProgress(0);
-    }, 400);
+      const timer1 = setTimeout(() => setProgress(70), 100);
+      const timer2 = setTimeout(() => setProgress(100), 200);
+      const timer3 = setTimeout(() => {
+        setLoading(false);
+        setProgress(0);
+      }, 400);
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
-  }, [pathname, searchParams]);
+      prevRouteRef.current = currentRoute;
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    }
+    prevRouteRef.current = currentRoute;
+  }, [currentRoute]);
 
   // Intercept click events on link tags to start progress bar instantly on click
   useEffect(() => {

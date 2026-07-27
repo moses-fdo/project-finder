@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
 import LenisScroller from "@/components/animated/LenisScroller";
+import ColabroLogo from "@/components/ColabroLogo";
 import anime from "animejs";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -192,10 +193,7 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
         >
           <div className="flex items-center gap-2.5">
             {/* Logo mark */}
-            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-              <rect width="26" height="26" rx="6" fill="oklch(0.55 0.28 272)"/>
-              <path d="M6 6h6v6H6zM14 6h6v6H14zM6 14h6v6H6zM14 14h6v6H14z" fill="white"/>
-            </svg>
+            <ColabroLogo size={28} />
             <span className="text-[16px] font-logo text-white">
               Colabro
             </span>
@@ -466,10 +464,7 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
           }}
         >
           <div className="flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-              <rect width="26" height="26" rx="6" fill="oklch(0.55 0.28 272)"/>
-              <path d="M6 6h6v6H6zM14 6h6v6H14zM6 14h6v6H6zM14 14h6v6H14z" fill="white"/>
-            </svg>
+            <ColabroLogo size={22} />
             <span className="text-[14px] font-logo text-white/80">
               Colabro
             </span>

@@ -22,6 +22,7 @@ model User {
   profileImage   String?
   githubUrl      String?
   linkedinUrl    String?
+  availability   String          @default("AVAILABLE") // "AVAILABLE" | "BUSY"
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   projects       Project[]       @relation("UserProjects")
@@ -32,13 +33,16 @@ model User {
   sentInvitations     Invitation[] @relation("SentInvitations")
   receivedInvitations Invitation[] @relation("ReceivedInvitations")
   abuseLog       AbusiveMessageLog[]
+
+  @@index([department])
+  @@index([role])
 }
 
 model Project {
   id             Int             @id @default(autoincrement())
   title          String
   description    String
-  status         String          @default("OPEN") // "OPEN" | "FULL" | "CLOSED"
+  status         String          @default("OPEN") // "OPEN" | "FULL" | "CLOSED" | "DONE"
   category       String?         // e.g. "Web", "Mobile", "AI/ML", "IoT", "Research", "Design"
   projectType    String?         // "Hackathon", "Research", "Side Project", "Open Source", "Academic"
   experienceLevel String?        // "Beginner", "Intermediate", "Advanced", "Any"
@@ -52,6 +56,10 @@ model Project {
   applications   Application[]
   bookmarks      Bookmark[]
   invitations    Invitation[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Skill {
@@ -73,6 +81,9 @@ model Application {
   updatedAt DateTime @updatedAt
 
   @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
 }
 
 model Invitation {
@@ -90,6 +101,9 @@ model Invitation {
   updatedAt   DateTime @updatedAt
 
   @@unique([projectId, receiverId])
+  @@index([receiverId])
+  @@index([senderId])
+  @@index([projectId])
 }
 
 model Notification {
@@ -101,6 +115,9 @@ model Notification {
   link      String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
 }
 
 model Bookmark {

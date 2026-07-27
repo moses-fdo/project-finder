@@ -119,3 +119,29 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await auth();
+    const currentUser = session?.user;
+
+    if (!currentUser || currentUser.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized. Admin privileges required." }, { status: 403 });
+    }
+
+    const { id } = await req.json();
+
+    if (!id) {
+      return NextResponse.json({ error: "Verification request ID is required." }, { status: 400 });
+    }
+
+    await prisma.idVerificationRequest.delete({
+      where: { id: Number(id) },
+    });
+
+    return NextResponse.json({ message: "Verification request log deleted successfully." });
+  } catch (error: any) {
+    console.error("Delete ID verification request error:", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
+}

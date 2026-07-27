@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ColabroLogo from "@/components/ColabroLogo";
 import {
   Users,
   FolderOpen,
@@ -118,6 +119,10 @@ export default function AdminClient({
   const [importing,      setImporting]      = useState(false);
   const [importErrors,   setImportErrors]   = useState<string[]>([]);
 
+  // Mass-select state for events
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<number>>(new Set());
+  const [bulkDeleting,     setBulkDeleting]     = useState(false);
+
   const handleExcelImport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) return;
@@ -212,7 +217,10 @@ export default function AdminClient({
     if (!confirm(`Delete event "${title}"?`)) return;
     setLoadingId(`hack-${id}`);
     try {
-      const res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+      let res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        res = await fetch(`/api/admin/hackathons/${id}`, { method: "DELETE" });
+      }
       if (!res.ok) {
         const d = await res.json();
         throw new Error(d.error || "Failed to delete event.");
@@ -223,6 +231,29 @@ export default function AdminClient({
       showFeedback("err", err.message);
     } finally {
       setLoadingId(null);
+    }
+  };
+
+  const bulkDeleteEvents = async () => {
+    const count = selectedEventIds.size;
+    if (count === 0) return;
+    if (!confirm(`Delete ${count} selected event(s)? This cannot be undone.`)) return;
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/admin/events", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedEventIds) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete events.");
+      showFeedback("ok", data.message || `${count} event(s) deleted.`);
+      setSelectedEventIds(new Set());
+      refresh();
+    } catch (err: any) {
+      showFeedback("err", err.message);
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -329,6 +360,28 @@ export default function AdminClient({
       if (status === "APPROVED") {
         setAllowedList(prev => [{ id: Date.now(), email, note: "Approved Student ID", addedBy: "Admin", createdAt: new Date() }, ...prev]);
       }
+      refresh();
+    } catch (err: any) {
+      showFeedback("err", err.message);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleDeleteIdVerification = async (id: number, name: string) => {
+    if (!confirm(`Delete verification request log for "${name}"? This cannot be undone.`)) return;
+    setLoadingId(`idverif-del-${id}`);
+    try {
+      const res = await fetch("/api/admin/id-verifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete verification request log.");
+
+      showFeedback("ok", `Verification request log for "${name}" deleted.`);
+      setIdRequests(prev => prev.filter(item => item.id !== id));
       refresh();
     } catch (err: any) {
       showFeedback("err", err.message);
@@ -445,11 +498,7 @@ export default function AdminClient({
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           {/* Colabro logo */}
           <Link href="/dashboard" className="flex items-center gap-2 mr-2 sm:mr-4 shrink-0">
-            <div className="h-7 w-7 rounded-[7px] bg-foreground flex items-center justify-center shrink-0">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
-              </svg>
-            </div>
+            <ColabroLogo size={28} />
             <span className="text-[15px] font-bold tracking-tight text-foreground">Colabro</span>
           </Link>
 
@@ -670,7 +719,7 @@ export default function AdminClient({
                         <button
                           onClick={() => deleteUser(u.id, u.name)}
                           disabled={loadingId !== null}
-                          className="btn-ghost p-2 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                          className="btn-ghost min-h-[44px] min-w-[44px] p-2.5 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer flex items-center justify-center"
                           title={`Delete ${u.name}`}
                           aria-label={`Delete ${u.name}`}
                         >
@@ -792,7 +841,7 @@ export default function AdminClient({
                 <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Campus Events &amp; Competitions</h2>
                 <p className="text-[12px] text-muted-foreground mt-0.5">Post and manage upcoming student hackathons, competitions, and events.</p>
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                 <button
                   onClick={() => setShowImportModal(true)}
                   className="btn-secondary text-[12px] py-2 px-3 sm:px-3.5 flex-1 sm:flex-none justify-center items-center gap-1.5 cursor-pointer font-semibold"
@@ -809,6 +858,54 @@ export default function AdminClient({
                 </button>
               </div>
             </div>
+
+            {/* Mass-Select Toolbar */}
+            {eventsList.length > 0 && (
+              <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-secondary/50 border border-border flex-wrap">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="accent-primary w-4 h-4 cursor-pointer rounded"
+                    checked={selectedEventIds.size === eventsList.length && eventsList.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedEventIds(new Set(eventsList.map((h: any) => h.id)));
+                      } else {
+                        setSelectedEventIds(new Set());
+                      }
+                    }}
+                  />
+                  <span className="text-[12px] font-semibold text-foreground">
+                    {selectedEventIds.size === eventsList.length && eventsList.length > 0
+                      ? "Deselect All"
+                      : `Select All (${eventsList.length})`}
+                  </span>
+                </label>
+
+                {selectedEventIds.size > 0 && (
+                  <>
+                    <span className="text-[11px] text-muted-foreground ml-1">
+                      {selectedEventIds.size} selected
+                    </span>
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => setSelectedEventIds(new Set())}
+                      className="btn-secondary text-[11px] py-1.5 px-3 cursor-pointer"
+                    >
+                      Clear Selection
+                    </button>
+                    <button
+                      onClick={bulkDeleteEvents}
+                      disabled={bulkDeleting}
+                      className="btn-ghost text-[11px] py-1.5 px-3 text-destructive border border-destructive/30 hover:bg-destructive/10 flex items-center gap-1.5 cursor-pointer font-bold"
+                    >
+                      <Trash2 size={13} />
+                      {bulkDeleting ? "Deleting…" : `Delete ${selectedEventIds.size} Selected`}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
             {eventsList.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -829,10 +926,29 @@ export default function AdminClient({
                   };
                   const endMs = parseEventEndDate(h);
                   const isEnded = endMs !== null && endMs < nowMs;
+                  const isSelected = selectedEventIds.has(h.id);
 
                   return (
-                    <div key={h.id} className="card p-4 sm:p-5 space-y-4 flex flex-col justify-between border-border relative">
-                      <div className="space-y-3 sm:space-y-4">
+                    <div
+                      key={h.id}
+                      className={`card p-4 sm:p-5 space-y-4 flex flex-col justify-between border relative transition-all ${isSelected ? "border-primary/60 bg-primary/5" : "border-border"}`}
+                    >
+                      {/* Selection checkbox overlay */}
+                      <label className="absolute top-3 left-3 cursor-pointer z-10">
+                        <input
+                          type="checkbox"
+                          className="accent-primary w-4 h-4 cursor-pointer rounded"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const next = new Set(selectedEventIds);
+                            if (e.target.checked) next.add(h.id);
+                            else next.delete(h.id);
+                            setSelectedEventIds(next);
+                          }}
+                        />
+                      </label>
+
+                      <div className="space-y-3 sm:space-y-4 pl-7">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold shrink-0">
@@ -865,8 +981,9 @@ export default function AdminClient({
                             <button
                               onClick={() => deleteHackathon(h.id, h.title)}
                               disabled={loadingId === `hack-${h.id}`}
-                              className="btn-ghost p-1.5 text-destructive hover:bg-destructive/10 cursor-pointer rounded-md ml-1"
+                              className="btn-ghost min-h-[44px] min-w-[44px] p-2.5 text-destructive hover:bg-destructive/10 cursor-pointer rounded-md flex items-center justify-center ml-1"
                               title="Delete event"
+                              aria-label={`Delete event ${h.title}`}
                             >
                               <Trash2 size={14} />
                             </button>
@@ -908,7 +1025,7 @@ export default function AdminClient({
                       </div>
 
                       {h.link && (
-                        <div className="border-t border-border pt-3 mt-2 flex items-center justify-between">
+                        <div className="border-t border-border pt-3 mt-2 flex items-center justify-between pl-7">
                           <a
                             href={h.link}
                             target="_blank"
@@ -991,8 +1108,9 @@ export default function AdminClient({
                       type="button"
                       onClick={() => handleDeleteAllowedEmail(item.id, item.email)}
                       disabled={loadingId === `allow-${item.id}`}
-                      className="btn-ghost p-2 text-destructive hover:bg-destructive/10 cursor-pointer self-end sm:self-center"
+                      className="btn-ghost min-h-[44px] min-w-[44px] p-2.5 text-destructive hover:bg-destructive/10 cursor-pointer flex items-center justify-center self-end sm:self-center"
                       title={`Remove ${item.email}`}
+                      aria-label={`Remove whitelisted email ${item.email}`}
                     >
                       {loadingId === `allow-${item.id}` ? "…" : <Trash2 size={14} />}
                     </button>
@@ -1059,9 +1177,21 @@ export default function AdminClient({
                           </div>
                           <p className="text-[12px] text-muted-foreground truncate">{req.email}</p>
                         </div>
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          {new Date(req.createdAt).toLocaleDateString()}
-                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(req.createdAt).toLocaleDateString()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteIdVerification(req.id, req.name)}
+                            disabled={loadingId === `idverif-del-${req.id}`}
+                            className="btn-ghost min-h-[36px] min-w-[36px] p-2 text-destructive hover:bg-destructive/10 cursor-pointer rounded-md flex items-center justify-center"
+                            title={`Delete verification request for ${req.name}`}
+                            aria-label={`Delete verification request log for ${req.name}`}
+                          >
+                            {loadingId === `idverif-del-${req.id}` ? "…" : <Trash2 size={14} />}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="p-3 bg-secondary/50 rounded-lg text-[11px] space-y-1">

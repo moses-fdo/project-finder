@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { Plus, BookOpen, LayoutGrid } from "lucide-react";
+import { Plus, LayoutGrid } from "lucide-react";
 import NavbarClient from "./NavbarClient";
+import ColabroLogo from "./ColabroLogo";
 import { prisma } from "@/lib/prisma";
 
 export default async function Navbar() {
@@ -25,14 +26,7 @@ export default async function Navbar() {
         {/* Logo */}
         <div className="flex items-center gap-6 shrink-0">
           <Link href="/" className="flex items-center gap-2 group">
-            <div
-              className="h-7 w-7 rounded-[7px] bg-foreground flex items-center justify-center shrink-0"
-              aria-hidden="true"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
-              </svg>
-            </div>
+            <ColabroLogo size={28} />
             <span className="text-[16px] font-logo text-foreground">
               Colabro
             </span>
@@ -41,10 +35,6 @@ export default async function Navbar() {
           {/* Desktop nav links — only shown when authenticated */}
           {user && (
             <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
-              <Link href="/projects" className="nav-item text-[13px]">
-                <BookOpen size={14} strokeWidth={1.75} />
-                Discover
-              </Link>
               <Link href="/dashboard" className="nav-item text-[13px]">
                 <LayoutGrid size={14} strokeWidth={1.75} />
                 Dashboard

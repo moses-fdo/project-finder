@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ColabroLogo from "@/components/ColabroLogo";
 import { User, GraduationCap, Calendar, ArrowRight } from "lucide-react";
 
 const departments = [
@@ -67,12 +68,8 @@ export default function OnboardingPage() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex flex-col items-center gap-3">
-            <div className="h-9 w-9 rounded-[9px] bg-foreground flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H8zM8 8h4v4H8z" fill="white" />
-              </svg>
-            </div>
+          <Link href="/" className="inline-flex flex-col items-center gap-2">
+            <ColabroLogo size={36} />
             <span className="text-[15px] font-semibold text-foreground">Colabro</span>
           </Link>
         </div>

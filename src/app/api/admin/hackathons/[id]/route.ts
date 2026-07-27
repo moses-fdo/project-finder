@@ -14,20 +14,30 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized. Admin privileges required." }, { status: 403 });
     }
 
-    const { id } = await params;
-    const hackathonId = Number(id);
+    const resolvedParams = await params;
+    const hackathonId = Number(resolvedParams.id);
 
     if (isNaN(hackathonId)) {
       return NextResponse.json({ error: "Invalid hackathon ID." }, { status: 400 });
     }
 
-    await prisma.event.delete({
-      where: { id: hackathonId },
-    });
+    // Try deleting from Hackathon model first
+    const existingHackathon = await prisma.hackathon.findUnique({ where: { id: hackathonId } });
+    if (existingHackathon) {
+      await prisma.hackathon.delete({ where: { id: hackathonId } });
+      return NextResponse.json({ message: "Hackathon deleted successfully." });
+    }
 
-    return NextResponse.json({ message: "Hackathon deleted successfully." });
-  } catch (error) {
+    // Fallback to Event model
+    const existingEvent = await prisma.event.findUnique({ where: { id: hackathonId } });
+    if (existingEvent) {
+      await prisma.event.delete({ where: { id: hackathonId } });
+      return NextResponse.json({ message: "Event deleted successfully." });
+    }
+
+    return NextResponse.json({ error: "Hackathon or Event not found." }, { status: 404 });
+  } catch (error: any) {
     console.error("Delete hackathon error:", error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Internal server error." }, { status: 500 });
   }
 }

@@ -38,10 +38,20 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Colabro \u2013 Campus Project & Hackathon Collaboration Platform",
+  title: "Colabro – Campus Project & Hackathon Collaboration Platform",
   description:
     "'Where ideas meet people'. Colabro connects students and developers across campus for project collaboration.",
   keywords: ["Colabro", "Project Collaboration", "Hackathons", "Student Portal", "Team Finder"],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+      { url: "/logo-dark.png", media: "(prefers-color-scheme: dark)", type: "image/png" },
+      { url: "/logo-light.png", media: "(prefers-color-scheme: light)", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
