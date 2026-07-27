@@ -121,8 +121,7 @@ export default async function DashboardPage({
     }),
     // 6: Collaborations directory
     prisma.user.findMany({
-      where: { id: { not: currentUserId } },
-      take: 20,
+      take: 100,
       select: {
         id: true,
         name: true,

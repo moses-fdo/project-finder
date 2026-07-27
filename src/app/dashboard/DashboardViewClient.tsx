@@ -594,6 +594,7 @@ export default function DashboardViewClient({
       {currentTab === "collaborations" && (
         <CollaborationsFinder
           people={collaborations}
+          currentUser={currentUser}
           collabSearch={collabSearch}
           setCollabSearch={setCollabSearch}
           collabDept={collabDept}
@@ -1655,6 +1656,7 @@ export default function DashboardViewClient({
 
 interface CFProps {
   people: any[];
+  currentUser?: any;
   collabSearch: string;
   setCollabSearch: (v: string) => void;
   collabDept: string;
@@ -1669,6 +1671,7 @@ interface CFProps {
 
 function CollaborationsFinder({
   people,
+  currentUser,
   collabSearch, setCollabSearch,
   collabDept,   setCollabDept,
   collabSkill,  setCollabSkill,
@@ -1880,10 +1883,15 @@ function CollaborationsFinder({
                       {initial}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-[13.5px] font-semibold text-foreground leading-snug truncate">
+                      <h3 className="text-[13.5px] font-semibold text-foreground leading-snug truncate flex items-center gap-1.5">
                         <Link href={`/profile/${u.id}`} className="hover:underline underline-offset-2">
                           {displayName}
                         </Link>
+                        {u.id === currentUser?.id && (
+                          <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-md bg-secondary text-muted-foreground border border-border">
+                            You
+                          </span>
+                        )}
                       </h3>
                       <p className="text-[10.5px] text-muted-foreground truncate font-normal mt-0.5">
                         Year {u.year || "N/A"}{u.department ? ` · ${u.department.split(" ").slice(0, 2).join(" ")}` : ""}
@@ -1959,7 +1967,7 @@ function CollaborationsFinder({
                     </button>
 
                     {/* Invite to project */}
-                    {hasProjects && onInviteUser && (
+                    {u.id !== currentUser?.id && hasProjects && onInviteUser && (
                       <button
                         type="button"
                         onClick={() => onInviteUser(u)}
