@@ -1,12 +1,16 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaNeonHttp } from "@prisma/adapter-neon";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
+
+neonConfig.webSocketConstructor = ws;
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 function createPrismaClient() {
   const dbUrl = process.env.DATABASE_URL;
   if (dbUrl && dbUrl.includes("neon.tech")) {
-    const adapter = new PrismaNeonHttp(dbUrl, {});
+    const adapter = new PrismaNeon({ connectionString: dbUrl });
     return new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],

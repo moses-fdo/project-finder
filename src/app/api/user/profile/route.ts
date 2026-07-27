@@ -54,6 +54,11 @@ export async function PATCH(req: Request) {
     if (availability) updateData.availability = availability;
     if (profileImage !== undefined) updateData.profileImage = profileImage;
 
+    const updatedUser = await prisma.user.update({
+      where: { id: currentUserId },
+      data: updateData,
+    });
+
     if (skills && Array.isArray(skills)) {
       const skillObjects = await Promise.all(
         skills.map(async (skillName: string) => {
@@ -65,15 +70,15 @@ export async function PATCH(req: Request) {
           });
         })
       );
-      updateData.skills = {
-        set: skillObjects.map((s) => ({ id: s.id })),
-      };
+      await prisma.user.update({
+        where: { id: currentUserId },
+        data: {
+          skills: {
+            set: skillObjects.map((s) => ({ id: s.id })),
+          },
+        },
+      });
     }
-
-    const updatedUser = await prisma.user.update({
-      where: { id: currentUserId },
-      data: updateData,
-    });
 
     clearUserDashboardCache(currentUserId);
 
