@@ -76,24 +76,23 @@ export async function POST(
       return NextResponse.json({ error: "You have already applied to this project." }, { status: 400 });
     }
 
-    // Create application and notification in a transaction so both succeed or both fail
-    const [application] = await prisma.$transaction([
-      prisma.application.create({
-        data: {
-          projectId,
-          userId: currentUserId,
-          message,
-        },
-      }),
-      prisma.notification.create({
-        data: {
-          userId: project.ownerId,
-          type: "APPLICATION_RECEIVED",
-          message: `${currentUser.name ?? "Someone"} applied to collaborate on "${project.title}".`,
-          link: "/dashboard?tab=projects",
-        },
-      }),
-    ]);
+    // Create application and notification sequentially without $transaction for Neon HTTP mode compatibility
+    const application = await prisma.application.create({
+      data: {
+        projectId,
+        userId: currentUserId,
+        message,
+      },
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId: project.ownerId,
+        type: "APPLICATION_RECEIVED",
+        message: `${currentUser.name ?? "Someone"} applied to collaborate on "${project.title}".`,
+        link: "/dashboard?tab=projects",
+      },
+    });
 
     return NextResponse.json({ message: "Applied successfully.", application });
   } catch (error: any) {

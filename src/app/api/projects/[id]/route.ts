@@ -58,12 +58,18 @@ export async function PATCH(
     if (status) updateData.status = status;
 
     if (skills && Array.isArray(skills)) {
+      const skillObjects = await Promise.all(
+        skills.map(async (name: string) => {
+          const cleanName = name.trim();
+          return await prisma.skill.upsert({
+            where: { name: cleanName },
+            update: {},
+            create: { name: cleanName },
+          });
+        })
+      );
       updateData.skills = {
-        set: [],
-        connectOrCreate: skills.map((name: string) => ({
-          where: { name },
-          create: { name },
-        })),
+        set: skillObjects.map((s) => ({ id: s.id })),
       };
     }
 

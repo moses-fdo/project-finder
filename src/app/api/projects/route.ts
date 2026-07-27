@@ -49,6 +49,17 @@ export async function POST(req: Request) {
       );
     }
 
+    const skillObjects = await Promise.all(
+      skills.map(async (name: string) => {
+        const cleanName = name.trim();
+        return await prisma.skill.upsert({
+          where: { name: cleanName },
+          update: {},
+          create: { name: cleanName },
+        });
+      })
+    );
+
     const project = await prisma.project.create({
       data: {
         title,
@@ -61,10 +72,7 @@ export async function POST(req: Request) {
         teamSize:        teamSize        ? Number(teamSize) : null,
         duration:        duration        || null,
         skills: {
-          connectOrCreate: skills.map((name: string) => ({
-            where:  { name },
-            create: { name },
-          })),
+          connect: skillObjects.map((s) => ({ id: s.id })),
         },
       },
       include: { skills: true },

@@ -55,12 +55,18 @@ export async function PATCH(req: Request) {
     if (profileImage !== undefined) updateData.profileImage = profileImage;
 
     if (skills && Array.isArray(skills)) {
+      const skillObjects = await Promise.all(
+        skills.map(async (skillName: string) => {
+          const cleanName = skillName.trim();
+          return await prisma.skill.upsert({
+            where: { name: cleanName },
+            update: {},
+            create: { name: cleanName },
+          });
+        })
+      );
       updateData.skills = {
-        set: [],
-        connectOrCreate: skills.map((skillName: string) => ({
-          where: { name: skillName },
-          create: { name: skillName },
-        })),
+        set: skillObjects.map((s) => ({ id: s.id })),
       };
     }
 
@@ -104,19 +110,18 @@ export async function DELETE() {
       );
     }
 
-    await prisma.$transaction([
-      prisma.application.deleteMany({ where: { userId: currentUserId } }),
-      prisma.bookmark.deleteMany({ where: { userId: currentUserId } }),
-      prisma.notification.deleteMany({ where: { userId: currentUserId } }),
-      prisma.application.deleteMany({
-        where: { project: { ownerId: currentUserId } },
-      }),
-      prisma.bookmark.deleteMany({
-        where: { project: { ownerId: currentUserId } },
-      }),
-      prisma.project.deleteMany({ where: { ownerId: currentUserId } }),
-      prisma.user.delete({ where: { id: currentUserId } }),
-    ]);
+    // Execute sequential deletes instead of $transaction for Neon HTTP mode compatibility
+    await prisma.application.deleteMany({ where: { userId: currentUserId } });
+    await prisma.bookmark.deleteMany({ where: { userId: currentUserId } });
+    await prisma.notification.deleteMany({ where: { userId: currentUserId } });
+    await prisma.application.deleteMany({
+      where: { project: { ownerId: currentUserId } },
+    });
+    await prisma.bookmark.deleteMany({
+      where: { project: { ownerId: currentUserId } },
+    });
+    await prisma.project.deleteMany({ where: { ownerId: currentUserId } });
+    await prisma.user.delete({ where: { id: currentUserId } });
 
     return NextResponse.json({ message: "Account deleted successfully." });
   } catch (error) {
