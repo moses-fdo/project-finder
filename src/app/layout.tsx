@@ -63,7 +63,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
         <ThemeProvider>
           <CustomCursor />
           <Suspense fallback={null}>

@@ -427,10 +427,10 @@ export default function AdminClient({
     <div className="min-h-screen bg-background">
 
       {/* ── Top bar ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 h-14 border-b border-border bg-card flex items-center justify-between px-6">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-40 h-14 border-b border-border bg-card flex items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           {/* Colabro logo */}
-          <Link href="/dashboard" className="flex items-center gap-2 mr-4">
+          <Link href="/dashboard" className="flex items-center gap-2 mr-2 sm:mr-4 shrink-0">
             <div className="h-7 w-7 rounded-[7px] bg-foreground flex items-center justify-center shrink-0">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <path d="M2 2h4v4H2zM8 2h4v4H8zM2 8h4v4H2zM8 8h4v4H8z" fill="white" />
@@ -439,27 +439,28 @@ export default function AdminClient({
             <span className="text-[15px] font-bold tracking-tight text-foreground">Colabro</span>
           </Link>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-destructive/10 border border-destructive/20">
-            <ShieldAlert size={13} strokeWidth={1.75} className="text-destructive" />
-            <span className="text-[11px] font-semibold text-destructive uppercase tracking-wide">Admin</span>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-destructive/10 border border-destructive/20 shrink-0">
+            <ShieldAlert size={13} strokeWidth={1.75} className="text-destructive shrink-0" />
+            <span className="text-[10px] sm:text-[11px] font-semibold text-destructive uppercase tracking-wide">Admin</span>
           </div>
         </div>
 
         <Link
           href="/dashboard"
-          className="flex items-center gap-1.5 btn-ghost text-[12px] text-muted-foreground"
+          className="flex items-center gap-1.5 btn-ghost text-[12px] text-muted-foreground shrink-0 px-2.5 sm:px-3 py-1.5"
         >
           <ArrowLeft size={14} strokeWidth={1.75} />
-          Back to dashboard
+          <span className="hidden sm:inline">Back to dashboard</span>
+          <span className="sm:hidden">Back</span>
         </Link>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
 
         {/* ── Page title ──────────────────────────────────────── */}
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">Admin Console</h1>
-          <p className="text-[12px] text-muted-foreground mt-1">
+          <h1 className="text-[20px] sm:text-[22px] font-bold tracking-tight text-foreground">Admin Console</h1>
+          <p className="text-[12px] text-muted-foreground mt-0.5 sm:mt-1">
             Manage users, projects, and platform health.
           </p>
         </div>
@@ -478,39 +479,41 @@ export default function AdminClient({
           </div>
         )}
 
-        {/* ── Tabs ────────────────────────────────────────────── */}
-        <div className="flex items-center gap-1 border-b border-border">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors cursor-pointer -mb-px ${
-                activeTab === t.id
-                  ? "border-foreground text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <t.icon size={14} strokeWidth={1.75} />
-              {t.label}
-            </button>
-          ))}
+        {/* ── Tabs (Mobile Scrollable) ───────────────────────── */}
+        <div className="border-b border-border -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden whitespace-nowrap pb-px">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 text-[12px] sm:text-[13px] font-medium border-b-2 transition-colors cursor-pointer shrink-0 -mb-px ${
+                  activeTab === t.id
+                    ? "border-foreground text-foreground font-semibold"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <t.icon size={14} strokeWidth={1.75} className="shrink-0" />
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ════════════════════════════════════════════════════ */}
         {/* OVERVIEW ─────────────────────────────────────────── */}
         {activeTab === "overview" && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
 
             {/* Stat cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {statCards.map((s) => (
-                <div key={s.label} className="card p-5 flex flex-col gap-3">
+                <div key={s.label} className="card p-4 sm:p-5 flex flex-col gap-2.5 sm:gap-3">
                   <div className={`h-8 w-8 rounded-lg bg-secondary border border-border flex items-center justify-center ${s.color}`}>
                     <s.icon size={16} strokeWidth={1.75} />
                   </div>
                   <div>
-                    <p className="text-[24px] font-bold text-foreground tabular-nums leading-none">{s.value}</p>
-                    <p className="text-[11px] text-muted-foreground mt-1">{s.label}</p>
+                    <p className="text-[20px] sm:text-[24px] font-bold text-foreground tabular-nums leading-none">{s.value}</p>
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 truncate">{s.label}</p>
                   </div>
                 </div>
               ))}
@@ -518,7 +521,7 @@ export default function AdminClient({
 
             {/* Recent users */}
             <div className="card overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
+              <div className="px-4 sm:px-5 py-3 sm:py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
                 <p className="text-[13px] font-semibold text-foreground">Recent sign-ups</p>
                 <button
                   onClick={() => setActiveTab("users")}
@@ -529,8 +532,8 @@ export default function AdminClient({
               </div>
               <div className="divide-y divide-border">
                 {users.slice(0, 5).map((u) => (
-                  <div key={u.id} className="px-5 py-3 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
+                  <div key={u.id} className="px-4 sm:px-5 py-3 flex items-center justify-between gap-3 sm:gap-4">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                       <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0 text-[11px] font-semibold text-foreground">
                         {((u?.name || "U").trim()[0] || "U").toUpperCase()}
                       </div>
@@ -554,7 +557,7 @@ export default function AdminClient({
 
             {/* Recent projects */}
             <div className="card overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
+              <div className="px-4 sm:px-5 py-3 sm:py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
                 <p className="text-[13px] font-semibold text-foreground">Recent projects</p>
                 <button
                   onClick={() => setActiveTab("projects")}
@@ -565,10 +568,10 @@ export default function AdminClient({
               </div>
               <div className="divide-y divide-border">
                 {projects.slice(0, 5).map((p) => (
-                  <div key={p.id} className="px-5 py-3 flex items-center justify-between gap-4">
+                  <div key={p.id} className="px-4 sm:px-5 py-3 flex items-center justify-between gap-3 sm:gap-4">
                     <div className="min-w-0">
                       <p className="text-[13px] font-medium text-foreground truncate">{p.title}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">by {p.owner?.name} · {p._count.applications} application{p._count.applications !== 1 ? "s" : ""}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 truncate">by {p.owner?.name} · {p._count.applications} application{p._count.applications !== 1 ? "s" : ""}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={p.status === "OPEN" ? "badge badge-green" : p.status === "FULL" ? "badge badge-yellow" : "badge badge-gray"}>
@@ -586,14 +589,14 @@ export default function AdminClient({
         {/* USERS ─────────────────────────────────────────────── */}
         {activeTab === "users" && (
           <div className="space-y-5">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <p className="text-[13px] text-muted-foreground">
                 <span className="font-semibold text-foreground">{filteredUsers.length}</span> user{filteredUsers.length !== 1 ? "s" : ""}
                 {userSearch && " matching"}
               </p>
 
               {/* Search */}
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-64">
                 <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
@@ -610,7 +613,7 @@ export default function AdminClient({
                 {filteredUsers.length === 0 ? (
                   <p className="px-5 py-10 text-center text-[12px] text-muted-foreground">No users found.</p>
                 ) : filteredUsers.map((u) => (
-                  <div key={u.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                  <div key={u.id} className="px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="h-8 w-8 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0 text-[12px] font-semibold text-foreground">
                         {((u?.name || "U").trim()[0] || "U").toUpperCase()}
@@ -619,28 +622,28 @@ export default function AdminClient({
                         <div className="flex items-center gap-2 flex-wrap">
                           <Link
                             href={`/profile/${u.id}`}
-                            className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2"
+                            className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2 truncate"
                           >
                             {u.name}
                           </Link>
                           {u.role === "ADMIN" && (
-                            <span className="badge badge-red">Admin</span>
+                            <span className="badge badge-red shrink-0">Admin</span>
                           )}
                           {u.verified
-                            ? <span className="badge badge-green">Verified</span>
-                            : <span className="badge badge-gray">Unverified</span>}
+                            ? <span className="badge badge-green shrink-0">Verified</span>
+                            : <span className="badge badge-gray shrink-0">Unverified</span>}
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                           {u.email} · {u.department} · Year {u.year}
                         </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
                           {u._count.projects} project{u._count.projects !== 1 ? "s" : ""} · {u._count.applications} application{u._count.applications !== 1 ? "s" : ""}
                           {" · "}Joined {new Date(u.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t border-border/40 sm:border-0 w-full sm:w-auto justify-end">
                       <Link
                         href={`/profile/${u.id}`}
                         className="btn-ghost text-[12px] p-2"
@@ -674,13 +677,13 @@ export default function AdminClient({
         {/* PROJECTS ──────────────────────────────────────────── */}
         {activeTab === "projects" && (
           <div className="space-y-5">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <p className="text-[13px] text-muted-foreground">
                 <span className="font-semibold text-foreground">{filteredProjects.length}</span> project{filteredProjects.length !== 1 ? "s" : ""}
                 {projSearch && " matching"}
               </p>
 
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-64">
                 <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
@@ -697,24 +700,24 @@ export default function AdminClient({
                 {filteredProjects.length === 0 ? (
                   <p className="px-5 py-10 text-center text-[12px] text-muted-foreground">No projects found.</p>
                 ) : filteredProjects.map((p) => (
-                  <div key={p.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                  <div key={p.id} className="px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Link
                           href={`/projects/${p.id}`}
-                          className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2"
+                          className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2 truncate"
                         >
                           {p.title}
                         </Link>
                         <span className={
-                          p.status === "OPEN" ? "badge badge-green" :
-                          p.status === "FULL" ? "badge badge-yellow" :
-                          "badge badge-gray"
+                          p.status === "OPEN" ? "badge badge-green shrink-0" :
+                          p.status === "FULL" ? "badge badge-yellow shrink-0" :
+                          "badge badge-gray shrink-0"
                         }>
                           {p.status}
                         </span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                         by{" "}
                         <Link href={`/profile/${p.owner?.id}`} className="hover:underline font-medium text-foreground">
                           {p.owner?.name}
@@ -738,7 +741,7 @@ export default function AdminClient({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t border-border/40 sm:border-0 w-full sm:w-auto justify-end">
                       <Link
                         href={`/projects/${p.id}`}
                         className="btn-ghost text-[12px] p-2"
@@ -767,30 +770,28 @@ export default function AdminClient({
         )}
 
         {/* ════════════════════════════════════════════════════ */}
-        {/* HACKATHONS ───────────────────────────────────────── */}
-        {/* ════════════════════════════════════════════════════ */}
-        {/* EVENTS ───────────────────────────────────────────── */}
+        {/* EVENTS / HACKATHONS ──────────────────────────────── */}
         {(activeTab === "events" || activeTab === "hackathons") && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <h2 className="text-[17px] font-bold text-foreground">Campus Events &amp; Competitions</h2>
+                <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Campus Events &amp; Competitions</h2>
                 <p className="text-[12px] text-muted-foreground mt-0.5">Post and manage upcoming student hackathons, competitions, and events.</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => setShowImportModal(true)}
-                  className="btn-secondary text-[12px] py-2 px-3.5 flex items-center gap-1.5 cursor-pointer font-semibold"
+                  className="btn-secondary text-[12px] py-2 px-3 sm:px-3.5 flex-1 sm:flex-none justify-center items-center gap-1.5 cursor-pointer font-semibold"
                 >
-                  <FileSpreadsheet size={14} className="text-green-500" />
-                  Import CSV / Excel
+                  <FileSpreadsheet size={14} className="text-green-500 shrink-0" />
+                  <span className="truncate">Import CSV / Excel</span>
                 </button>
                 <button
                   onClick={() => setShowAddHackathon(true)}
-                  className="btn-primary text-[12px] py-2 px-4 flex items-center gap-1.5 cursor-pointer font-bold"
+                  className="btn-primary text-[12px] py-2 px-3.5 sm:px-4 flex-1 sm:flex-none justify-center items-center gap-1.5 cursor-pointer font-bold"
                 >
-                  <Plus size={14} />
-                  Create Event
+                  <Plus size={14} className="shrink-0" />
+                  <span className="truncate">Create Event</span>
                 </button>
               </div>
             </div>
@@ -802,28 +803,28 @@ export default function AdminClient({
                   const isEnded = h.endDate ? new Date(h.endDate).getTime() < nowMs : false;
 
                   return (
-                    <div key={h.id} className="card p-5 space-y-4 flex flex-col justify-between border-border relative">
-                      <div className="space-y-2">
+                    <div key={h.id} className="card p-4 sm:p-5 space-y-4 flex flex-col justify-between border-border relative">
+                      <div className="space-y-3 sm:space-y-4">
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold shrink-0">
                               <Trophy size={18} />
                             </div>
-                            <div>
-                              <h3 className="text-[14px] font-bold text-foreground line-clamp-1">{h.title}</h3>
-                              <div className="flex items-center gap-2 mt-0.5">
+                            <div className="min-w-0">
+                              <h3 className="text-[14px] font-bold text-foreground truncate">{h.title}</h3>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 {h.organizer && (
-                                  <span className="text-[11px] font-semibold text-foreground/80">{h.organizer}</span>
+                                  <span className="text-[11px] font-semibold text-foreground/80 truncate">{h.organizer}</span>
                                 )}
                                 {h.organizerType && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-medium">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-medium shrink-0">
                                     {h.organizerType}
                                   </span>
                                 )}
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 shrink-0">
                             {isEnded ? (
                               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">
                                 Ended
@@ -848,7 +849,7 @@ export default function AdminClient({
                           {h.description}
                         </p>
 
-                        <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground font-medium pt-2 border-t border-border/50">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-muted-foreground font-medium pt-2 border-t border-border/50">
                           <div>
                             <span className="text-foreground font-semibold">📅 Dates:</span> {h.startDate ? `${h.startDate}${h.endDate ? ` to ${h.endDate}` : ""}` : (h.date || "TBA")}
                           </div>
@@ -866,12 +867,12 @@ export default function AdminClient({
                             </div>
                           )}
                           {h.prize && (
-                            <div className="col-span-2 text-amber-500 font-semibold line-clamp-1">
+                            <div className="col-span-1 sm:col-span-2 text-amber-500 font-semibold line-clamp-1">
                               🏆 Prize: {h.prize}
                             </div>
                           )}
                           {h.source && (
-                            <div className="col-span-2 text-[10px] text-muted-foreground">
+                            <div className="col-span-1 sm:col-span-2 text-[10px] text-muted-foreground">
                               Source: {h.source}
                             </div>
                           )}
@@ -895,7 +896,7 @@ export default function AdminClient({
                 })}
               </div>
             ) : (
-              <div className="card p-12 text-center space-y-2">
+              <div className="card p-8 sm:p-12 text-center space-y-2">
                 <Trophy size={32} className="mx-auto text-muted-foreground/40" />
                 <p className="text-[14px] font-medium text-foreground">No events posted yet</p>
                 <p className="text-[12px] text-muted-foreground">Click &ldquo;Create Event&rdquo; or &ldquo;Import CSV / Excel&rdquo; to add events.</p>
@@ -905,12 +906,12 @@ export default function AdminClient({
         )}
 
         {/* ════════════════════════════════════════════════════ */}
-        {/* ALLOWED EMAILS (NON-COLLEGE IDS) ──────────────────── */}
+        {/* ALLOWED EMAILS ────────────────────────────────────── */}
         {activeTab === "allowedEmails" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-[17px] font-bold text-foreground">Non-College Allowed Emails</h2>
+                <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Non-College Allowed Emails</h2>
                 <p className="text-[12px] text-muted-foreground mt-0.5">
                   Whitelist non-college email addresses (Gmail, Yahoo, external mentors) so they can register and log in.
                 </p>
@@ -918,17 +919,17 @@ export default function AdminClient({
               <button
                 type="button"
                 onClick={() => setShowAddAllowedModal(true)}
-                className="btn-primary text-[12px] py-2 px-4 flex items-center gap-1.5 cursor-pointer font-bold shrink-0"
+                className="btn-primary text-[12px] py-2 px-4 flex items-center justify-center gap-1.5 cursor-pointer font-bold shrink-0 w-full sm:w-auto"
               >
                 <Plus size={14} /> Add Non-College Email
               </button>
             </div>
 
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <p className="text-[12px] text-muted-foreground">
                 <span className="font-semibold text-foreground">{filteredAllowed.length}</span> whitelisted email{filteredAllowed.length !== 1 ? "s" : ""}
               </p>
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-64">
                 <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
@@ -945,15 +946,15 @@ export default function AdminClient({
                 {filteredAllowed.length === 0 ? (
                   <p className="px-5 py-10 text-center text-[12px] text-muted-foreground">No allowed emails added yet.</p>
                 ) : filteredAllowed.map((item) => (
-                  <div key={item.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
+                  <div key={item.id} className="px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[13px] font-semibold text-foreground">{item.email}</span>
-                        <span className="badge badge-green flex items-center gap-1">
+                        <span className="text-[13px] font-semibold text-foreground truncate">{item.email}</span>
+                        <span className="badge badge-green flex items-center gap-1 shrink-0">
                           <ShieldCheck size={10} /> Whitelisted
                         </span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                         {item.note ? `Note: ${item.note} · ` : ""}Added by {item.addedBy || "Admin"} on {new Date(item.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -962,7 +963,7 @@ export default function AdminClient({
                       type="button"
                       onClick={() => handleDeleteAllowedEmail(item.id, item.email)}
                       disabled={loadingId === `allow-${item.id}`}
-                      className="btn-ghost p-2 text-destructive hover:bg-destructive/10 cursor-pointer self-start sm:self-center"
+                      className="btn-ghost p-2 text-destructive hover:bg-destructive/10 cursor-pointer self-end sm:self-center"
                       title={`Remove ${item.email}`}
                     >
                       {loadingId === `allow-${item.id}` ? "…" : <Trash2 size={14} />}
@@ -978,20 +979,20 @@ export default function AdminClient({
         {/* ID VERIFICATIONS ─────────────────────────────────── */}
         {activeTab === "idVerifications" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-[17px] font-bold text-foreground">Student ID Verification Requests</h2>
+                <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Student ID Verification Requests</h2>
                 <p className="text-[12px] text-muted-foreground mt-0.5">
                   Review student ID cards uploaded by students without institutional .edu emails.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <p className="text-[12px] text-muted-foreground">
                 <span className="font-semibold text-foreground">{filteredIdRequests.length}</span> request{filteredIdRequests.length !== 1 ? "s" : ""}
               </p>
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-64">
                 <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
@@ -1005,19 +1006,19 @@ export default function AdminClient({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredIdRequests.length === 0 ? (
-                <div className="col-span-full card p-10 text-center text-[12px] text-muted-foreground">
+                <div className="col-span-full card p-8 sm:p-10 text-center text-[12px] text-muted-foreground">
                   No ID verification requests found.
                 </div>
               ) : (
                 filteredIdRequests.map((req) => (
-                  <div key={req.id} className="card p-5 space-y-4 flex flex-col justify-between border-border">
+                  <div key={req.id} className="card p-4 sm:p-5 space-y-4 flex flex-col justify-between border-border">
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-[14px] font-bold text-foreground">{req.name}</h3>
+                            <h3 className="text-[14px] font-bold text-foreground truncate">{req.name}</h3>
                             <span
-                              className={`badge ${
+                              className={`badge shrink-0 ${
                                 req.status === "PENDING"
                                   ? "badge-yellow"
                                   : req.status === "APPROVED"
@@ -1028,7 +1029,7 @@ export default function AdminClient({
                               {req.status}
                             </span>
                           </div>
-                          <p className="text-[12px] text-muted-foreground">{req.email}</p>
+                          <p className="text-[12px] text-muted-foreground truncate">{req.email}</p>
                         </div>
                         <span className="text-[10px] text-muted-foreground shrink-0">
                           {new Date(req.createdAt).toLocaleDateString()}
@@ -1036,28 +1037,28 @@ export default function AdminClient({
                       </div>
 
                       <div className="p-3 bg-secondary/50 rounded-lg text-[11px] space-y-1">
-                        <p className="text-foreground font-medium">🏫 {req.collegeName}</p>
-                        {req.department && <p className="text-muted-foreground">📚 {req.department}</p>}
+                        <p className="text-foreground font-medium truncate">🏫 {req.collegeName}</p>
+                        {req.department && <p className="text-muted-foreground truncate">📚 {req.department}</p>}
                         {req.adminNote && <p className="text-destructive font-mono mt-1">Note: {req.adminNote}</p>}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-border">
                       <button
                         type="button"
                         onClick={() => setPreviewIdImage({ name: req.name, image: req.idCardImage })}
-                        className="btn-secondary text-[11px] py-1.5 px-3 flex items-center gap-1.5 cursor-pointer"
+                        className="btn-secondary text-[11px] py-1.5 px-3 flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <FileText size={12} /> View Student ID Card
                       </button>
 
                       {req.status === "PENDING" && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => handleUpdateIdVerification(req.id, "REJECTED", req.email)}
                             disabled={loadingId === `idverif-${req.id}`}
-                            className="btn-ghost text-[11px] py-1.5 px-3 text-destructive hover:bg-destructive/10 cursor-pointer"
+                            className="btn-ghost text-[11px] py-1.5 px-3 text-destructive hover:bg-destructive/10 cursor-pointer flex-1 sm:flex-none"
                           >
                             Reject
                           </button>
@@ -1065,7 +1066,7 @@ export default function AdminClient({
                             type="button"
                             onClick={() => handleUpdateIdVerification(req.id, "APPROVED", req.email)}
                             disabled={loadingId === `idverif-${req.id}`}
-                            className="btn-primary text-[11px] py-1.5 px-3 font-bold bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                            className="btn-primary text-[11px] py-1.5 px-3 font-bold bg-green-600 hover:bg-green-700 text-white cursor-pointer flex-1 sm:flex-none"
                           >
                             Approve
                           </button>
@@ -1083,9 +1084,9 @@ export default function AdminClient({
         {/* MODERATION ─────────────────────────────────────── */}
         {activeTab === "moderation" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-[17px] font-bold text-foreground">Content Moderation</h2>
+                <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Content Moderation</h2>
                 <p className="text-[12px] text-muted-foreground mt-0.5">
                   Review flagged and blocked project description attempts across the platform.
                 </p>
@@ -1095,7 +1096,7 @@ export default function AdminClient({
                   type="button"
                   onClick={handleClearAllAbuseLogs}
                   disabled={loadingId === "abuse-all"}
-                  className="btn-ghost text-[12px] py-2 px-3.5 flex items-center gap-1.5 cursor-pointer text-destructive hover:bg-destructive/10 border border-destructive/30 rounded-lg shrink-0"
+                  className="btn-ghost text-[12px] py-2 px-3.5 flex items-center justify-center gap-1.5 cursor-pointer text-destructive hover:bg-destructive/10 border border-destructive/30 rounded-lg shrink-0 w-full sm:w-auto"
                 >
                   <Trash2 size={13} />
                   {loadingId === "abuse-all" ? "Clearing…" : "Clear All Logs"}
@@ -1103,12 +1104,12 @@ export default function AdminClient({
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <p className="text-[12px] text-muted-foreground">
                 <span className="font-semibold text-foreground">{filteredAbuseLogs.length}</span> log entr{filteredAbuseLogs.length !== 1 ? "ies" : "y"}
                 {abuseSearch && " matching"}
               </p>
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-64">
                 <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
@@ -1121,7 +1122,7 @@ export default function AdminClient({
             </div>
 
             {filteredAbuseLogs.length === 0 ? (
-              <div className="card p-12 text-center space-y-2">
+              <div className="card p-8 sm:p-12 text-center space-y-2">
                 <MessageSquareDiff size={32} className="mx-auto text-muted-foreground/40" />
                 <p className="text-[14px] font-medium text-foreground">No flagged descriptions</p>
                 <p className="text-[12px] text-muted-foreground">The abuse classifier hasn&apos;t blocked any project descriptions yet.</p>
@@ -1135,7 +1136,7 @@ export default function AdminClient({
                       : [];
                     const isPhrase = log.reason === "abusive_phrase" || (!log.reason?.startsWith("flagged:") && log.reason);
                     return (
-                      <div key={log.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                      <div key={log.id} className="px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                         <div className="flex items-start gap-3 min-w-0">
                           <div className="h-8 w-8 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center shrink-0 text-[12px] font-semibold text-destructive">
                             {((log.user?.name || "U").trim()[0] || "U").toUpperCase()}
@@ -1144,11 +1145,11 @@ export default function AdminClient({
                             <div className="flex items-center gap-2 flex-wrap">
                               <Link
                                 href={`/profile/${log.user.id}`}
-                                className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2"
+                                className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2 truncate"
                               >
                                 {log.user.name}
                               </Link>
-                              <span className="badge badge-red flex items-center gap-1">
+                              <span className="badge badge-red flex items-center gap-1 shrink-0">
                                 <ShieldAlert size={9} />
                                 {log.count} blocked attempt{log.count !== 1 ? "s" : ""}
                               </span>
@@ -1175,7 +1176,7 @@ export default function AdminClient({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t border-border/40 sm:border-0 w-full sm:w-auto justify-end">
                           <Link
                             href={`/profile/${log.user.id}`}
                             className="btn-ghost text-[12px] p-2"
@@ -1207,21 +1208,21 @@ export default function AdminClient({
 
       {/* ── CREATE HACKATHON MODAL ────────────────────────────── */}
       {showAddHackathon && (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="card w-full max-w-[460px] p-6 space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="card w-full max-w-[480px] p-5 sm:p-6 space-y-4 sm:space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold shrink-0">
                   <Trophy size={18} />
                 </div>
-                <div>
-                  <h3 className="text-[16px] font-bold text-foreground">Create New Hackathon</h3>
-                  <p className="text-[11px] text-muted-foreground">Post event &amp; notify all platform students</p>
+                <div className="min-w-0">
+                  <h3 className="text-[15px] sm:text-[16px] font-bold text-foreground truncate">Create New Hackathon</h3>
+                  <p className="text-[11px] text-muted-foreground truncate">Post event &amp; notify all platform students</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowAddHackathon(false)}
-                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg"
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg shrink-0 ml-2"
               >
                 ✕
               </button>
@@ -1240,7 +1241,7 @@ export default function AdminClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block section-label mb-1">Organizer</label>
                   <input
@@ -1275,7 +1276,7 @@ export default function AdminClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block section-label mb-1">Start Date</label>
                   <input
@@ -1298,7 +1299,7 @@ export default function AdminClient({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block section-label mb-1">Mode</label>
                   <select
@@ -1323,7 +1324,7 @@ export default function AdminClient({
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
                   <label className="block section-label mb-1">City</label>
                   <input
@@ -1367,7 +1368,7 @@ export default function AdminClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block section-label mb-1">Prize Pool</label>
                   <input
@@ -1424,28 +1425,28 @@ export default function AdminClient({
 
       {/* ── IMPORT EXCEL MODAL ───────────────────────────────── */}
       {showImportModal && (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="card w-full max-w-[480px] p-6 space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="card w-full max-w-[480px] p-5 sm:p-6 space-y-4 sm:space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center font-bold">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center font-bold shrink-0">
                   <FileSpreadsheet size={18} />
                 </div>
-                <div>
-                  <h3 className="text-[16px] font-bold text-foreground">Import Hackathons from Excel</h3>
-                  <p className="text-[11px] text-muted-foreground">Upload a .xlsx, .xls, or .csv spreadsheet</p>
+                <div className="min-w-0">
+                  <h3 className="text-[15px] sm:text-[16px] font-bold text-foreground truncate">Import Hackathons from Excel</h3>
+                  <p className="text-[11px] text-muted-foreground truncate">Upload a .xlsx, .xls, or .csv spreadsheet</p>
                 </div>
               </div>
               <button
                 onClick={() => { setShowImportModal(false); setImportFile(null); setImportErrors([]); }}
-                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg"
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg shrink-0 ml-2"
               >
                 ✕
               </button>
             </div>
 
             <div className="card p-3.5 bg-secondary/40 border-dashed border-border space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-[12px] font-semibold text-foreground flex items-center gap-1.5">
                   <Download size={13} className="text-primary" />
                   Need a sample template?
@@ -1477,7 +1478,7 @@ export default function AdminClient({
             <form onSubmit={handleExcelImport} className="space-y-4">
               <div>
                 <label className="block section-label mb-1.5">Select Excel / CSV File</label>
-                <div className="relative border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-6 text-center transition-colors bg-card">
+                <div className="relative border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-5 sm:p-6 text-center transition-colors bg-card">
                   <input
                     type="file"
                     required
@@ -1489,7 +1490,7 @@ export default function AdminClient({
                     <Upload size={24} className="mx-auto text-muted-foreground" />
                     {importFile ? (
                       <div>
-                        <p className="text-[13px] font-bold text-foreground">{importFile.name}</p>
+                        <p className="text-[13px] font-bold text-foreground truncate">{importFile.name}</p>
                         <p className="text-[10px] text-muted-foreground">{(importFile.size / 1024).toFixed(1)} KB</p>
                       </div>
                     ) : (
@@ -1525,22 +1526,22 @@ export default function AdminClient({
 
       {/* ── ADD ALLOWED EMAIL MODAL ─────────────────────────── */}
       {showAddAllowedModal && (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="card w-full max-w-[440px] p-6 space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="card w-full max-w-[440px] p-5 sm:p-6 space-y-4 sm:space-y-5 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                   <ShieldCheck size={18} />
                 </div>
-                <div>
-                  <h3 className="text-[16px] font-bold text-foreground">Whitelist Non-College Email</h3>
-                  <p className="text-[11px] text-muted-foreground">Grant platform sign-in access</p>
+                <div className="min-w-0">
+                  <h3 className="text-[15px] sm:text-[16px] font-bold text-foreground truncate">Whitelist Non-College Email</h3>
+                  <p className="text-[11px] text-muted-foreground truncate">Grant platform sign-in access</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddAllowedModal(false)}
-                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg"
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg shrink-0 ml-2"
               >
                 ✕
               </button>
@@ -1596,17 +1597,17 @@ export default function AdminClient({
 
       {/* ── PREVIEW STUDENT ID CARD MODAL ─────────────────── */}
       {previewIdImage && (
-        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="card w-full max-w-[600px] p-6 space-y-4 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="card w-full max-w-[600px] p-4 sm:p-6 space-y-4 border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-3">
-              <div>
-                <h3 className="text-[16px] font-bold text-foreground">Student ID Card</h3>
-                <p className="text-[11px] text-muted-foreground">{previewIdImage.name}</p>
+              <div className="min-w-0">
+                <h3 className="text-[15px] sm:text-[16px] font-bold text-foreground truncate">Student ID Card</h3>
+                <p className="text-[11px] text-muted-foreground truncate">{previewIdImage.name}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setPreviewIdImage(null)}
-                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+                className="btn-ghost p-1.5 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer shrink-0 ml-2"
               >
                 ✕
               </button>
@@ -1617,7 +1618,7 @@ export default function AdminClient({
               <img
                 src={previewIdImage.image}
                 alt={`Student ID of ${previewIdImage.name}`}
-                className="max-h-[450px] mx-auto rounded-lg object-contain shadow-md"
+                className="max-h-[350px] sm:max-h-[450px] mx-auto rounded-lg object-contain shadow-md"
               />
             </div>
 
