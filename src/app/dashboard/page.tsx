@@ -150,7 +150,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           // 5: Collaborations directory (if needed)
           needsCollaborations
             ? prisma.user.findMany({
-                take: 30,
+                take: 200,
                 select: {
                   id: true,
                   name: true,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -1883,13 +1883,14 @@ function CollaborationsFinder({
   hasProjects = false,
   onInviteUser,
 }: CFProps) {
+  const topRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [rawPage, setRawPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
 
-  // "open to collaborate" = user explicitly set availability OR has no currently-OPEN project they own
+  // "open to collaborate" = user explicitly set availability OR is default AVAILABLE
   const isOpenToWork = (u: any) => {
-    if (u.availability === "BUSY") return false;
-    if (u.availability === "AVAILABLE") return true;
-    return !(u.projects || []).some((p: any) => p.status === "OPEN");
+    return u.availability !== "BUSY";
   };
 
   // Unique department list from the data
@@ -1920,6 +1921,17 @@ function CollaborationsFinder({
     return true;
   });
 
+  // Pagination calculation
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+  const page = Math.min(Math.max(1, rawPage), totalPages);
+  const paginatedPeople = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const changePage = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setRawPage(newPage);
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const copyEmail = async (userId: number, email: string) => {
     try {
       await navigator.clipboard.writeText(email);
@@ -1943,7 +1955,7 @@ function CollaborationsFinder({
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={topRef} className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
         <div>
@@ -2119,10 +2131,10 @@ function CollaborationsFinder({
         </div>
       )}
 
-      {/* Collaborators Card Grid (Matching Reference Layout) */}
-      {filtered.length > 0 ? (
+      {/* Collaborators Card Grid */}
+      {paginatedPeople.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4.5">
-          {filtered.map((u: any) => {
+          {paginatedPeople.map((u: any) => {
             const open = isOpenToWork(u);
             const displayName = u.name || u.email?.split("@")[0] || "Student";
             const initial = (displayName[0] || "?").toUpperCase();
@@ -2260,30 +2272,69 @@ function CollaborationsFinder({
         </div>
       )}
 
-      {/* Pagination Footer (Matching Reference Image 1) */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border/80">
-        <div className="flex items-center gap-1.5 mx-auto sm:mx-0">
-          <button className="p-2 text-muted-foreground hover:text-foreground rounded-lg border border-border bg-card cursor-pointer">
-            <ChevronLeft size={14} />
-          </button>
-          <button className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white">1</button>
-          <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-card text-muted-foreground hover:text-foreground border border-border cursor-pointer">2</button>
-          <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-card text-muted-foreground hover:text-foreground border border-border cursor-pointer">3</button>
-          <span className="px-2 text-muted-foreground text-xs font-semibold">...</span>
-          <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-card text-muted-foreground hover:text-foreground border border-border cursor-pointer">9</button>
-          <button className="p-2 text-muted-foreground hover:text-foreground rounded-lg border border-border bg-card cursor-pointer">
-            <ChevronRight size={14} />
-          </button>
-        </div>
+      {/* Dynamic Pagination Bar */}
+      {filtered.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border/80">
+          <p className="text-xs text-muted-foreground font-medium">
+            Showing <span className="font-semibold text-foreground">{(page - 1) * pageSize + 1}</span>–
+            <span className="font-semibold text-foreground">{Math.min(page * pageSize, filtered.length)}</span> of{" "}
+            <span className="font-semibold text-foreground">{filtered.length}</span> collaborators
+          </p>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <select className="bg-card border border-border rounded-lg text-foreground px-3 py-1.5 font-medium appearance-none cursor-pointer" style={selectBg}>
-            <option>12 per page</option>
-            <option>24 per page</option>
-            <option>48 per page</option>
-          </select>
+          <div className="flex items-center gap-1.5 mx-auto sm:mx-0">
+            <button
+              type="button"
+              disabled={page === 1}
+              onClick={() => changePage(page - 1)}
+              className="p-2 text-muted-foreground hover:text-foreground rounded-lg border border-border bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Previous Page"
+            >
+              <ChevronLeft size={14} />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => (
+              <button
+                key={pNum}
+                type="button"
+                onClick={() => changePage(pNum)}
+                className={`min-w-[32px] h-8 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                  pNum === page
+                    ? "bg-indigo-600 text-white border-indigo-600 font-bold shadow-xs"
+                    : "bg-card text-muted-foreground hover:text-foreground border-border"
+                }`}
+              >
+                {pNum}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              disabled={page === totalPages}
+              onClick={() => changePage(page + 1)}
+              className="p-2 text-muted-foreground hover:text-foreground rounded-lg border border-border bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Next Page"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setRawPage(1);
+              }}
+              className="bg-card border border-border rounded-lg text-foreground px-3 py-1.5 font-medium appearance-none cursor-pointer"
+              style={selectBg}
+            >
+              <option value={12}>12 per page</option>
+              <option value={24}>24 per page</option>
+              <option value={48}>48 per page</option>
+            </select>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
