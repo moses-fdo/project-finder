@@ -12,7 +12,7 @@ export default function SciFiGradient() {
   return (
     <div className="absolute inset-0 isolate overflow-hidden pointer-events-none">
       {/* Main gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-blue-50/30 to-indigo-50/20 dark:from-purple-900/20 dark:via-indigo-900/10 dark:to-blue-900/15" />
+      <div className="absolute inset-0 bg-gradient-to-br from-secondary/40 via-background to-accent/30 dark:from-secondary/30 dark:via-background dark:to-accent/20" />
 
       {/* Neon grid overlay */}
       <svg

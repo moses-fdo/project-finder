@@ -17,13 +17,9 @@ export default function ColabroLogo({ size = 40 }: ColabroLogoProps) {
     setMounted(true);
   }, []);
 
-  // Before mount, read directly from DOM class (set by the anti-flash inline script)
-  // This prevents flicker on dark-mode page load
-  const effectiveTheme = mounted
-    ? theme
-    : (typeof document !== "undefined" && document.documentElement.classList.contains("dark"))
-      ? "dark"
-      : "light";
+  // Before mount (SSR & initial client hydration), default to "light" so HTML matches.
+  // After mount (useEffect), update to the user's active theme.
+  const effectiveTheme = mounted ? theme : "light";
 
   return (
     <Image

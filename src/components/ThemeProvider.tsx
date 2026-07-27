@@ -19,14 +19,22 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "light";
-    const saved = localStorage.getItem("colabro-theme");
-    if (saved === "dark" || saved === "light") return saved;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
+  const [theme, setTheme] = useState<Theme>("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+    const saved = localStorage.getItem("colabro-theme");
+    const initialTheme: Theme = (saved === "dark" || saved === "light")
+      ? saved
+      : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+    setTheme(initialTheme);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
@@ -34,7 +42,6 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
       root.classList.remove("dark");
     }
 
-    // Listen to real-time OS system theme changes when no override is stored
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleSystemChange = (e: MediaQueryListEvent) => {
       const stored = localStorage.getItem("colabro-theme");
@@ -45,7 +52,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
 
     mediaQuery.addEventListener("change", handleSystemChange);
     return () => mediaQuery.removeEventListener("change", handleSystemChange);
-  }, [theme]);
+  }, [theme, mounted]);
 
   function toggle() {
     const next: Theme = theme === "light" ? "dark" : "light";

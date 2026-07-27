@@ -73,9 +73,9 @@ export default function ProjectCard({ project, initialBookmarked = false }: Proj
   };
 
   return (
-    <article className="card card-hover flex flex-col h-full p-5 group">
+    <article className="card card-hover flex flex-col h-full p-5 group min-w-0 transition-all duration-200 ease-out-quart">
       {/* Top row: status + bookmark + date */}
-      <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
         {statusBadge(project.status)}
         <div className="flex items-center gap-2">
           <button
@@ -83,19 +83,19 @@ export default function ProjectCard({ project, initialBookmarked = false }: Proj
             disabled={bookmarkLoading}
             aria-label={bookmarked ? "Remove bookmark" : "Bookmark project"}
             title={bookmarked ? "Remove bookmark" : "Save project"}
-            className={`p-1 rounded-md transition-colors cursor-pointer disabled:opacity-50 ${
+            className={`min-h-[36px] min-w-[36px] p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-150 ${
               bookmarked
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-foreground bg-secondary/60"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
             }`}
           >
             <Bookmark
-              size={13}
+              size={14}
               strokeWidth={1.75}
               className={bookmarked ? "fill-foreground" : ""}
             />
           </button>
-          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1 text-[11px] text-muted-foreground shrink-0">
             <Clock size={11} strokeWidth={1.75} />
             {dateStr}
           </span>
@@ -103,24 +103,24 @@ export default function ProjectCard({ project, initialBookmarked = false }: Proj
       </div>
 
       {/* Title */}
-      <h3 className="text-[14px] font-semibold text-foreground leading-snug mb-2 line-clamp-1">
+      <h3 className="text-[14px] font-semibold text-foreground leading-snug mb-2 line-clamp-1 break-words min-w-0">
         <Link href={`/projects/${project.id}`} className="hover:underline underline-offset-2">
           {project.title}
         </Link>
       </h3>
 
       {/* Description */}
-      <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3 mb-4 flex-1">
+      <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3 mb-4 flex-1 break-words min-w-0 overflow-hidden">
         {truncatedDesc}
       </p>
 
       {/* Skills */}
       {project.skills.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap gap-1.5 mb-4 shrink-0">
           {project.skills.slice(0, 4).map((skill) => (
             <span
               key={skill.id}
-              className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-secondary text-muted-foreground"
+              className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-secondary text-muted-foreground max-w-[120px] truncate"
             >
               {skill.name}
             </span>
@@ -134,19 +134,19 @@ export default function ProjectCard({ project, initialBookmarked = false }: Proj
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3.5 border-t border-border">
+      <div className="flex items-center justify-between pt-3.5 border-t border-border shrink-0 gap-2">
         {/* Owner */}
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] font-semibold text-foreground shrink-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="h-6 w-6 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] font-semibold text-foreground shrink-0 overflow-hidden">
             {ownerInitial}
           </div>
-          <div>
-            <p className="text-[12px] font-medium text-foreground leading-none">
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-medium text-foreground leading-none truncate">
               <Link href={`/profile/${project.owner.id}`} className="hover:underline underline-offset-2">
                 {project.owner.name}
               </Link>
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
+            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
               {project.owner.department}
             </p>
           </div>
@@ -155,12 +155,12 @@ export default function ProjectCard({ project, initialBookmarked = false }: Proj
         {/* View link */}
         <Link
           href={`/projects/${project.id}`}
-          className="btn-ghost flex items-center gap-1 text-[12px] px-2.5 py-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+          className="btn-ghost group/btn flex items-center gap-1 text-[12px] px-2.5 py-1.5 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 transition-all duration-150 shrink-0"
           tabIndex={0}
           aria-label={`View ${project.title}`}
         >
-          View
-          <ArrowRight size={12} strokeWidth={2} />
+          <span>View</span>
+          <ArrowRight size={12} strokeWidth={2} className="transition-transform duration-150 group-hover/btn:translate-x-0.5" />
         </Link>
       </div>
     </article>

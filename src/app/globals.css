@@ -174,11 +174,12 @@ body {
 
 .forge-input {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  min-height: 44px;
+  padding: 0.625rem 0.875rem;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: var(--foreground);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -436,17 +437,13 @@ body {
 }
 
 .text-gradient-purple {
-  background: linear-gradient(to right, var(--foreground) 30%, #a855f7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--foreground);
+  font-weight: 700;
 }
 
 .text-gradient-blue {
-  background: linear-gradient(to right, var(--foreground) 30%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--foreground);
+  font-weight: 700;
 }
 
 .glow-card {

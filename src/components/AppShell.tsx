@@ -25,6 +25,7 @@ import {
   CheckCheck,
   ShieldAlert,
   Trash2,
+  X,
 } from "lucide-react";
 
 import { getNotificationLink } from "@/lib/notifications";
@@ -447,6 +448,16 @@ export default function AppShell({
           </Link>
 
           <div className="flex items-center gap-1 relative" ref={inboxMobile}>
+            {/* Mobile Search trigger — 44×44 touch target */}
+            <button
+              onClick={() => setSearchModalOpen(true)}
+              className="flex items-center justify-center w-11 h-11 text-muted-foreground hover:text-foreground rounded-xl transition-colors cursor-pointer"
+              aria-label="Search projects"
+              title="Search projects"
+            >
+              <Search size={18} strokeWidth={1.75} />
+            </button>
+
             <ThemeToggle />
 
             {/* Inbox trigger — 44×44 touch target */}
@@ -538,17 +549,28 @@ export default function AppShell({
               <div className="h-1 w-10 rounded-full bg-border" />
             </div>
 
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-              <div className="h-11 w-11 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
-                {user?.image
-                  ? <Image src={user.image} alt={user.name || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
-                  : <span className="text-[15px] font-bold text-foreground">{initials}</span>
-                }
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="h-11 w-11 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
+                  {user?.image
+                    ? <Image src={user.image} alt={user.name || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
+                    : <span className="text-[15px] font-bold text-foreground">{initials}</span>
+                  }
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-[14px] font-semibold text-foreground truncate">{user?.name || "User"}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{user?.email || ""}</p>
+                </div>
               </div>
-              <div className="overflow-hidden">
-                <p className="text-[14px] font-semibold text-foreground truncate">{user?.name || "User"}</p>
-                <p className="text-[11px] text-muted-foreground truncate">{user?.email || ""}</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setMobileProfileOpen(false)}
+                className="h-11 w-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer shrink-0"
+                aria-label="Close profile menu"
+                title="Close"
+              >
+                <X size={18} strokeWidth={1.75} />
+              </button>
             </div>
 
             <div className="px-3 py-2 space-y-px">
@@ -628,6 +650,10 @@ export default function AppShell({
               <Search size={16} className="text-muted-foreground shrink-0" />
               <input
                 type="text"
+                inputMode="search"
+                enterKeyHint="search"
+                autoCapitalize="off"
+                autoCorrect="off"
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -637,10 +663,10 @@ export default function AppShell({
                     router.push(`/projects?q=${encodeURIComponent(searchQuery.trim())}`);
                   }
                 }}
-                placeholder="Search projects, skills, events… (Press Enter)"
-                className="w-full bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none"
+                placeholder="Search projects, skills, events…"
+                className="w-full bg-transparent text-[14px] min-h-[36px] text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
-              <kbd className="text-[10px] font-mono text-muted-foreground bg-secondary border border-border px-1.5 py-0.5 rounded">ESC</kbd>
+              <kbd className="hidden sm:inline-block text-[10px] font-mono text-muted-foreground bg-secondary border border-border px-1.5 py-0.5 rounded shrink-0">ESC</kbd>
             </div>
 
             <div className="p-2 max-h-80 overflow-y-auto space-y-1">
@@ -710,19 +736,28 @@ export default function AppShell({
 
 function ThemeToggleRow() {
   const { theme, toggle } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  const activeTheme = mounted ? theme : "light";
+
   return (
     <button
       onClick={toggle}
-      className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-[13px] font-medium text-foreground hover:bg-secondary transition-colors"
+      className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-[13px] font-medium text-foreground hover:bg-secondary transition-colors cursor-pointer"
     >
       <span className="flex items-center gap-3">
-        {theme === "dark"
+        {activeTheme === "dark"
           ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
           : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         }
-        {theme === "dark" ? "Light mode" : "Dark mode"}
+        {activeTheme === "dark" ? "Light mode" : "Dark mode"}
       </span>
-      <span className="text-[11px] text-muted-foreground">{theme === "dark" ? "On" : "Off"}</span>
+      <span className="text-[11px] text-muted-foreground">{activeTheme === "dark" ? "On" : "Off"}</span>
     </button>
   );
 }

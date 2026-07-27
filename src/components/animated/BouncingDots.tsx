@@ -4,11 +4,9 @@ export default function BouncingDots() {
       {[0, 1, 2, 3].map((i) => (
         <div
           key={i}
-          className="h-1.5 w-1.5 rounded-full bg-blue-400 dark:bg-purple-400"
+          className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-pulse"
           style={{
-            animation: "bounce 2s infinite",
-            animationDelay: `${i * 0.2}s`,
-            animationFillMode: "both",
+            animationDelay: `${i * 0.15}s`,
           }}
         />
       ))}
