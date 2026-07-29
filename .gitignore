@@ -34,7 +34,6 @@ yarn-error.log*
 .env*
 !.env.example
 
-
 # vercel
 .vercel
 
@@ -46,3 +45,26 @@ next-env.d.ts
 /prisma/dev.db
 /src/generated/prisma
 SCALING_GUIDE.md
+
+# AI agent & editor directories
+.claude/
+.opencode/
+.impeccable/
+.gemini/
+.vscode/
+.idea/
+
+# Audit & test artifacts
+/audit_screenshots/
+/discovery.json
+/ERROR_FIXES_SUMMARY.md
+/about.txt
+/*.png
+!/public/*.png
+
+# Python / Classifier artifacts
+__pycache__/
+*.pyc
+venv/
+.venv/
+classifier/*.joblib
