@@ -64,7 +64,6 @@ interface DashboardViewClientProps {
   sentInvitations?: any[];
   myProjectsSidebar?: any[];
   myApplicationsSidebar?: any[];
-  myBookmarksSidebar?: any[];
   recentNotifications?: any[];
 }
 
@@ -115,9 +114,9 @@ export default function DashboardViewClient({
   recommendedProjects = [],
   receivedInvitations = [],
   sentInvitations = [],
-  myProjectsSidebar = [],
-  myApplicationsSidebar = [],
-  recentNotifications = [],
+   myProjectsSidebar = [],
+   myApplicationsSidebar = [],
+   recentNotifications = [],
 }: DashboardViewClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -729,7 +728,7 @@ export default function DashboardViewClient({
                   </Link>
                 </div>
 
-                <div className="card divide-y divide-border/60 overflow-hidden">
+                <div className="card divide-y divide-border/60 max-h-[300px] overflow-y-auto">
                   {recentNotifications && recentNotifications.length > 0 ? (
                     recentNotifications.slice(0, 4).map((notif) => (
                       <Link
@@ -760,7 +759,7 @@ export default function DashboardViewClient({
               <div className="flex-1 min-w-0 space-y-6">
 
                 {/* ROW 1: 4 Stat Cards */}
-                <div className="grid grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <div className="card p-4 flex items-center gap-3.5 border-border/80 hover:border-primary/40 transition-all">
                     <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
                       <Folder size={18} />

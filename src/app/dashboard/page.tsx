@@ -258,32 +258,31 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const inboxNotifications = (notifications || []).slice(0, 10); // Slice top 10 for dropdown navbar
 
   // Derived fast sidebars
-  const myProjectsSidebar = (projects || []).slice(0, 5).map((p: any) => ({ id: p.id, title: p.title, status: p.status }));
+  const userProjects = (projects || []).filter((p: any) => p.ownerId === currentUserId);
+  const myProjectsSidebar = userProjects.slice(0, 5).map((p: any) => ({ id: p.id, title: p.title, status: p.status }));
   const myApplicationsSidebar = (applications || []).slice(0, 5).map((a: any) => ({ id: a.id, status: a.status, project: { id: a.project.id, title: a.project.title } }));
-  const myBookmarksSidebar = (bookmarks || []).slice(0, 5).map((b: any) => ({ project: { id: b.project.id, title: b.project.title } }));
   const recentNotifications = (notifications || []).slice(0, 5);
 
   return (
     <AppShell user={user} unreadNotifications={unreadNotificationsCount} inboxNotifications={inboxNotifications}>
-      <DashboardViewClient
-        activeTab={activeTab}
-        currentUser={user}
-        projects={projects}
-        applications={applications}
-        notifications={notifications}
-        profileData={profileData}
-        collaborations={collaborations}
-        bookmarks={bookmarks}
-        events={events}
-        hackathons={events}
-        recommendedProjects={recommendedProjects}
-        receivedInvitations={receivedInvitations}
-        sentInvitations={sentInvitations}
-        myProjectsSidebar={myProjectsSidebar}
-        myApplicationsSidebar={myApplicationsSidebar}
-        myBookmarksSidebar={myBookmarksSidebar}
-        recentNotifications={recentNotifications}
-      />
+<DashboardViewClient
+         activeTab={activeTab}
+         currentUser={user}
+         projects={projects}
+         applications={applications}
+         notifications={notifications}
+         profileData={profileData}
+         collaborations={collaborations}
+         bookmarks={bookmarks}
+         events={events}
+         hackathons={events}
+         recommendedProjects={recommendedProjects}
+         receivedInvitations={receivedInvitations}
+         sentInvitations={sentInvitations}
+         myProjectsSidebar={myProjectsSidebar}
+         myApplicationsSidebar={myApplicationsSidebar}
+         recentNotifications={recentNotifications}
+       />
     </AppShell>
   );
 }
