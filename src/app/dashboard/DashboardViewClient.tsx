@@ -1249,7 +1249,7 @@ export default function DashboardViewClient({
       {/* ── MY PROJECTS ───────────────────────────────────── */}
       {currentTab === "projects" && (
         <ProjectsTab
-          projects={projects.filter((p: any) => p.ownerId === currentUser?.id || p.owner?.id === currentUser?.id)}
+          projects={projects.filter((p: any) => p.ownerId === Number(currentUser?.id))}
           loadingId={loadingId}
           setEditingProject={setEditingProject}
           statusToggle={statusToggle}

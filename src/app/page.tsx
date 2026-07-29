@@ -12,7 +12,7 @@ export default async function Home() {
   } catch {
     // If JWT session cookie is invalid or expired, catch error gracefully
   }
-  if (session) redirect("/dashboard");
+  if (session?.user) redirect("/dashboard");
 
   // Run sequentially — Neon serverless wakes one connection at a time,
   // parallel Promise.all spikes the pool and causes timeout on cold start.

@@ -1,0 +1,339 @@
+{
+  "base_url": "http://localhost:3000",
+  "pages": [
+    {
+      "path": "/",
+      "url": "http://localhost:3000/",
+      "elements": [
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Sign in",
+          "href": "/login",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Sign in\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Get started",
+          "href": "/signup",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Get started\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Create free account",
+          "href": "/signup",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Create free account\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Already have an account",
+          "href": "/login",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Already have an account\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Sign in",
+          "href": "/login",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Sign in\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Register",
+          "href": "/signup",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Register\")"
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": [],
+      "status": "loaded"
+    },
+    {
+      "path": "/login",
+      "url": "http://localhost:3000/login",
+      "elements": [
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "Continue with Google (.edu / .ac)",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"Continue with Google (.edu / .ac)\")"
+        },
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "\ud83e\udeaa Upload Student ID Card for Verification",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"\ud83e\udeaa Upload Student ID Card for Verification\")"
+        },
+        {
+          "tag": "button",
+          "id": "next-logo",
+          "name": "",
+          "type": "",
+          "text": "",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "#next-logo"
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": [],
+      "status": "loaded"
+    },
+    {
+      "path": "/signup",
+      "url": "http://localhost:3000/signup",
+      "elements": [
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "Continue with Google (.edu / .ac)",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"Continue with Google (.edu / .ac)\")"
+        },
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "\ud83e\udeaa Upload Student ID Card for Verification",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"\ud83e\udeaa Upload Student ID Card for Verification\")"
+        },
+        {
+          "tag": "button",
+          "id": "next-logo",
+          "name": "",
+          "type": "",
+          "text": "",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "#next-logo"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Sign in",
+          "href": "/login",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Sign in\")"
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": [],
+      "status": "loaded"
+    },
+    {
+      "path": "/new-landing",
+      "url": "http://localhost:3000/new-landing",
+      "elements": [
+        {
+          "tag": "button",
+          "id": "next-logo",
+          "name": "",
+          "type": "",
+          "text": "",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "#next-logo"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Sign in",
+          "href": "/login",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Sign in\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Get started",
+          "href": "/signup",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Get started\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Create free account",
+          "href": "/signup",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Create free account\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Already have an account",
+          "href": "/login",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Already have an account\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Sign in",
+          "href": "/login",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Sign in\")"
+        },
+        {
+          "tag": "a",
+          "id": "",
+          "name": "",
+          "type": "",
+          "text": "Register",
+          "href": "/signup",
+          "disabled": false,
+          "suggested_selector": "a:has-text(\"Register\")"
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": [],
+      "status": "loaded"
+    },
+    {
+      "path": "/projects",
+      "url": "http://localhost:3000/projects",
+      "elements": [
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "Don't have a .edu email? Upload Student ID Card \u2192",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"Don't have a .edu email? Upload Student ID Card \u2192\")"
+        },
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "Continue with Google (.edu / .ac)",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"Continue with Google (.edu / .ac)\")"
+        },
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "\ud83e\udeaa Upload Student ID Card for Verification",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"\ud83e\udeaa Upload Student ID Card for Verification\")"
+        },
+        {
+          "tag": "button",
+          "id": "next-logo",
+          "name": "",
+          "type": "",
+          "text": "",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "#next-logo"
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": [],
+      "status": "loaded"
+    },
+    {
+      "path": "/admin",
+      "url": "http://localhost:3000/admin",
+      "elements": [
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "Don't have a .edu email? Upload Student ID Card \u2192",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"Don't have a .edu email? Upload Student ID Card \u2192\")"
+        },
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "Continue with Google (.edu / .ac)",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"Continue with Google (.edu / .ac)\")"
+        },
+        {
+          "tag": "button",
+          "id": "",
+          "name": "",
+          "type": "button",
+          "text": "\ud83e\udeaa Upload Student ID Card for Verification",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "button:has-text(\"\ud83e\udeaa Upload Student ID Card for Verification\")"
+        },
+        {
+          "tag": "button",
+          "id": "next-logo",
+          "name": "",
+          "type": "",
+          "text": "",
+          "href": "",
+          "disabled": false,
+          "suggested_selector": "#next-logo"
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": [],
+      "status": "loaded"
+    }
+  ]
+}

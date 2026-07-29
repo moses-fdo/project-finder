@@ -19,18 +19,19 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("colabro-theme");
+      if (saved === "dark" || saved === "light") return saved;
+      if (document.documentElement.classList.contains("dark")) return "dark";
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return "light";
+  });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    const saved = localStorage.getItem("colabro-theme");
-    const initialTheme: Theme = (saved === "dark" || saved === "light")
-      ? saved
-      : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-
-    setTheme(initialTheme);
   }, []);
 
   useEffect(() => {

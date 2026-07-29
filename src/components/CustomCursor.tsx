@@ -24,11 +24,15 @@ export default function CustomCursor() {
     const mq = window.matchMedia("(pointer: fine)");
     if (!mq.matches) return;
 
-    document.documentElement.classList.add("has-custom-cursor");
+    if (!document.documentElement.classList.contains("has-custom-cursor")) {
+      document.documentElement.classList.add("has-custom-cursor");
+    }
 
-    // Sync dark-mode state for cursor colors
-    const updateTheme = () =>
-      setIsDark(document.documentElement.classList.contains("dark"));
+    // Sync dark-mode state for cursor colors without triggering state if unchanged
+    const updateTheme = () => {
+      const isDarkNow = document.documentElement.classList.contains("dark");
+      setIsDark((prev) => (prev === isDarkNow ? prev : isDarkNow));
+    };
 
     const initId = requestAnimationFrame(() => {
       setMounted(true);
@@ -44,17 +48,22 @@ export default function CustomCursor() {
       posRef.current = { x: e.clientX, y: e.clientY };
 
       // Detect if mouse moved outside window bounds
-      if (
+      const isOutside =
         e.clientX <= 0 ||
         e.clientY <= 0 ||
         e.clientX >= window.innerWidth - 1 ||
-        e.clientY >= window.innerHeight - 1
-      ) {
+        e.clientY >= window.innerHeight - 1;
+
+      if (isOutside) {
         setVisible(false);
-        document.documentElement.classList.remove("has-custom-cursor");
+        if (document.documentElement.classList.contains("has-custom-cursor")) {
+          document.documentElement.classList.remove("has-custom-cursor");
+        }
       } else {
         setVisible(true);
-        document.documentElement.classList.add("has-custom-cursor");
+        if (!document.documentElement.classList.contains("has-custom-cursor")) {
+          document.documentElement.classList.add("has-custom-cursor");
+        }
       }
     };
 
@@ -73,18 +82,24 @@ export default function CustomCursor() {
       // If relatedTarget is null or mouse left the document viewport, hide cursor
       if (!e.relatedTarget || (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) {
         setVisible(false);
-        document.documentElement.classList.remove("has-custom-cursor");
+        if (document.documentElement.classList.contains("has-custom-cursor")) {
+          document.documentElement.classList.remove("has-custom-cursor");
+        }
       }
     };
 
     const onMouseEnter = () => {
       setVisible(true);
-      document.documentElement.classList.add("has-custom-cursor");
+      if (!document.documentElement.classList.contains("has-custom-cursor")) {
+        document.documentElement.classList.add("has-custom-cursor");
+      }
     };
 
     const onBlur = () => {
       setVisible(false);
-      document.documentElement.classList.remove("has-custom-cursor");
+      if (document.documentElement.classList.contains("has-custom-cursor")) {
+        document.documentElement.classList.remove("has-custom-cursor");
+      }
     };
 
     window.addEventListener("mousemove", onMove);
@@ -104,7 +119,9 @@ export default function CustomCursor() {
     rafRef.current = requestAnimationFrame(loop);
 
     return () => {
-      document.documentElement.classList.remove("has-custom-cursor");
+      if (document.documentElement.classList.contains("has-custom-cursor")) {
+        document.documentElement.classList.remove("has-custom-cursor");
+      }
       cancelAnimationFrame(initId);
       observer.disconnect();
       window.removeEventListener("mousemove", onMove);

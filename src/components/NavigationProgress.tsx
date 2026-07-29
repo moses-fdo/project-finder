@@ -38,18 +38,30 @@ export default function NavigationProgress() {
 
   // Intercept click events on link tags to start progress bar instantly on click
   useEffect(() => {
+    let fallbackTimer: NodeJS.Timeout | null = null;
     const handleClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest("a");
       if (target && target.href && !target.target && target.origin === window.location.origin) {
-        if (target.href !== window.location.href) {
+        const cleanTarget = target.href.split("#")[0];
+        const cleanCurrent = window.location.href.split("#")[0];
+        if (cleanTarget !== cleanCurrent) {
           setLoading(true);
           setProgress(20);
+
+          if (fallbackTimer) clearTimeout(fallbackTimer);
+          fallbackTimer = setTimeout(() => {
+            setLoading(false);
+            setProgress(0);
+          }, 2500);
         }
       }
     };
 
     window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
+    return () => {
+      window.removeEventListener("click", handleClick);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
   }, []);
 
   if (!loading && progress === 0) return null;

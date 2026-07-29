@@ -11,16 +11,19 @@ export default function HeroBackground() {
     const el = mountRef.current;
     if (!el) return;
 
+    const width = el.clientWidth || window.innerWidth;
+    const height = el.clientHeight || window.innerHeight;
+
     // ── Renderer ──────────────────────────────────────────
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(el.clientWidth, el.clientHeight);
+    renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
     el.appendChild(renderer.domElement);
 
     // ── Scene / Camera ────────────────────────────────────
     const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, el.clientWidth / el.clientHeight, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
     camera.position.set(0, 0, 5);
 
     // ── Primary: large icosahedron wireframe ──────────────
