@@ -67,9 +67,9 @@ export default async function ProjectsPage({
     }),
   ]);
 
-  const bookmarkedIds = new Set(userBookmarks.map((b) => b.projectId));
+  const bookmarkedIds = new Set(userBookmarks.map((b: any) => b.projectId));
 
-  const skills = skillsData.map((s) => s.name);
+  const skills = skillsData.map((s: any) => s.name);
 
   const departments = [
     "Computer Science",
@@ -102,7 +102,7 @@ export default async function ProjectsPage({
         {/* Results */}
         {projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map((project) => (
+            {projects.map((project: any) => (
               <ProjectCard
                 key={project.id}
                 project={project as any}

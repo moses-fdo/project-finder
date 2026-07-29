@@ -168,7 +168,7 @@ export default async function ProjectPage({ params }: PageProps) {
             <div className="card p-5 space-y-3">
               <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Skills &amp; Tech Stack</h3>
               <div className="flex flex-wrap gap-1.5">
-                {project.skills.map((skill) => (
+                {project.skills.map((skill: any) => (
                   <span
                     key={skill.id}
                     className="text-[11px] font-medium px-2.5 py-1 rounded bg-secondary border border-border text-muted-foreground"

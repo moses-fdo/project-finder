@@ -41,7 +41,11 @@ import {
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  Upload
+  Upload,
+  Calendar,
+  MapPin,
+  Globe,
+  Sparkles,
 } from "lucide-react";
 
 interface DashboardViewClientProps {
@@ -472,6 +476,25 @@ export default function DashboardViewClient({
         });
         const topEvents = (activeEventsList.length > 0 ? activeEventsList : eventsList).slice(0, 4);
 
+        const userProjects = projects.filter((p: any) => p.ownerId === currentUser?.id);
+        const userApplications = applications || [];
+        const activityNotifs = notifications || [];
+
+        const getSkillMatchScore = (userSkillsList: any[], projSkillsList: any[]) => {
+          if (!projSkillsList || projSkillsList.length === 0) return { matchingCount: 0, totalRequired: 0, matchLabel: "" };
+          const userSkillNames = new Set((userSkillsList || []).map((s: any) => (s.name || s).toLowerCase()));
+          let matchingCount = 0;
+          projSkillsList.forEach((s: any) => {
+            if (userSkillNames.has((s.name || s).toLowerCase())) matchingCount++;
+          });
+          const totalRequired = projSkillsList.length;
+          return {
+            matchingCount,
+            totalRequired,
+            matchLabel: `Matches ${matchingCount}/${totalRequired} skills`,
+          };
+        };
+
         const filteredProjects = projects.filter((p: any) => {
           if (dashSearch) {
             const q = dashSearch.trim().toLowerCase();
@@ -729,279 +752,429 @@ export default function DashboardViewClient({
             </div>
 
             {/* ═════════════════════════════════════════════════════
-               DESKTOP VIEW — PC UNIFIED LAYOUT (hidden md:block)
+               DESKTOP VIEW — PC UNIFIED LAYOUT (hidden md:flex)
                ═════════════════════════════════════════════════════ */}
-            <div className="hidden md:block space-y-7">
-              {/* ROW 1: Search Bar (Left) + Stat Cards (Right) */}
-            <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-4 items-center">
-              {/* Search Bar */}
-              <div className="relative flex-1">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={dashSearch}
-                  onChange={(e) => { setDashSearch(e.target.value); setDashPage(1); }}
-                  placeholder="Search projects, technologies, teammates..."
-                  className="w-full pl-10 pr-20 py-2.5 rounded-xl bg-card border border-border text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold px-2 py-0.5 rounded bg-secondary border border-border text-muted-foreground pointer-events-none">
-                  Ctrl + K
-                </span>
-              </div>
+            <div className="hidden md:flex md:gap-7 md:items-start">
 
-              {/* 4 Stat Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
-                <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
-                  <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-500 border border-purple-500/20 flex items-center justify-center shrink-0">
-                    <Folder size={16} />
-                  </div>
-                  <div>
-                    <p className="text-[16px] font-extrabold text-foreground leading-none">{projects.length}</p>
-                    <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Total Projects</p>
-                  </div>
-                </div>
+              {/* ── LEFT MAIN FEED ─────────────────────────────── */}
+              <div className="flex-1 min-w-0 space-y-6">
 
-                <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
-                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                    <CheckCircle2 size={16} />
+                {/* ROW 1: 4 Stat Cards */}
+                <div className="grid grid-cols-4 gap-3.5">
+                  <div className="card p-4 flex items-center gap-3.5 border-border/80 hover:border-primary/40 transition-all">
+                    <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
+                      <Folder size={18} />
+                    </div>
+                    <div>
+                      <p className="text-[18px] font-extrabold text-foreground leading-none">{projects.length}</p>
+                      <p className="text-[11px] text-muted-foreground font-medium mt-1">Total Projects</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[16px] font-extrabold text-foreground leading-none">{projects.filter((p: any) => p.status === "OPEN").length}</p>
-                    <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Open Projects</p>
-                  </div>
-                </div>
 
-                <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
-                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center shrink-0">
-                    <Users size={16} />
+                  <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                      <CheckCircle2 size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[16px] font-extrabold text-foreground leading-none">{projects.filter((p: any) => p.status === "OPEN").length}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Open Projects</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[16px] font-extrabold text-foreground leading-none">{applications.length}</p>
-                    <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Applications</p>
+
+                  <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
+                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center shrink-0">
+                      <Users size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[16px] font-extrabold text-foreground leading-none">{applications.length}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Applications</p>
+                    </div>
+                  </div>
+
+                  <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center shrink-0">
+                      <Trophy size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[16px] font-extrabold text-foreground leading-none">{eventsList.length}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Hackathons</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
-                  <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center shrink-0">
-                    <Trophy size={16} />
+                {/* ROW 2: Top Events & Competitions */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Trophy size={18} className="text-amber-500" />
+                      <h2 className="text-[15px] font-bold text-foreground tracking-tight">Top Events &amp; Competitions</h2>
+                    </div>
+                    <Link href="/dashboard?tab=events" className="text-[12px] font-semibold text-primary hover:underline flex items-center gap-1">
+                      View all events →
+                    </Link>
                   </div>
-                  <div>
-                    <p className="text-[16px] font-extrabold text-foreground leading-none">{eventsList.length}</p>
-                    <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Hackathons</p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* ROW 2: Top Events & Competitions */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Trophy size={18} className="text-amber-500" />
-                  <h2 className="text-[15px] font-bold text-foreground tracking-tight">Top Events &amp; Competitions</h2>
-                </div>
-                <Link href="/dashboard?tab=events" className="text-[12px] font-semibold text-primary hover:underline flex items-center gap-1">
-                  View all events →
-                </Link>
-              </div>
+                  {topEvents.length > 0 ? (
+                    <div className="flex gap-4 overflow-x-auto snap-x scrollbar-none pb-3 pt-1">
+                      {topEvents.map((h: any) => {
+                        const locationStr = [h.location, h.city, h.state, h.country].filter(Boolean).join(", ") || h.location || "Online";
+                        const mainPrize = h.prize ? (h.prize.includes("|") ? h.prize.split("|")[0].trim() : h.prize) : null;
 
-              {topEvents.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {topEvents.map((h: any) => {
-                    const locationStr = [h.location, h.city, h.state, h.country].filter(Boolean).join(", ") || h.location || "Online";
-                    return (
-                      <div key={h.id} className="card p-4 space-y-3 flex flex-col justify-between border-border transition-all hover:border-primary/40">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[9px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                              {h.organizerType || "HACKATHON"}
-                            </span>
-                          </div>
-                          <h3 className="text-[13px] font-bold text-foreground line-clamp-1 leading-snug">{h.title}</h3>
-                          <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{h.description}</p>
-                          <div className="text-[10px] text-muted-foreground space-y-0.5 pt-1">
-                            <div>📅 {h.startDate ? `${h.startDate}${h.endDate ? ` → ${h.endDate}` : ''}` : (h.date || "TBA")}</div>
-                            <div>📍 {locationStr}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between border-t border-border/50 pt-2 text-[10px]">
-                          <div>
-                            <span className="text-muted-foreground block text-[9px]">Prize Pool</span>
-                            <span className="font-bold text-foreground">{h.prize || "TBA"}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-muted-foreground block text-[9px]">Team Size</span>
-                            <span className="font-bold text-foreground">{h.teamSize || "1-4 Members"}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="card p-6 text-center text-[12px] text-muted-foreground">No upcoming events right now.</div>
-              )}
-            </div>
-
-            {/* ROW 3: Filter Toolbar (Category Pills + Dropdowns) */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
-              {/* Category Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {["All", "AI", "Web", "IoT", "Robotics", "Research", "Hackathon", "Productivity", "Design"].map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => { setDashCategory(cat); setDashPage(1); }}
-                    className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
-                      dashCategory === cat
-                        ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                        : "bg-secondary/60 text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-
-              {/* Filter Dropdowns */}
-              <div className="flex items-center gap-2 overflow-x-auto shrink-0">
-                <select
-                  value={dashDept}
-                  onChange={(e) => { setDashDept(e.target.value); setDashPage(1); }}
-                  className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-foreground cursor-pointer focus:outline-none"
-                >
-                  <option value="">Department ▾</option>
-                  {departments.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={dashStatus}
-                  onChange={(e) => { setDashStatus(e.target.value); setDashPage(1); }}
-                  className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-foreground cursor-pointer focus:outline-none"
-                >
-                  <option value="ALL">Status ▾</option>
-                  <option value="OPEN">Open</option>
-                  <option value="FULL">Full</option>
-                  <option value="CLOSED">Closed</option>
-                </select>
-              </div>
-            </div>
-
-            {/* ROW 4: Projects Grid */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[14px] font-bold text-foreground">{filteredProjects.length} Projects Found</h3>
-              </div>
-
-              {currentProjects.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {currentProjects.map((project: any) => {
-                    const isBookmarked = bookmarkedIds.has(project.id);
-                    return (
-                      <div key={project.id} className="card p-4 space-y-3 flex flex-col justify-between border-border transition-all hover:border-primary/40">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            {project.status === "OPEN" && (
-                              <span className="badge badge-green text-[9px] font-bold">OPEN</span>
-                            )}
-                            {project.status === "FULL" && (
-                              <span className="badge badge-yellow text-[9px] font-bold">FULL</span>
-                            )}
-                            {project.status === "CLOSED" && (
-                              <span className="badge badge-red text-[9px] font-bold">CLOSED</span>
-                            )}
-
-                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground ml-auto">
-                              <button
-                                onClick={() => toggleBookmark(project.id)}
-                                className={`p-0.5 rounded transition-colors cursor-pointer ${isBookmarked ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
-                              >
-                                <Bookmark size={13} className={isBookmarked ? "fill-foreground" : ""} />
-                              </button>
-                            </div>
-                          </div>
-
-                          <h4 className="text-[13px] font-bold text-foreground leading-snug line-clamp-1 hover:underline">
-                            <Link href={`/projects/${project.id}`}>{project.title}</Link>
-                          </h4>
-
-                          <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
-                            {project.description}
-                          </p>
-
-                          <div className="flex flex-wrap gap-1 pt-1">
-                            {project.skills?.slice(0, 3).map((skill: any) => (
-                              <span key={skill.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
-                                {skill.name}
+                        return (
+                          <div key={h.id} className="w-[300px] shrink-0 snap-start card p-4.5 space-y-3 flex flex-col justify-between border-border/80 bg-card rounded-2xl hover:border-amber-500/40 transition-all shadow-xs group">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[9.5px] font-extrabold tracking-wider uppercase px-2.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border/80">
+                                {h.organizerType || "HACKATHON"}
                               </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between border-t border-border/50 pt-2.5">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="h-6 w-6 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-[9px] shrink-0">
-                              {(project.owner?.name?.[0] || "U").toUpperCase()}
+                              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                                Live
+                              </span>
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-semibold text-foreground truncate">{project.owner?.name || "Student"}</p>
-                              <p className="text-[8px] text-muted-foreground truncate">{project.owner?.department || "Campus"}</p>
+
+                            <div className="space-y-1">
+                              <h3 className="text-[13.5px] font-bold text-foreground leading-snug line-clamp-2 group-hover:text-amber-400 transition-colors">
+                                {h.title}
+                              </h3>
+                              <p className="text-[11px] text-muted-foreground line-clamp-1">
+                                Organized by <span className="font-semibold text-foreground/90">{h.organizer || "Campus Partner"}</span>
+                              </p>
+                            </div>
+
+                            {mainPrize && (
+                              <div className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-2">
+                                <span className="text-[11px] font-bold text-amber-400 truncate flex items-center gap-1.5">
+                                  🏆 {mainPrize}
+                                </span>
+                                {h.prize?.includes("|") && (
+                                  <span className="text-[9.5px] text-amber-500/80 font-medium shrink-0">+more</span>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="space-y-1 text-[10.5px] text-muted-foreground border-t border-border/50 pt-2.5">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5"><Calendar size={10} className="shrink-0" /> Dates:</span>
+                                <span className="font-semibold text-foreground truncate max-w-[140px]">{h.startDate ? `${h.startDate}${h.endDate ? ` → ${h.endDate}` : ""}` : (h.date || "TBA")}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5"><MapPin size={10} className="shrink-0" /> Venue:</span>
+                                <span className="font-semibold text-foreground truncate max-w-[140px]">{locationStr}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5"><Globe size={10} className="shrink-0" /> Mode &amp; Fee:</span>
+                                <span className="font-semibold text-foreground">{h.mode || "In-Person"} • {h.registrationFee || "Free"}</span>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-border/60 pt-3 mt-auto">
+                              <a
+                                href={h.link || "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full btn-primary py-2 text-[12px] font-bold justify-center flex items-center gap-1 rounded-xl"
+                              >
+                                Register Now ↗
+                              </a>
                             </div>
                           </div>
-
-                          <div className="text-right shrink-0">
-                            <p className="text-[9px] font-bold text-foreground">{project.teamSize ? `1/${project.teamSize}` : "Team"}</p>
-                            <p className="text-[8px] text-muted-foreground">Members</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="card p-6 text-center text-[12px] text-muted-foreground">No upcoming events right now.</div>
+                  )}
                 </div>
-              ) : (
-                <div className="card p-8 text-center text-[12px] text-muted-foreground">No projects match the selected filters.</div>
-              )}
-            </div>
 
-            {/* ROW 5: Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-1.5 pt-4">
-                <button
-                  onClick={() => setDashPage(p => Math.max(1, p - 1))}
-                  disabled={dashPage === 1}
-                  className="px-2.5 py-1.5 rounded-lg border border-border text-[11px] font-semibold disabled:opacity-40 hover:bg-secondary cursor-pointer"
-                >
-                  ‹
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => (
-                  <button
-                    key={pNum}
-                    onClick={() => setDashPage(pNum)}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer ${
-                      dashPage === pNum
-                        ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                        : "bg-card border border-border text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {pNum}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setDashPage(p => Math.min(totalPages, p + 1))}
-                  disabled={dashPage === totalPages}
-                  className="px-2.5 py-1.5 rounded-lg border border-border text-[11px] font-semibold disabled:opacity-40 hover:bg-secondary cursor-pointer"
-                >
-                  ›
-                </button>
-              </div>
-            )}
-            </div>{/* end hidden md:block desktop view */}
+                {/* ROW 3: Filter Toolbar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {["All", "AI", "Web", "IoT", "Robotics", "Research", "Hackathon", "Productivity", "Design"].map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => { setDashCategory(cat); setDashPage(1); }}
+                        className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                          dashCategory === cat
+                            ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                            : "bg-secondary/60 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <select
+                      value={dashDept}
+                      onChange={(e) => { setDashDept(e.target.value); setDashPage(1); }}
+                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-foreground cursor-pointer focus:outline-none"
+                    >
+                      <option value="">Department ▾</option>
+                      {departments.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={dashStatus}
+                      onChange={(e) => { setDashStatus(e.target.value); setDashPage(1); }}
+                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-foreground cursor-pointer focus:outline-none"
+                    >
+                      <option value="ALL">Status ▾</option>
+                      <option value="OPEN">Open</option>
+                      <option value="FULL">Full</option>
+                      <option value="CLOSED">Closed</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* ROW 4: Projects Grid */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                    <h3 className="text-[14px] font-bold text-foreground">{filteredProjects.length} Projects Found</h3>
+                  </div>
+
+                  {currentProjects.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {currentProjects.map((project: any) => (
+                        <div key={project.id} className="card p-4 space-y-3 flex flex-col justify-between border-border transition-all hover:border-primary/40">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {project.status === "OPEN" && <span className="badge badge-green text-[9px] font-bold">OPEN</span>}
+                              {project.status === "FULL" && <span className="badge badge-yellow text-[9px] font-bold">FULL</span>}
+                              {project.status === "CLOSED" && <span className="badge badge-red text-[9px] font-bold">CLOSED</span>}
+                              {project.status === "DONE" && <span className="badge badge-green text-[9px] font-bold">✓ DONE</span>}
+                              {(() => {
+                                const match = getSkillMatchScore(currentUser?.skills, project.skills);
+                                if (!match.totalRequired || match.matchingCount === 0) return null;
+                                return (
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shrink-0">
+                                    ⚡ {match.matchLabel}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+
+                            <h4 className="text-[13px] font-bold text-foreground leading-snug line-clamp-1 hover:underline">
+                              <Link href={`/projects/${project.id}`}>{project.title}</Link>
+                            </h4>
+
+                            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                              {project.description}
+                            </p>
+
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {project.skills?.slice(0, 3).map((skill: any) => (
+                                <span key={skill.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                                  {skill.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between border-t border-border/50 pt-2.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="h-6 w-6 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-[9px] shrink-0">
+                                {(project.owner?.name?.[0] || "U").toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[10px] font-semibold text-foreground truncate">{project.owner?.name || "Student"}</p>
+                                <p className="text-[8px] text-muted-foreground truncate">{project.owner?.department || "Campus"}</p>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-[9px] font-bold text-foreground">{project.teamSize ? `1/${project.teamSize}` : "Team"}</p>
+                              <p className="text-[8px] text-muted-foreground">Members</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="card p-8 text-center text-[12px] text-muted-foreground">No projects match the selected filters.</div>
+                  )}
+
+                  {/* View all projects link */}
+                  <div className="text-center pt-1">
+                    <Link href="/projects" className="text-[12px] font-semibold text-primary hover:underline">
+                      View all projects →
+                    </Link>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 pt-2">
+                      <button
+                        onClick={() => setDashPage(p => Math.max(1, p - 1))}
+                        disabled={dashPage === 1}
+                        className="px-2.5 py-1.5 rounded-lg border border-border text-[11px] font-semibold disabled:opacity-40 hover:bg-secondary cursor-pointer"
+                      >
+                        ‹
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => (
+                        <button
+                          key={pNum}
+                          onClick={() => setDashPage(pNum)}
+                          className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer ${
+                            dashPage === pNum
+                              ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                              : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {pNum}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setDashPage(p => Math.min(totalPages, p + 1))}
+                        disabled={dashPage === totalPages}
+                        className="px-2.5 py-1.5 rounded-lg border border-border text-[11px] font-semibold disabled:opacity-40 hover:bg-secondary cursor-pointer"
+                      >
+                        ›
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+              </div>{/* end left main column */}
+
+              {/* ── RIGHT SIDEBAR (sticky) ────────────────────────── */}
+              <div className="w-[280px] shrink-0 space-y-4 sticky top-20 self-start">
+
+                {/* My Projects Card */}
+                <div className="card p-4 space-y-3 border-border/80 bg-card shadow-xs">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Folder size={14} className="text-purple-400 shrink-0" />
+                      <h3 className="text-[13px] font-bold text-foreground">My Projects</h3>
+                      <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        {userProjects.length}
+                      </span>
+                    </div>
+                    <Link href="/projects/create" className="text-[11px] font-bold text-primary hover:underline">
+                      View all →
+                    </Link>
+                  </div>
+
+                  {userProjects.length > 0 ? (
+                    <div className="space-y-2">
+                      {userProjects.slice(0, 3).map((p: any) => (
+                        <Link
+                          key={p.id}
+                          href={`/projects/${p.id}`}
+                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-secondary/30 hover:bg-secondary/70 border border-border/40 transition-colors group"
+                        >
+                          <p className="text-[11.5px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                            {p.title}
+                          </p>
+                          <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded shrink-0 uppercase ${
+                            p.status === "OPEN" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                            p.status === "FULL" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
+                            "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                          }`}>
+                            {p.status}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-3 text-center space-y-2">
+                      <p className="text-[11px] text-muted-foreground">No projects created yet.</p>
+                      <Link href="/projects/create" className="btn-primary text-[10.5px] py-1 px-3 inline-flex items-center gap-1 font-bold rounded-lg">
+                        + Create Project
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* My Applications Card */}
+                <div className="card p-4 space-y-3 border-border/80 bg-card shadow-xs">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Send size={14} className="text-blue-400 shrink-0" />
+                      <h3 className="text-[13px] font-bold text-foreground">My Applications</h3>
+                      <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        {userApplications.length}
+                      </span>
+                    </div>
+                    <Link href="/dashboard?tab=applications" className="text-[11px] font-bold text-primary hover:underline">
+                      View all →
+                    </Link>
+                  </div>
+
+                  {userApplications.length > 0 ? (
+                    <div className="space-y-2">
+                      {userApplications.slice(0, 3).map((app: any) => (
+                        <Link
+                          key={app.id}
+                          href={`/projects/${app.project?.id || app.projectId}`}
+                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-secondary/30 hover:bg-secondary/70 border border-border/40 transition-colors group"
+                        >
+                          <p className="text-[11.5px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                            {app.project?.title || "Project"}
+                          </p>
+                          <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded shrink-0 uppercase ${
+                            app.status === "ACCEPTED" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                            app.status === "REJECTED" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
+                            "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          }`}>
+                            {app.status}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-3 text-center space-y-2">
+                      <p className="text-[11px] text-muted-foreground">No active applications.</p>
+                      <Link href="/projects" className="btn-primary text-[10.5px] py-1 px-3 inline-flex items-center gap-1 font-bold rounded-lg">
+                        Browse Projects
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Recent Activity Card */}
+                <div className="card p-4 space-y-3 border-border/80 bg-card shadow-xs">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={14} className="text-amber-400 shrink-0" />
+                      <h3 className="text-[13px] font-bold text-foreground">Recent Activity</h3>
+                    </div>
+                    <Link href="/dashboard?tab=notifications" className="text-[11px] font-bold text-primary hover:underline">
+                      View all →
+                    </Link>
+                  </div>
+
+                  {activityNotifs.length > 0 ? (
+                    <div className="space-y-1 divide-y divide-border/30">
+                      {activityNotifs.slice(0, 4).map((notif: any) => (
+                        <Link
+                          key={notif.id}
+                          href={getNotificationLink(notif)}
+                          className="flex items-start gap-2 py-2 first:pt-0 last:pb-0 hover:bg-secondary/20 px-1 rounded-lg transition-colors group"
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${notif.read ? "bg-muted-foreground/30" : "bg-primary"}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                              {notif.message}
+                            </p>
+                            <p className="text-[9.5px] text-muted-foreground mt-0.5">
+                              {new Date(notif.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-3 text-center text-[11px] text-muted-foreground">No recent activity.</p>
+                  )}
+                </div>
+
+              </div>{/* end right sidebar */}
+
+            </div>{/* end hidden md:flex desktop view */}
           </div>
         );
       })()}
-
 
       {/* ── COLLABORATIONS — people finder ────────────────── */}
       {currentTab === "collaborations" && (
