@@ -97,7 +97,7 @@ function getProjectIcon(title: string): { icon: LucideIcon; bg: string; text: st
   ) {
     return { icon: Dumbbell, bg: "bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400" };
   }
-  return { icon: Folder, bg: "bg-secondary", text: "text-foreground" };
+  return { icon: Folder, bg: "bg-secondary", text: "text-textPrimary" };
 }
 
 export default function DashboardViewClient({
@@ -536,10 +536,10 @@ export default function DashboardViewClient({
               {/* 1. Welcome Greeting + + New Project CTA Button */}
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h1 className="text-[17px] font-bold text-foreground tracking-tight leading-snug">
+                  <h1 className="text-[17px] font-bold text-textPrimary tracking-tight leading-snug">
                     Welcome back, {(currentUser?.name || "USER").toUpperCase()} 👋
                   </h1>
-                  <p className="text-[11.5px] text-muted-foreground mt-0.5 leading-relaxed">
+                  <p className="text-[11.5px] text-textMuted mt-0.5 leading-relaxed">
                     Start by posting your first project and connecting with amazing collaborators.
                   </p>
                 </div>
@@ -553,18 +553,18 @@ export default function DashboardViewClient({
 
               {/* Mobile Search Bar */}
               <div className="relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none" />
                 <input
                   type="text"
                   value={dashSearch}
                   onChange={(e) => { setDashSearch(e.target.value); setDashPage(1); }}
                   placeholder="Search projects, technologies, teammates..."
-                  className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-card border border-border text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-card border border-border text-[12px] text-textPrimary placeholder:text-textMuted focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {dashSearch && (
                   <button
                     onClick={() => setDashSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-textPrimary cursor-pointer"
                   >
                     <X size={13} />
                   </button>
@@ -573,43 +573,43 @@ export default function DashboardViewClient({
 
               {/* 2. 4 Stat Cards Row */}
               <div className="grid grid-cols-4 gap-2">
-                <Link href="/dashboard?tab=projects" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:border-muted-foreground/30 transition-all">
-                  <div className="h-7 w-7 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20 flex items-center justify-center">
+                <Link href="/dashboard?tab=projects" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:bg-card-hover transition-all">
+                  <div className="h-7 w-7 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
                     <Folder size={14} />
                   </div>
-                  <span className="text-[15px] font-extrabold text-foreground leading-none">{projects.length}</span>
-                  <span className="text-[9px] text-muted-foreground font-medium truncate w-full">My projects</span>
+                  <span className="text-[15px] font-extrabold text-textPrimary leading-none">{projects.length}</span>
+                  <span className="text-[9px] text-textMuted font-medium truncate w-full">My projects</span>
                 </Link>
 
-                <Link href="/dashboard?tab=applications" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:border-muted-foreground/30 transition-all">
-                  <div className="h-7 w-7 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center">
+                <Link href="/dashboard?tab=applications" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:bg-card-hover transition-all">
+                  <div className="h-7 w-7 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
                     <Send size={14} />
                   </div>
-                  <span className="text-[15px] font-extrabold text-foreground leading-none">{applications.length}</span>
-                  <span className="text-[9px] text-muted-foreground font-medium truncate w-full">Applications</span>
+                  <span className="text-[15px] font-extrabold text-textPrimary leading-none">{applications.length}</span>
+                  <span className="text-[9px] text-textMuted font-medium truncate w-full">Applications</span>
                 </Link>
 
-                <Link href="/dashboard?tab=applications" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:border-muted-foreground/30 transition-all">
-                  <div className="h-7 w-7 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center">
+                <Link href="/dashboard?tab=applications" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:bg-card-hover transition-all">
+                  <div className="h-7 w-7 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
                     <Bookmark size={14} />
                   </div>
-                  <span className="text-[15px] font-extrabold text-foreground leading-none">{applications.filter((a: any) => a.status === "PENDING").length}</span>
-                  <span className="text-[9px] text-muted-foreground font-medium truncate w-full">Pending</span>
+                  <span className="text-[15px] font-extrabold text-textPrimary leading-none">{applications.filter((a: any) => a.status === "PENDING").length}</span>
+                  <span className="text-[9px] text-textMuted font-medium truncate w-full">Pending</span>
                 </Link>
 
-                <Link href="/dashboard?tab=notifications" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:border-muted-foreground/30 transition-all">
-                  <div className="h-7 w-7 rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center">
+                <Link href="/dashboard?tab=notifications" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:bg-card-hover transition-all">
+                  <div className="h-7 w-7 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
                     <Users size={14} />
                   </div>
-                  <span className="text-[15px] font-extrabold text-foreground leading-none">{recentNotifications.filter((n: any) => !n.read).length}</span>
-                  <span className="text-[9px] text-muted-foreground font-medium truncate w-full">Unread</span>
+                  <span className="text-[15px] font-extrabold text-textPrimary leading-none">{recentNotifications.filter((n: any) => !n.read).length}</span>
+                  <span className="text-[9px] text-textMuted font-medium truncate w-full">Unread</span>
                 </Link>
               </div>
 
               {/* 3. Open to join Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[14px] font-bold text-foreground">Open to join</h2>
+                  <h2 className="text-[14px] font-bold text-textPrimary">Open to join</h2>
                   <Link href="/projects" className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5">
                     View all →
                   </Link>
@@ -622,13 +622,13 @@ export default function DashboardViewClient({
                       const Icon = iconInfo.icon;
                       const isBookmarked = bookmarkedIds.has(project.id);
                       return (
-                        <article key={project.id} className="card p-3.5 flex items-start gap-3 hover:border-muted-foreground/30 transition-all">
-                          <div className={`h-10 w-10 rounded-xl ${iconInfo.bg} border border-border flex items-center justify-center shrink-0 mt-0.5`}>
+                        <article key={project.id} className="card p-3.5 flex items-start gap-3 hover:bg-card-hover transition-all">
+                          <div className={`h-10 w-10 rounded-xl ${iconInfo.bg} flex items-center justify-center shrink-0 mt-0.5`}>
                             <Icon size={18} className={iconInfo.text} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <h3 className="text-[13px] font-bold text-foreground leading-snug line-clamp-1">
+                              <h3 className="text-[13px] font-bold text-textPrimary leading-snug line-clamp-1">
                                 <Link href={`/projects/${project.id}`}>{project.title}</Link>
                               </h3>
                               <div className="flex items-center gap-1.5 shrink-0">
@@ -637,31 +637,31 @@ export default function DashboardViewClient({
                                 {project.status === "CLOSED" && <span className="badge badge-red text-[9px] font-bold">CLOSED</span>}
                                 <button
                                   onClick={() => toggleBookmark(project.id)}
-                                  className={`p-0.5 rounded transition-colors ${isBookmarked ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
+                                  className={`p-0.5 rounded transition-colors ${isBookmarked ? "text-textPrimary" : "text-textMuted/40 hover:text-textMuted"}`}
                                 >
-                                  <Bookmark size={12} className={isBookmarked ? "fill-foreground" : ""} />
+                                  <Bookmark size={12} className={isBookmarked ? "fill-textPrimary" : ""} />
                                 </button>
                               </div>
                             </div>
-                            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed mb-2">
+                            <p className="text-[11px] text-textMuted line-clamp-2 leading-relaxed mb-2">
                               {project.description}
                             </p>
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex flex-wrap gap-1">
                                 {project.skills?.slice(0, 3).map((skill: any) => (
-                                  <span key={skill.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                                  <span key={skill.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-textMuted">
                                     {skill.name}
                                   </span>
                                 ))}
                               </div>
-                              <span className="text-[10px] text-muted-foreground shrink-0 uppercase tracking-tight font-medium">by {project.owner?.name}</span>
+                              <span className="text-[10px] text-textMuted shrink-0 uppercase tracking-tight font-medium">by {project.owner?.name}</span>
                             </div>
                           </div>
                         </article>
                       );
                     })
                   ) : (
-                    <div className="card p-6 text-center text-[12px] text-muted-foreground">No open projects right now.</div>
+                    <div className="card p-6 text-center text-[12px] text-textMuted">No open projects right now.</div>
                   )}
                 </div>
               </div>
@@ -671,21 +671,21 @@ export default function DashboardViewClient({
                 {/* My projects card */}
                 <div className="card p-4 flex flex-col justify-between space-y-3 min-h-[160px]">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[12px] font-bold text-foreground">My projects</h3>
+                    <h3 className="text-[12px] font-bold text-textPrimary">My projects</h3>
                     <Link href="/projects/create" className="text-[10px] font-semibold text-primary hover:underline">+ New</Link>
                   </div>
                   {myProjectsSidebar && myProjectsSidebar.length > 0 ? (
                     <div className="space-y-2">
                       {myProjectsSidebar.slice(0, 2).map((proj) => (
-                        <Link key={proj.id} href={`/projects/${proj.id}`} className="block text-[11px] font-medium text-foreground hover:underline truncate">
+                        <Link key={proj.id} href={`/projects/${proj.id}`} className="block text-[11px] font-medium text-textPrimary hover:underline truncate">
                           {proj.title}
                         </Link>
                       ))}
                     </div>
                   ) : (
                     <div className="text-center py-2 space-y-2">
-                      <Folder size={24} className="mx-auto text-muted-foreground/40" />
-                      <p className="text-[10px] text-muted-foreground leading-tight">No projects yet.<br />Create your first project.</p>
+                      <Folder size={24} className="mx-auto text-textMuted/40" />
+                      <p className="text-[10px] text-textMuted leading-tight">No projects yet.<br />Create your first project.</p>
                       <Link href="/projects/create" className="btn-primary text-[10px] py-1 px-2.5 w-full block text-center rounded-lg font-bold">
                         Create Project
                       </Link>
@@ -696,21 +696,21 @@ export default function DashboardViewClient({
                 {/* Applications card */}
                 <div className="card p-4 flex flex-col justify-between space-y-3 min-h-[160px]">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[12px] font-bold text-foreground">Applications</h3>
+                    <h3 className="text-[12px] font-bold text-textPrimary">Applications</h3>
                     <Link href="/dashboard?tab=applications" className="text-[10px] font-semibold text-primary hover:underline">View all</Link>
                   </div>
                   {myApplicationsSidebar && myApplicationsSidebar.length > 0 ? (
                     <div className="space-y-2">
                       {myApplicationsSidebar.slice(0, 2).map((app) => (
-                        <Link key={app.id} href={`/projects/${app.project.id}`} className="block text-[11px] font-medium text-foreground hover:underline truncate">
+                        <Link key={app.id} href={`/projects/${app.project.id}`} className="block text-[11px] font-medium text-textPrimary hover:underline truncate">
                           {app.project.title}
                         </Link>
                       ))}
                     </div>
                   ) : (
                     <div className="text-center py-2 space-y-2">
-                      <Send size={24} className="mx-auto text-muted-foreground/40" />
-                      <p className="text-[10px] text-muted-foreground leading-tight">No applications yet.<br />Browse and apply to exciting projects.</p>
+                      <Send size={24} className="mx-auto text-textMuted/40" />
+                      <p className="text-[10px] text-textMuted leading-tight">No applications yet.<br />Browse and apply to exciting projects.</p>
                       <Link href="/projects" className="btn-primary text-[10px] py-1 px-2.5 w-full block text-center rounded-lg font-bold">
                         Browse Projects
                       </Link>
@@ -722,7 +722,7 @@ export default function DashboardViewClient({
               {/* 5. Recent activity Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[14px] font-bold text-foreground">Recent activity</h2>
+                  <h2 className="text-[14px] font-bold text-textPrimary">Recent activity</h2>
                   <Link href="/dashboard?tab=notifications" className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5">
                     View all →
                   </Link>
@@ -737,14 +737,14 @@ export default function DashboardViewClient({
                         className="flex items-center gap-3 px-3.5 py-3 hover:bg-secondary/30 transition-colors"
                       >
                         <span className={`h-2 w-2 rounded-full shrink-0 ${notif.read ? "bg-muted-foreground/30" : "bg-primary"}`} />
-                        <p className="text-[11px] text-foreground flex-1 truncate leading-snug">{notif.message}</p>
-                        <span className="text-[9.5px] text-muted-foreground shrink-0 font-medium ml-1">
+                        <p className="text-[11px] text-textPrimary flex-1 truncate leading-snug">{notif.message}</p>
+                        <span className="text-[9.5px] text-textMuted shrink-0 font-medium ml-1">
                           {new Date(notif.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                         </span>
                       </Link>
                     ))
                   ) : (
-                    <p className="px-4 py-5 text-[11px] text-muted-foreground text-center">No recent activity.</p>
+                    <p className="px-4 py-5 text-[11px] text-textMuted text-center">No recent activity.</p>
                   )}
                 </div>
               </div>
@@ -758,55 +758,55 @@ export default function DashboardViewClient({
               {/* ── LEFT MAIN FEED ─────────────────────────────── */}
               <div className="flex-1 min-w-0 space-y-6">
 
-                {/* ROW 1: 4 Stat Cards */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <div className="card p-4 flex items-center gap-3.5 border-border/80 hover:border-primary/40 transition-all">
-                    <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-                      <Folder size={18} />
-                    </div>
-                    <div>
-                      <p className="text-[18px] font-extrabold text-foreground leading-none">{projects.length}</p>
-                      <p className="text-[11px] text-muted-foreground font-medium mt-1">Total Projects</p>
-                    </div>
-                  </div>
+{/* ROW 1: 4 Stat Cards */}
+                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                   <div className="card p-4 flex items-center gap-3.5 hover:bg-card-hover transition-all">
+                     <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+                       <Folder size={18} />
+                     </div>
+                     <div>
+                       <p className="text-[18px] font-extrabold text-textPrimary leading-none">{projects.length}</p>
+                       <p className="text-[11px] text-textMuted font-medium mt-1">Total Projects</p>
+                     </div>
+                   </div>
 
-                  <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                      <CheckCircle2 size={16} />
-                    </div>
-                    <div>
-                      <p className="text-[16px] font-extrabold text-foreground leading-none">{projects.filter((p: any) => p.status === "OPEN").length}</p>
-                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Open Projects</p>
-                    </div>
-                  </div>
+                   <div className="card p-4 flex items-center gap-3.5 hover:bg-card-hover transition-all">
+                     <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                       <CheckCircle2 size={16} />
+                     </div>
+                     <div>
+                       <p className="text-[18px] font-extrabold text-textPrimary leading-none">{projects.filter((p: any) => p.status === "OPEN").length}</p>
+                       <p className="text-[11px] text-textMuted font-medium mt-1">Open Projects</p>
+                     </div>
+                   </div>
 
-                  <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
-                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center shrink-0">
-                      <Users size={16} />
-                    </div>
-                    <div>
-                      <p className="text-[16px] font-extrabold text-foreground leading-none">{applications.length}</p>
-                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Applications</p>
-                    </div>
-                  </div>
+                   <div className="card p-4 flex items-center gap-3.5 hover:bg-card-hover transition-all">
+                     <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                       <Users size={16} />
+                     </div>
+                     <div>
+                       <p className="text-[18px] font-extrabold text-textPrimary leading-none">{applications.length}</p>
+                       <p className="text-[11px] text-textMuted font-medium mt-0.5">Applications</p>
+                     </div>
+                   </div>
 
-                  <div className="card px-3.5 py-2.5 flex items-center gap-3 border-border">
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center shrink-0">
-                      <Trophy size={16} />
-                    </div>
-                    <div>
-                      <p className="text-[16px] font-extrabold text-foreground leading-none">{eventsList.length}</p>
-                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Hackathons</p>
-                    </div>
-                  </div>
-                </div>
+                   <div className="card p-4 flex items-center gap-3.5 hover:bg-card-hover transition-all">
+                     <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                       <Trophy size={16} />
+                     </div>
+                     <div>
+                       <p className="text-[18px] font-extrabold text-textPrimary leading-none">{eventsList.length}</p>
+                       <p className="text-[11px] text-textMuted font-medium mt-0.5">Hackathons</p>
+                     </div>
+                   </div>
+                 </div>
 
                 {/* ROW 2: Top Events & Competitions */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Trophy size={18} className="text-amber-500" />
-                      <h2 className="text-[15px] font-bold text-foreground tracking-tight">Top Events &amp; Competitions</h2>
+                      <Trophy size={18} className="text-amber-400" />
+                      <h2 className="text-[15px] font-bold text-textPrimary tracking-tight">Top Events &amp; Competitions</h2>
                     </div>
                     <Link href="/dashboard?tab=events" className="text-[12px] font-semibold text-primary hover:underline flex items-center gap-1">
                       View all events →
@@ -820,9 +820,9 @@ export default function DashboardViewClient({
                         const mainPrize = h.prize ? (h.prize.includes("|") ? h.prize.split("|")[0].trim() : h.prize) : null;
 
                         return (
-                          <div key={h.id} className="w-[300px] shrink-0 snap-start card p-4.5 space-y-3 flex flex-col justify-between border-border/80 bg-card rounded-2xl hover:border-amber-500/40 transition-all shadow-xs group">
+                          <div key={h.id} className="w-[300px] shrink-0 snap-start card p-4.5 space-y-3 flex flex-col justify-between bg-card rounded-2xl hover:bg-card-hover transition-all shadow-xs group">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-[9.5px] font-extrabold tracking-wider uppercase px-2.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border/80">
+                              <span className="text-[9.5px] font-extrabold tracking-wider uppercase px-2.5 py-0.5 rounded-md bg-secondary text-textMuted border border-border/80">
                                 {h.organizerType || "HACKATHON"}
                               </span>
                               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
@@ -831,11 +831,11 @@ export default function DashboardViewClient({
                             </div>
 
                             <div className="space-y-1">
-                              <h3 className="text-[13.5px] font-bold text-foreground leading-snug line-clamp-2 group-hover:text-amber-400 transition-colors">
+                              <h3 className="text-[13.5px] font-bold text-textPrimary leading-snug line-clamp-2 group-hover:text-amber-400 transition-colors">
                                 {h.title}
                               </h3>
-                              <p className="text-[11px] text-muted-foreground line-clamp-1">
-                                Organized by <span className="font-semibold text-foreground/90">{h.organizer || "Campus Partner"}</span>
+                              <p className="text-[11px] text-textMuted line-clamp-1">
+                                Organized by <span className="font-semibold text-textPrimary/90">{h.organizer || "Campus Partner"}</span>
                               </p>
                             </div>
 
@@ -845,23 +845,23 @@ export default function DashboardViewClient({
                                   🏆 {mainPrize}
                                 </span>
                                 {h.prize?.includes("|") && (
-                                  <span className="text-[9.5px] text-amber-500/80 font-medium shrink-0">+more</span>
+                                  <span className="text-[9.5px] text-amber-400/80 font-medium shrink-0">+more</span>
                                 )}
                               </div>
                             )}
 
-                            <div className="space-y-1 text-[10.5px] text-muted-foreground border-t border-border/50 pt-2.5">
+                            <div className="space-y-1 text-[10.5px] text-textMuted border-t border-border/50 pt-2.5">
                               <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1.5"><Calendar size={10} className="shrink-0" /> Dates:</span>
-                                <span className="font-semibold text-foreground truncate max-w-[140px]">{h.startDate ? `${h.startDate}${h.endDate ? ` → ${h.endDate}` : ""}` : (h.date || "TBA")}</span>
+                                <span className="font-semibold text-textPrimary truncate max-w-[140px]">{h.startDate ? `${h.startDate}${h.endDate ? ` → ${h.endDate}` : ""}` : (h.date || "TBA")}</span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1.5"><MapPin size={10} className="shrink-0" /> Venue:</span>
-                                <span className="font-semibold text-foreground truncate max-w-[140px]">{locationStr}</span>
+                                <span className="font-semibold text-textPrimary truncate max-w-[140px]">{locationStr}</span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1.5"><Globe size={10} className="shrink-0" /> Mode &amp; Fee:</span>
-                                <span className="font-semibold text-foreground">{h.mode || "In-Person"} • {h.registrationFee || "Free"}</span>
+                                <span className="font-semibold text-textPrimary">{h.mode || "In-Person"} • {h.registrationFee || "Free"}</span>
                               </div>
                             </div>
 
@@ -880,7 +880,7 @@ export default function DashboardViewClient({
                       })}
                     </div>
                   ) : (
-                    <div className="card p-6 text-center text-[12px] text-muted-foreground">No upcoming events right now.</div>
+                    <div className="card p-6 text-center text-[12px] text-textMuted">No upcoming events right now.</div>
                   )}
                 </div>
 
@@ -895,7 +895,7 @@ export default function DashboardViewClient({
                         className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
                           dashCategory === cat
                             ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                            : "bg-secondary/60 text-muted-foreground hover:text-foreground"
+                            : "bg-secondary/60 text-textMuted hover:text-textPrimary"
                         }`}
                       >
                         {cat}
@@ -907,7 +907,7 @@ export default function DashboardViewClient({
                     <select
                       value={dashDept}
                       onChange={(e) => { setDashDept(e.target.value); setDashPage(1); }}
-                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-foreground cursor-pointer focus:outline-none"
+                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-textPrimary cursor-pointer focus:outline-none"
                     >
                       <option value="">Department ▾</option>
                       {departments.map((d) => (
@@ -917,7 +917,7 @@ export default function DashboardViewClient({
                     <select
                       value={dashStatus}
                       onChange={(e) => { setDashStatus(e.target.value); setDashPage(1); }}
-                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-foreground cursor-pointer focus:outline-none"
+                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-textPrimary cursor-pointer focus:outline-none"
                     >
                       <option value="ALL">Status ▾</option>
                       <option value="OPEN">Open</option>
@@ -930,13 +930,13 @@ export default function DashboardViewClient({
                 {/* ROW 4: Projects Grid */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-border/50 pb-2">
-                    <h3 className="text-[14px] font-bold text-foreground">{filteredProjects.length} Projects Found</h3>
+                    <h3 className="text-[14px] font-bold text-textPrimary">{filteredProjects.length} Projects Found</h3>
                   </div>
 
                   {currentProjects.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                       {currentProjects.map((project: any) => (
-                        <div key={project.id} className="card p-4 space-y-3 flex flex-col justify-between border-border transition-all hover:border-primary/40">
+                        <div key={project.id} className="card p-4 space-y-3 flex flex-col justify-between hover:bg-card-hover transition-all">
                           <div className="space-y-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {project.status === "OPEN" && <span className="badge badge-green text-[9px] font-bold">OPEN</span>}
@@ -954,17 +954,17 @@ export default function DashboardViewClient({
                               })()}
                             </div>
 
-                            <h4 className="text-[13px] font-bold text-foreground leading-snug line-clamp-1 hover:underline">
+                            <h4 className="text-[13px] font-bold text-textPrimary leading-snug line-clamp-1 hover:underline">
                               <Link href={`/projects/${project.id}`}>{project.title}</Link>
                             </h4>
 
-                            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                            <p className="text-[11px] text-textMuted line-clamp-2 leading-relaxed">
                               {project.description}
                             </p>
 
                             <div className="flex flex-wrap gap-1 pt-1">
                               {project.skills?.slice(0, 3).map((skill: any) => (
-                                <span key={skill.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                                <span key={skill.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-textMuted">
                                   {skill.name}
                                 </span>
                               ))}
@@ -977,20 +977,20 @@ export default function DashboardViewClient({
                                 {(project.owner?.name?.[0] || "U").toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-[10px] font-semibold text-foreground truncate">{project.owner?.name || "Student"}</p>
-                                <p className="text-[8px] text-muted-foreground truncate">{project.owner?.department || "Campus"}</p>
+                                <p className="text-[10px] font-semibold text-textPrimary truncate">{project.owner?.name || "Student"}</p>
+                                <p className="text-[8px] text-textMuted truncate">{project.owner?.department || "Campus"}</p>
                               </div>
                             </div>
                             <div className="text-right shrink-0">
-                              <p className="text-[9px] font-bold text-foreground">{project.teamSize ? `1/${project.teamSize}` : "Team"}</p>
-                              <p className="text-[8px] text-muted-foreground">Members</p>
+                              <p className="text-[9px] font-bold text-textPrimary">{project.teamSize ? `1/${project.teamSize}` : "Team"}</p>
+                              <p className="text-[8px] text-textMuted">Members</p>
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="card p-8 text-center text-[12px] text-muted-foreground">No projects match the selected filters.</div>
+                    <div className="card p-8 text-center text-[12px] text-textMuted">No projects match the selected filters.</div>
                   )}
 
                   {/* View all projects link */}
@@ -1017,7 +1017,7 @@ export default function DashboardViewClient({
                           className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer ${
                             dashPage === pNum
                               ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                              : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                              : "bg-card border border-border text-textMuted hover:text-textPrimary"
                           }`}
                         >
                           {pNum}
@@ -1044,7 +1044,7 @@ export default function DashboardViewClient({
                   <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
                     <div className="flex items-center gap-2">
                       <Folder size={14} className="text-purple-400 shrink-0" />
-                      <h3 className="text-[13px] font-bold text-foreground">My Projects</h3>
+                      <h3 className="text-[13px] font-bold text-textPrimary">My Projects</h3>
                       <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
                         {userProjects.length}
                       </span>
@@ -1062,7 +1062,7 @@ export default function DashboardViewClient({
                           href={`/projects/${p.id}`}
                           className="flex items-center justify-between gap-2 p-2 rounded-lg bg-secondary/30 hover:bg-secondary/70 border border-border/40 transition-colors group"
                         >
-                          <p className="text-[11.5px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                          <p className="text-[11.5px] font-semibold text-textPrimary truncate group-hover:text-primary transition-colors">
                             {p.title}
                           </p>
                           <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded shrink-0 uppercase ${
@@ -1077,7 +1077,7 @@ export default function DashboardViewClient({
                     </div>
                   ) : (
                     <div className="py-3 text-center space-y-2">
-                      <p className="text-[11px] text-muted-foreground">No projects created yet.</p>
+                      <p className="text-[11px] text-textMuted">No projects created yet.</p>
                       <Link href="/projects/create" className="btn-primary text-[10.5px] py-1 px-3 inline-flex items-center gap-1 font-bold rounded-lg">
                         + Create Project
                       </Link>
@@ -1090,7 +1090,7 @@ export default function DashboardViewClient({
                   <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
                     <div className="flex items-center gap-2">
                       <Send size={14} className="text-blue-400 shrink-0" />
-                      <h3 className="text-[13px] font-bold text-foreground">My Applications</h3>
+                      <h3 className="text-[13px] font-bold text-textPrimary">My Applications</h3>
                       <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                         {userApplications.length}
                       </span>
@@ -1108,7 +1108,7 @@ export default function DashboardViewClient({
                           href={`/projects/${app.project?.id || app.projectId}`}
                           className="flex items-center justify-between gap-2 p-2 rounded-lg bg-secondary/30 hover:bg-secondary/70 border border-border/40 transition-colors group"
                         >
-                          <p className="text-[11.5px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                          <p className="text-[11.5px] font-semibold text-textPrimary truncate group-hover:text-primary transition-colors">
                             {app.project?.title || "Project"}
                           </p>
                           <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded shrink-0 uppercase ${
@@ -1123,7 +1123,7 @@ export default function DashboardViewClient({
                     </div>
                   ) : (
                     <div className="py-3 text-center space-y-2">
-                      <p className="text-[11px] text-muted-foreground">No active applications.</p>
+                      <p className="text-[11px] text-textMuted">No active applications.</p>
                       <Link href="/projects" className="btn-primary text-[10.5px] py-1 px-3 inline-flex items-center gap-1 font-bold rounded-lg">
                         Browse Projects
                       </Link>
@@ -1136,7 +1136,7 @@ export default function DashboardViewClient({
                   <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
                     <div className="flex items-center gap-2">
                       <Sparkles size={14} className="text-amber-400 shrink-0" />
-                      <h3 className="text-[13px] font-bold text-foreground">Recent Activity</h3>
+                      <h3 className="text-[13px] font-bold text-textPrimary">Recent Activity</h3>
                     </div>
                     <Link href="/dashboard?tab=notifications" className="text-[11px] font-bold text-primary hover:underline">
                       View all →
@@ -1153,10 +1153,10 @@ export default function DashboardViewClient({
                         >
                           <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${notif.read ? "bg-muted-foreground/30" : "bg-primary"}`} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[11px] text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                            <p className="text-[11px] text-textPrimary leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                               {notif.message}
                             </p>
-                            <p className="text-[9.5px] text-muted-foreground mt-0.5">
+                            <p className="text-[9.5px] text-textMuted mt-0.5">
                               {new Date(notif.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                             </p>
                           </div>
@@ -1164,7 +1164,7 @@ export default function DashboardViewClient({
                       ))}
                     </div>
                   ) : (
-                    <p className="py-3 text-center text-[11px] text-muted-foreground">No recent activity.</p>
+                    <p className="py-3 text-center text-[11px] text-textMuted">No recent activity.</p>
                   )}
                 </div>
 
@@ -1246,8 +1246,8 @@ export default function DashboardViewClient({
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-[17px] font-bold text-foreground tracking-tight">Events &amp; Competitions</h2>
-                <p className="text-[12px] text-muted-foreground mt-0.5">Explore hackathons, hiring challenges, and tech events from top platforms &amp; universities.</p>
+                <h2 className="text-[17px] font-bold text-textPrimary tracking-tight">Events &amp; Competitions</h2>
+                <p className="text-[12px] text-textMuted mt-0.5">Explore hackathons, hiring challenges, and tech events from top platforms &amp; universities.</p>
               </div>
 
               {/* Sub-filters for Active vs Ended */}
@@ -1257,8 +1257,8 @@ export default function DashboardViewClient({
                   onClick={() => setEventFilter("active")}
                   className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     eventFilter === "active"
-                      ? "bg-card text-foreground shadow-sm font-bold"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-card text-textPrimary shadow-sm font-bold"
+                      : "text-textMuted hover:text-textPrimary"
                   }`}
                 >
                   Upcoming &amp; Live ({activeEvents.length})
@@ -1268,8 +1268,8 @@ export default function DashboardViewClient({
                   onClick={() => setEventFilter("ended")}
                   className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     eventFilter === "ended"
-                      ? "bg-card text-foreground shadow-sm font-bold"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-card text-textPrimary shadow-sm font-bold"
+                      : "text-textMuted hover:text-textPrimary"
                   }`}
                 >
                   Past Events ({endedEvents.length})
@@ -1279,8 +1279,8 @@ export default function DashboardViewClient({
                   onClick={() => setEventFilter("all")}
                   className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     eventFilter === "all"
-                      ? "bg-card text-foreground shadow-sm font-bold"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-card text-textPrimary shadow-sm font-bold"
+                      : "text-textMuted hover:text-textPrimary"
                   }`}
                 >
                   All ({eventsList.length})
@@ -1298,24 +1298,24 @@ export default function DashboardViewClient({
                   return (
                     <div
                       key={h.id}
-                      className={`card p-5 space-y-4 flex flex-col justify-between border-border relative transition-all hover:border-primary/40 ${
+                      className={`card p-5 space-y-4 flex flex-col justify-between hover:bg-card-hover relative transition-all ${
                         isEnded ? "opacity-75 bg-card/60" : ""
                       }`}
                     >
                       <div className="space-y-2.5">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold shrink-0 text-[18px]">
+                            <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold shrink-0 text-[18px]">
                               🏆
                             </div>
                             <div>
-                              <h3 className="text-[15px] font-bold text-foreground leading-snug line-clamp-1">{h.title}</h3>
+                              <h3 className="text-[15px] font-bold text-textPrimary leading-snug line-clamp-1">{h.title}</h3>
                               <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                                 {h.organizer && (
-                                  <span className="text-[11px] font-semibold text-foreground/90">{h.organizer}</span>
+                                  <span className="text-[11px] font-semibold text-textPrimary/90">{h.organizer}</span>
                                 )}
                                 {h.organizerType && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-medium">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-textMuted font-medium">
                                     {h.organizerType}
                                   </span>
                                 )}
@@ -1325,47 +1325,47 @@ export default function DashboardViewClient({
 
                           {/* Status Badge */}
                           {isEnded ? (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border shrink-0">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary text-textMuted border border-border shrink-0">
                               Ended
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                               Live / Upcoming
                             </span>
                           )}
                         </div>
 
-                        <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3">
+                        <p className="text-[12px] text-textMuted leading-relaxed line-clamp-3">
                           {h.description}
                         </p>
 
-                        <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground font-medium pt-2 border-t border-border/50">
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-textMuted font-medium pt-2 border-t border-border/50">
                           <div>
-                            <span className="text-foreground font-semibold">📅 Dates:</span>{" "}
+                            <span className="text-textPrimary font-semibold">📅 Dates:</span>{" "}
                             {h.startDate
                               ? `${h.startDate}${h.endDate ? ` → ${h.endDate}` : ""}`
                               : (h.date || "TBA")}
                           </div>
                           <div>
-                            <span className="text-foreground font-semibold">📍 Venue:</span> {locationStr}
+                            <span className="text-textPrimary font-semibold">📍 Venue:</span> {locationStr}
                           </div>
                           {h.mode && (
                             <div>
-                              <span className="text-foreground font-semibold">🌐 Mode:</span> {h.mode}
+                              <span className="text-textPrimary font-semibold">🌐 Mode:</span> {h.mode}
                             </div>
                           )}
                           {h.registrationFee && (
                             <div>
-                              <span className="text-foreground font-semibold">💳 Fee:</span> {h.registrationFee}
+                              <span className="text-textPrimary font-semibold">💳 Fee:</span> {h.registrationFee}
                             </div>
                           )}
                           {h.prize && (
-                            <div className="col-span-2 text-amber-500 font-semibold line-clamp-1">
+                            <div className="col-span-2 text-amber-400 font-semibold line-clamp-1">
                               🏆 Prize Pool: {h.prize}
                             </div>
                           )}
                           {h.source && (
-                            <div className="col-span-2 text-[10px] text-muted-foreground/80">
+                            <div className="col-span-2 text-[10px] text-textMuted/80">
                               Source: {h.source}
                             </div>
                           )}
@@ -1380,7 +1380,7 @@ export default function DashboardViewClient({
                             rel="noopener noreferrer"
                             className={`w-full justify-center text-[12px] py-2 flex items-center gap-1.5 font-bold transition-all rounded-lg ${
                               isEnded
-                                ? "btn-secondary text-muted-foreground hover:text-foreground opacity-80"
+                                ? "btn-secondary text-textMuted hover:text-textPrimary opacity-80"
                                 : "btn-primary"
                             }`}
                           >
@@ -1389,7 +1389,7 @@ export default function DashboardViewClient({
                         </div>
                       ) : (
                         <div className="border-t border-border pt-3">
-                          <span className="text-[11px] text-muted-foreground italic">Registration opens soon</span>
+                          <span className="text-[11px] text-textMuted italic">Registration opens soon</span>
                         </div>
                       )}
                     </div>
@@ -1398,11 +1398,11 @@ export default function DashboardViewClient({
               </div>
             ) : (
               <div className="card p-12 text-center space-y-2">
-                <Trophy size={32} className="mx-auto text-muted-foreground/40" />
-                <p className="text-[14px] font-medium text-foreground">
+                <Trophy size={32} className="mx-auto text-textMuted/40" />
+                <p className="text-[14px] font-medium text-textPrimary">
                   {eventFilter === "active" ? "No upcoming events right now" : "No events found"}
                 </p>
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-[12px] text-textMuted">
                   {eventFilter === "active"
                     ? "Check back soon for new hackathons and competitions, or view past events."
                     : "Try switching filters to view upcoming or past events."}
@@ -1442,11 +1442,11 @@ export default function DashboardViewClient({
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
             <div>
-              <h2 className="text-[17px] font-bold text-foreground tracking-tight flex items-center gap-2">
+              <h2 className="text-[17px] font-bold text-textPrimary tracking-tight flex items-center gap-2">
                 <Mail size={18} strokeWidth={2} />
                 Project Invitations
               </h2>
-              <p className="text-[12px] text-muted-foreground mt-0.5">
+              <p className="text-[12px] text-textMuted mt-0.5">
                 Manage collaboration invitations sent to you or sent by you.
               </p>
             </div>
@@ -1472,8 +1472,8 @@ export default function DashboardViewClient({
               onClick={() => setInvitationSubTab("received")}
               className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
                 invitationSubTab === "received"
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-secondary text-textPrimary"
+                  : "text-textMuted hover:text-textPrimary"
               }`}
             >
               Received
@@ -1489,8 +1489,8 @@ export default function DashboardViewClient({
               onClick={() => setInvitationSubTab("sent")}
               className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
                 invitationSubTab === "sent"
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-secondary text-textPrimary"
+                  : "text-textMuted hover:text-textPrimary"
               }`}
             >
               Sent ({sentNotifs.length})
@@ -1507,7 +1507,7 @@ export default function DashboardViewClient({
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <h3 className="text-[14px] font-semibold text-foreground">
+                            <h3 className="text-[14px] font-semibold text-textPrimary">
                               <Link href={`/projects/${inv.project.id}`} className="hover:underline underline-offset-2">
                                 {inv.project.title}
                               </Link>
@@ -1521,8 +1521,8 @@ export default function DashboardViewClient({
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            Invited by <strong className="text-foreground">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString()}
+                          <p className="text-[11px] text-textMuted">
+                            Invited by <strong className="text-textPrimary">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString()}
                           </p>
                         </div>
 
@@ -1555,7 +1555,7 @@ export default function DashboardViewClient({
                       </div>
 
                       {inv.message && (
-                        <div className="text-[12px] text-foreground bg-secondary/60 rounded-lg p-3 border border-border italic leading-relaxed">
+                        <div className="text-[12px] text-textPrimary bg-secondary/60 rounded-lg p-3 border border-border italic leading-relaxed">
                           &ldquo;{inv.message}&rdquo;
                         </div>
                       )}
@@ -1563,7 +1563,7 @@ export default function DashboardViewClient({
                       {inv.project.skills && inv.project.skills.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
                           {inv.project.skills.map((s: any) => (
-                            <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                            <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-textMuted">
                               {s.name}
                             </span>
                           ))}
@@ -1574,9 +1574,9 @@ export default function DashboardViewClient({
                 </div>
               ) : (
                 <div className="card p-12 text-center space-y-2">
-                  <Mail size={32} className="mx-auto text-muted-foreground/40" />
-                  <p className="text-[14px] font-medium text-foreground">No invitations received yet</p>
-                  <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
+                  <Mail size={32} className="mx-auto text-textMuted/40" />
+                  <p className="text-[14px] font-medium text-textPrimary">No invitations received yet</p>
+                  <p className="text-[12px] text-textMuted max-w-sm mx-auto">
                     When project owners invite you to join their projects, their invitations will appear here.
                   </p>
                 </div>
@@ -1593,23 +1593,23 @@ export default function DashboardViewClient({
                     <div key={inv.id} className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-[13px] font-semibold text-foreground">
+                          <span className="text-[13px] font-semibold text-textPrimary">
                             Invite to {inv.receiver?.name}
                           </span>
-                          <span className="text-[11px] text-muted-foreground">
+                          <span className="text-[11px] text-textMuted">
                             ({inv.receiver?.department})
                           </span>
                           {inv.role && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-secondary text-foreground border border-border">
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-secondary text-textPrimary border border-border">
                               {inv.role}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground">
-                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-foreground hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString()}
+                        <p className="text-[11px] text-textMuted">
+                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-textPrimary hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString()}
                         </p>
                         {inv.message && (
-                          <p className="text-[11px] text-muted-foreground italic mt-1.5 line-clamp-1">
+                          <p className="text-[11px] text-textMuted italic mt-1.5 line-clamp-1">
                             &ldquo;{inv.message}&rdquo;
                           </p>
                         )}
@@ -1636,9 +1636,9 @@ export default function DashboardViewClient({
                 </div>
               ) : (
                 <div className="card p-12 text-center space-y-2">
-                  <Send size={32} className="mx-auto text-muted-foreground/40" />
-                  <p className="text-[14px] font-medium text-foreground">No invitations sent</p>
-                  <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
+                  <Send size={32} className="mx-auto text-textMuted/40" />
+                  <p className="text-[14px] font-medium text-textPrimary">No invitations sent</p>
+                  <p className="text-[12px] text-textMuted max-w-sm mx-auto">
                     You haven&apos;t sent any project invitations yet. Browse the Collaborators directory to find students and invite them!
                   </p>
                   <Link href="/dashboard?tab=collaborations" className="btn-secondary text-[12px] py-2 px-4 inline-flex mt-2">
@@ -1657,15 +1657,15 @@ export default function DashboardViewClient({
           <div className="card w-full max-w-md p-6 space-y-4 bg-card shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <UserPlus size={18} className="text-foreground" />
-                <h3 className="text-[15px] font-bold text-foreground">
+                <UserPlus size={18} className="text-textPrimary" />
+                <h3 className="text-[15px] font-bold text-textPrimary">
                   {inviteTargetUser ? `Invite ${inviteTargetUser.name}` : "Send Project Invitation"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setInviteModalOpen(false)}
-                className="btn-ghost p-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="btn-ghost p-1 text-textMuted hover:text-textPrimary cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -1698,8 +1698,8 @@ export default function DashboardViewClient({
                     {inviteTargetUser.name[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[13px] font-semibold text-foreground">{inviteTargetUser.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{inviteTargetUser.department}</p>
+                    <p className="text-[13px] font-semibold text-textPrimary">{inviteTargetUser.name}</p>
+                    <p className="text-[10px] text-textMuted">{inviteTargetUser.department}</p>
                   </div>
                 </div>
               )}
@@ -1777,8 +1777,8 @@ export default function DashboardViewClient({
       {currentTab === "profile" && (
         <div className="space-y-5">
           <div>
-            <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Profile settings</h2>
-            <p className="text-[12px] text-muted-foreground mt-0.5">Manage your account details and public profile.</p>
+            <h2 className="text-[17px] font-semibold text-textPrimary tracking-tight">Profile settings</h2>
+            <p className="text-[12px] text-textMuted mt-0.5">Manage your account details and public profile.</p>
           </div>
 
           <div className="card p-6">
@@ -1789,14 +1789,14 @@ export default function DashboardViewClient({
                   {profileImage ? (
                     <Image src={profileImage} alt="Profile" width={64} height={64} className="h-full w-full object-cover" unoptimized />
                   ) : (
-                    <span className="text-xl font-bold text-foreground">
+                    <span className="text-xl font-bold text-textPrimary">
                       {(profileName[0] || "?").toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-[13px] font-semibold text-foreground">Profile Picture (Cloudinary)</label>
-                  <p className="text-[11px] text-muted-foreground">Upload your avatar to Cloudinary.</p>
+                  <label className="block text-[13px] font-semibold text-textPrimary">Profile Picture (Cloudinary)</label>
+                  <p className="text-[11px] text-textMuted">Upload your avatar to Cloudinary.</p>
                   <div className="pt-1">
                     <label className="btn-secondary text-[11px] py-1.5 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-medium hover:bg-secondary">
                       <Upload size={12} />
@@ -1867,7 +1867,7 @@ export default function DashboardViewClient({
                     className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border text-[12px] font-bold transition-all cursor-pointer ${
                       profileAvailability === "AVAILABLE"
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 shadow-xs"
-                        : "bg-card text-muted-foreground border-border hover:text-foreground"
+                        : "bg-card text-textMuted border-border hover:text-textPrimary"
                     }`}
                   >
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -1880,7 +1880,7 @@ export default function DashboardViewClient({
                     className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border text-[12px] font-bold transition-all cursor-pointer ${
                       profileAvailability === "BUSY"
                         ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 shadow-xs"
-                        : "bg-card text-muted-foreground border-border hover:text-foreground"
+                        : "bg-card text-textMuted border-border hover:text-textPrimary"
                     }`}
                   >
                     <span className="h-2 w-2 rounded-full bg-rose-500" />
@@ -1960,7 +1960,7 @@ export default function DashboardViewClient({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="text-[13px] font-bold text-destructive">Danger Zone</h4>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-textMuted mt-0.5">
                     Permanently delete your account and all associated projects, applications, and data.
                   </p>
                 </div>
@@ -1985,8 +1985,8 @@ export default function DashboardViewClient({
               <Trash2 size={22} />
               <h3 className="text-[16px] font-bold">Delete Account?</h3>
             </div>
-            <p className="text-[12px] text-muted-foreground leading-relaxed">
-              This action is <strong className="text-foreground">permanent and cannot be undone</strong>. All your projects, applications, bookmarks, and account data will be permanently deleted.
+            <p className="text-[12px] text-textMuted leading-relaxed">
+              This action is <strong className="text-textPrimary">permanent and cannot be undone</strong>. All your projects, applications, bookmarks, and account data will be permanently deleted.
             </p>
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
               <button
@@ -2156,15 +2156,15 @@ function CollaborationsFinder({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
         <div>
           <div className="flex items-center gap-2.5">
-            <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-textPrimary tracking-tight flex items-center gap-2">
               Find collaborators
               <Users size={20} className="text-indigo-400" />
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-secondary text-muted-foreground text-xs font-semibold border border-border">
+            <span className="px-2.5 py-0.5 rounded-full bg-secondary text-textMuted text-xs font-semibold border border-border">
               {filtered.length}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-textMuted mt-1">
             Connect with verified students across campus and build project teams.
           </p>
         </div>
@@ -2172,7 +2172,7 @@ function CollaborationsFinder({
 
       {/* Mobile Search Bar */}
       <div className="relative block sm:hidden">
-        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none" />
         <input
           type="text"
           value={collabSearch}
@@ -2183,7 +2183,7 @@ function CollaborationsFinder({
         {collabSearch && (
           <button
             onClick={() => setCollabSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-textPrimary"
           >
             <X size={13} />
           </button>
@@ -2199,7 +2199,7 @@ function CollaborationsFinder({
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               collabStatus === "all"
                 ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-textMuted hover:text-textPrimary"
             }`}
           >
             <span className="h-2 w-2 rounded-full bg-indigo-500" />
@@ -2211,7 +2211,7 @@ function CollaborationsFinder({
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               collabStatus === "open"
                 ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-textMuted hover:text-textPrimary"
             }`}
           >
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -2223,7 +2223,7 @@ function CollaborationsFinder({
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               collabStatus === "busy"
                 ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-textMuted hover:text-textPrimary"
             }`}
           >
             <span className="h-2 w-2 rounded-full bg-amber-500" />
@@ -2235,7 +2235,7 @@ function CollaborationsFinder({
         <div className="flex flex-wrap items-center gap-2">
           {/* Desktop Search input */}
           <div className="relative hidden sm:block w-48 lg:w-60">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none" />
             <input
               type="text"
               value={collabSearch}
@@ -2244,7 +2244,7 @@ function CollaborationsFinder({
               className="forge-input pl-8 pr-7 py-1.5 w-full bg-card rounded-lg text-xs"
             />
             {collabSearch && (
-              <button onClick={() => setCollabSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <button onClick={() => setCollabSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-textMuted">
                 <X size={11} />
               </button>
             )}
@@ -2253,7 +2253,7 @@ function CollaborationsFinder({
           <select
             value={collabDept}
             onChange={(e) => setCollabDept(e.target.value)}
-            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
+            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-textPrimary focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
             style={selectBg}
           >
             <option value="">Departments</option>
@@ -2263,7 +2263,7 @@ function CollaborationsFinder({
           <select
             value={collabSkill}
             onChange={(e) => setCollabSkill(e.target.value)}
-            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
+            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-textPrimary focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
             style={selectBg}
           >
             <option value="">Skills</option>
@@ -2271,7 +2271,7 @@ function CollaborationsFinder({
           </select>
 
           <select
-            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
+            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-textPrimary focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
             style={selectBg}
           >
             <option>Sort by: Recommended</option>
@@ -2279,7 +2279,7 @@ function CollaborationsFinder({
             <option>Highest Rated</option>
           </select>
 
-          <button className="p-2 bg-card border border-border rounded-lg text-muted-foreground hover:text-foreground cursor-pointer">
+          <button className="p-2 bg-card border border-border rounded-lg text-textMuted hover:text-textPrimary cursor-pointer">
             <SlidersHorizontal size={14} />
           </button>
         </div>
@@ -2288,11 +2288,11 @@ function CollaborationsFinder({
       {/* Active filter pills */}
       {(collabDept || collabSkill || collabSearch || collabStatus !== "all") && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-xs text-muted-foreground font-medium mr-1">Active filters:</span>
+          <span className="text-xs text-textMuted font-medium mr-1">Active filters:</span>
           {collabDept && (
             <button
               onClick={() => setCollabDept("")}
-              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-foreground border border-border hover:bg-secondary"
+              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-textPrimary border border-border hover:bg-secondary"
             >
               Dept: {collabDept} <X size={11} />
             </button>
@@ -2300,7 +2300,7 @@ function CollaborationsFinder({
           {collabSkill && (
             <button
               onClick={() => setCollabSkill("")}
-              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-foreground border border-border hover:bg-secondary"
+              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-textPrimary border border-border hover:bg-secondary"
             >
               Skill: {collabSkill} <X size={11} />
             </button>
@@ -2308,7 +2308,7 @@ function CollaborationsFinder({
           {collabStatus !== "all" && (
             <button
               onClick={() => setCollabStatus("all")}
-              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-foreground border border-border hover:bg-secondary"
+              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-textPrimary border border-border hover:bg-secondary"
             >
               Status: {collabStatus === "open" ? "Available" : "Busy"} <X size={11} />
             </button>
@@ -2320,7 +2320,7 @@ function CollaborationsFinder({
               setCollabSkill("");
               setCollabStatus("all");
             }}
-            className="text-xs text-muted-foreground hover:text-foreground underline ml-auto cursor-pointer"
+            className="text-xs text-textMuted hover:text-textPrimary underline ml-auto cursor-pointer"
           >
             Clear all
           </button>
@@ -2341,13 +2341,13 @@ function CollaborationsFinder({
             return (
               <div
                 key={u.id}
-                className="card p-5 space-y-4 border border-border/80 bg-card rounded-2xl flex flex-col justify-between hover:border-primary/40 transition-all duration-200 shadow-xs group relative"
+                className="card p-5 space-y-4 bg-card rounded-2xl flex flex-col justify-between hover:bg-card-hover transition-all duration-200 shadow-xs group relative"
               >
                 {/* Top Row: Avatar + Status Badge & Action Menu */}
                 <div className="flex items-start justify-between gap-3">
                   {/* Avatar Circle with Online Dot */}
                   <div className="relative shrink-0">
-                    <div className="h-16 w-16 rounded-full bg-secondary border-2 border-border flex items-center justify-center font-bold text-lg text-foreground shrink-0 overflow-hidden shadow-xs">
+                    <div className="h-16 w-16 rounded-full bg-secondary border-2 border-border flex items-center justify-center font-bold text-lg text-textPrimary shrink-0 overflow-hidden shadow-xs">
                       {u.profileImage ? (
                         <Image src={u.profileImage} alt={displayName} width={64} height={64} className="h-full w-full object-cover" unoptimized />
                       ) : (
@@ -2367,7 +2367,7 @@ function CollaborationsFinder({
                     }`}>
                       {open ? "Available" : "Busy"}
                     </span>
-                    <button className="p-1 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer">
+                    <button className="p-1 text-textMuted hover:text-textPrimary rounded-lg cursor-pointer">
                       <MoreVertical size={14} />
                     </button>
                   </div>
@@ -2376,11 +2376,11 @@ function CollaborationsFinder({
                 {/* Name & Academic Year */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
-                    <Link href={`/profile/${u.id}`} className="text-[15px] font-bold text-foreground hover:underline truncate">
+                    <Link href={`/profile/${u.id}`} className="text-[15px] font-bold text-textPrimary hover:underline truncate">
                       {displayName}
                     </Link>
                   </div>
-                  <p className="text-xs text-muted-foreground font-medium">
+                  <p className="text-xs text-textMuted font-medium">
                     Year {u.year || 2} • {u.department || "CSE"}
                   </p>
                 </div>
@@ -2391,14 +2391,14 @@ function CollaborationsFinder({
                     {u.skills.slice(0, 3).map((s: any) => (
                       <span
                         key={s.id}
-                        className="text-[10px] font-medium px-2.5 py-1 rounded-lg bg-secondary/80 text-foreground border border-border/60 hover:border-primary/40 cursor-pointer transition-colors"
+                        className="text-[10px] font-medium px-2.5 py-1 rounded-lg bg-secondary/80 text-textPrimary border border-border/60 hover:bg-card-hover cursor-pointer transition-colors"
                         onClick={() => setCollabSkill(collabSkill === s.name ? "" : s.name)}
                       >
                         {s.name}
                       </span>
                     ))}
                     {u.skills.length > 3 && (
-                      <span className="text-[10px] font-medium px-2 py-1 rounded-lg bg-secondary text-muted-foreground border border-border/60">
+                      <span className="text-[10px] font-medium px-2 py-1 rounded-lg bg-secondary text-textMuted border border-border/60">
                         +{u.skills.length - 3}
                       </span>
                     )}
@@ -2406,26 +2406,26 @@ function CollaborationsFinder({
                 )}
 
                 {/* Looking For Line */}
-                <div className="text-[11.5px] text-muted-foreground line-clamp-1">
-                  <span className="font-semibold text-foreground/80">Looking for: </span>
+                <div className="text-[11.5px] text-textMuted line-clamp-1">
+                  <span className="font-semibold text-textPrimary/80">Looking for: </span>
                   {lookingForText}
                 </div>
 
                 {/* Stats 2-Column Grid */}
                 <div className="grid grid-cols-2 gap-2 py-2 border-y border-border/60 text-center">
                   <div>
-                    <div className="flex items-center justify-center gap-1 text-[12px] font-bold text-foreground">
-                      <Folder size={11} className="text-muted-foreground" />
+                    <div className="flex items-center justify-center gap-1 text-[12px] font-bold text-textPrimary">
+                      <Folder size={11} className="text-textMuted" />
                       {projectCount}
                     </div>
-                    <div className="text-[9.5px] text-muted-foreground font-medium">Projects</div>
+                    <div className="text-[9.5px] text-textMuted font-medium">Projects</div>
                   </div>
                   <div>
-                    <div className="flex items-center justify-center gap-1 text-[12px] font-bold text-foreground">
-                      <Users size={11} className="text-muted-foreground" />
+                    <div className="flex items-center justify-center gap-1 text-[12px] font-bold text-textPrimary">
+                      <Users size={11} className="text-textMuted" />
                       {collabCount}
                     </div>
-                    <div className="text-[9.5px] text-muted-foreground font-medium">Collaborations</div>
+                    <div className="text-[9.5px] text-textMuted font-medium">Collaborations</div>
                   </div>
                 </div>
 
@@ -2462,19 +2462,19 @@ function CollaborationsFinder({
         </div>
       ) : (
         <div className="card p-14 text-center border border-border bg-card rounded-2xl space-y-2">
-          <Users size={32} className="mx-auto text-muted-foreground/40" />
-          <p className="text-base font-bold text-foreground">No collaborators found</p>
-          <p className="text-xs text-muted-foreground">Try adjusting your filters or search query.</p>
+          <Users size={32} className="mx-auto text-textMuted/40" />
+          <p className="text-base font-bold text-textPrimary">No collaborators found</p>
+          <p className="text-xs text-textMuted">Try adjusting your filters or search query.</p>
         </div>
       )}
 
       {/* Dynamic Pagination Bar */}
       {filtered.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border/80">
-          <p className="text-xs text-muted-foreground font-medium">
-            Showing <span className="font-semibold text-foreground">{(page - 1) * pageSize + 1}</span>–
-            <span className="font-semibold text-foreground">{Math.min(page * pageSize, filtered.length)}</span> of{" "}
-            <span className="font-semibold text-foreground">{filtered.length}</span> collaborators
+          <p className="text-xs text-textMuted font-medium">
+            Showing <span className="font-semibold text-textPrimary">{(page - 1) * pageSize + 1}</span>–
+            <span className="font-semibold text-textPrimary">{Math.min(page * pageSize, filtered.length)}</span> of{" "}
+            <span className="font-semibold text-textPrimary">{filtered.length}</span> collaborators
           </p>
 
           <div className="flex items-center gap-1.5 mx-auto sm:mx-0">
@@ -2482,7 +2482,7 @@ function CollaborationsFinder({
               type="button"
               disabled={page === 1}
               onClick={() => changePage(page - 1)}
-              className="p-2 text-muted-foreground hover:text-foreground rounded-lg border border-border bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 text-textMuted hover:text-textPrimary rounded-lg border border-border bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               title="Previous Page"
             >
               <ChevronLeft size={14} />
@@ -2496,7 +2496,7 @@ function CollaborationsFinder({
                 className={`min-w-[32px] h-8 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                   pNum === page
                     ? "bg-indigo-600 text-white border-indigo-600 font-bold shadow-xs"
-                    : "bg-card text-muted-foreground hover:text-foreground border-border"
+                    : "bg-card text-textMuted hover:text-textPrimary border-border"
                 }`}
               >
                 {pNum}
@@ -2507,21 +2507,21 @@ function CollaborationsFinder({
               type="button"
               disabled={page === totalPages}
               onClick={() => changePage(page + 1)}
-              className="p-2 text-muted-foreground hover:text-foreground rounded-lg border border-border bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 text-textMuted hover:text-textPrimary rounded-lg border border-border bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               title="Next Page"
             >
               <ChevronRight size={14} />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-textMuted">
             <select
               value={pageSize}
               onChange={(e) => {
                 setPageSize(Number(e.target.value));
                 setRawPage(1);
               }}
-              className="bg-card border border-border rounded-lg text-foreground px-3 py-1.5 font-medium appearance-none cursor-pointer"
+              className="bg-card border border-border rounded-lg text-textPrimary px-3 py-1.5 font-medium appearance-none cursor-pointer"
               style={selectBg}
             >
               <option value={12}>12 per page</option>

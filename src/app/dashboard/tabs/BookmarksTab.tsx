@@ -12,8 +12,8 @@ export default function BookmarksTab({ bookmarks, getProjectIcon }: BookmarksTab
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Bookmarks</h2>
-        <p className="text-[12px] text-muted-foreground mt-0.5">Projects you saved for later.</p>
+        <h2 className="text-[17px] font-semibold text-textPrimary tracking-tight">Bookmarks</h2>
+        <p className="text-[12px] text-textMuted mt-0.5">Projects you saved for later.</p>
       </div>
 
       {bookmarks.length > 0 ? (
@@ -37,10 +37,10 @@ export default function BookmarksTab({ bookmarks, getProjectIcon }: BookmarksTab
                   )}
                 </div>
                 <div>
-                  <h3 className="text-[13px] font-semibold text-foreground group-hover:underline underline-offset-2">
+                  <h3 className="text-[13px] font-semibold text-textPrimary group-hover:underline underline-offset-2">
                     <Link href={`/projects/${p.id}`}>{p.title}</Link>
                   </h3>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-textMuted mt-0.5">
                     by{" "}
                     <Link href={`/profile/${p.owner.id}`} className="hover:underline">
                       {p.owner.name}
@@ -51,14 +51,14 @@ export default function BookmarksTab({ bookmarks, getProjectIcon }: BookmarksTab
                 {p.skills?.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {p.skills.slice(0, 3).map((s: any) => (
-                      <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
+                      <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-textMuted">
                         {s.name}
                       </span>
                     ))}
                   </div>
                 )}
                 <div className="flex items-center justify-between border-t border-border pt-3 mt-auto">
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[10px] text-textMuted">
                     Saved {new Date(bm.createdAt).toLocaleDateString()}
                   </span>
                   <Link href={`/projects/${p.id}`} className="btn-ghost text-[11px] px-2 py-1">
@@ -72,11 +72,11 @@ export default function BookmarksTab({ bookmarks, getProjectIcon }: BookmarksTab
       ) : (
         <div className="card p-8 sm:p-12 text-center max-w-xl mx-auto space-y-4">
           <div className="h-14 w-14 rounded-2xl bg-secondary border border-border/80 flex items-center justify-center mx-auto shadow-sm">
-            <Bookmark size={26} strokeWidth={1.75} className="text-foreground" />
+            <Bookmark size={26} strokeWidth={1.75} className="text-textPrimary" />
           </div>
           <div>
-            <h3 className="text-[16px] font-bold text-foreground">No bookmarked projects yet</h3>
-            <p className="text-[12px] text-muted-foreground mt-1.5 leading-relaxed max-w-md mx-auto">
+            <h3 className="text-[16px] font-bold text-textPrimary">No bookmarked projects yet</h3>
+            <p className="text-[12px] text-textMuted mt-1.5 leading-relaxed max-w-md mx-auto">
               Save interesting campus projects, research ideas, and hackathon opportunities to easily compare them and apply when you&apos;re ready.
             </p>
           </div>
@@ -90,7 +90,7 @@ export default function BookmarksTab({ bookmarks, getProjectIcon }: BookmarksTab
             </Link>
           </div>
 
-          <div className="pt-4 border-t border-border/50 text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
+          <div className="pt-4 border-t border-border/50 text-[11px] text-textMuted flex items-center justify-center gap-1.5">
             <span>💡 <strong>Pro-Tip:</strong> Click the 🔖 bookmark button on any project card to save it here.</span>
           </div>
         </div>
