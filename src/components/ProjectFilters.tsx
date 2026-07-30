@@ -66,9 +66,12 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
             placeholder="Search projects…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="forge-input pl-10 min-h-[44px] text-[14px] sm:text-[13px]"
+            className="forge-input pl-10 pr-12 min-h-[44px] text-[14px] sm:text-[13px]"
             aria-label="Search projects"
           />
+          <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground bg-secondary border border-border px-1.5 py-0.5 rounded pointer-events-none" title="Press / to search">
+            /
+          </kbd>
         </div>
         <button
           type="submit"
@@ -169,11 +172,37 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
           <button
             onClick={() => { setSkill(""); push({ skill: "" }); }}
             aria-label={`Remove filter: ${skill}`}
-            className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-medium px-3 py-1.5 rounded-lg bg-secondary text-foreground hover:bg-accent border border-border transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-medium px-3 py-1.5 rounded-lg bg-accent text-white border border-accent transition-colors cursor-pointer"
           >
             {skill} <X size={13} strokeWidth={2} />
           </button>
         )}
+      </div>
+
+      {/* Quick Skill Filter Chips */}
+      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider pr-1">Popular:</span>
+        {(skills.length > 0 ? skills.slice(0, 7) : ["React", "Python", "AI/ML", "UI/UX", "TypeScript", "Node.js", "Figma"]).map((s) => {
+          const isActive = skill.toLowerCase() === s.toLowerCase();
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => {
+                const nextSkill = isActive ? "" : s;
+                setSkill(nextSkill);
+                push({ skill: nextSkill });
+              }}
+              className={`text-[11px] font-medium px-2.5 py-1 rounded-md transition-all cursor-pointer border ${
+                isActive
+                  ? "bg-accent text-white border-accent shadow-sm"
+                  : "bg-secondary/80 text-foreground border-border hover:bg-secondary hover:border-accent/40"
+              }`}
+            >
+              {s}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

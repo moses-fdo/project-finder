@@ -76,3 +76,44 @@ export async function PATCH(
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    const currentUser = session?.user;
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "You must be logged in." }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const applicationId = Number(id);
+
+    const application = await prisma.application.findUnique({
+      where: { id: applicationId },
+    });
+
+    if (!application) {
+      return NextResponse.json({ error: "Application not found." }, { status: 404 });
+    }
+
+    const currentUserId = Number((currentUser as any).id);
+    const isAdmin = (currentUser as any).role === "ADMIN";
+
+    if (application.userId !== currentUserId && !isAdmin) {
+      return NextResponse.json({ error: "Not authorized to withdraw this application." }, { status: 403 });
+    }
+
+    await prisma.application.delete({
+      where: { id: applicationId },
+    });
+
+    return NextResponse.json({ message: "Application withdrawn successfully." });
+  } catch (error: any) {
+    console.error("Withdraw application error:", error);
+    return NextResponse.json({ error: "Failed to withdraw application." }, { status: 500 });
+  }
+}
