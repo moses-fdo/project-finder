@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
+import Toast from "@/components/Toast";
 import OnboardingModal from "@/components/OnboardingModal";
 import EditProjectModal from "@/components/EditProjectModal";
 import CropImageModal from "@/components/CropImageModal";
-import { getNotificationLink } from "@/lib/notifications";
 
 // Lazy-loaded Tab Modules for faster client JS bundle
 const ProjectsTab = dynamic(() => import("./tabs/ProjectsTab"));
-const BookmarksTab = dynamic(() => import("./tabs/BookmarksTab"));
 const ApplicationsTab = dynamic(() => import("./tabs/ApplicationsTab"));
 const NotificationsTab = dynamic(() => import("./tabs/NotificationsTab"));
 const HomeTab = dynamic(() => import("./tabs/HomeTab"));
@@ -29,16 +28,10 @@ import {
   Brain,
   Dumbbell,
   Folder,
-  Bookmark,
-  Users,
-  Plus,
-  Search,
-  CheckCheck,
   Mail,
   Send,
   UserPlus,
   LucideIcon,
-  CheckCircle2,
   Upload,
 } from "lucide-react";
 
@@ -52,7 +45,6 @@ interface DashboardViewClientProps {
   collaborations?: any[];
   collabNextCursor?: number;
   collabHasMore?: boolean;
-  bookmarks?: any[];
   events?: any[];
   hackathons?: any[];
   recommendedProjects?: any[];
@@ -106,7 +98,6 @@ export default function DashboardViewClient({
   collaborations = [],
   collabNextCursor,
   collabHasMore,
-  bookmarks = [],
   events = [],
   hackathons = [],
   recommendedProjects = [],
@@ -182,31 +173,17 @@ export default function DashboardViewClient({
     }
   };
 
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(
-    () => new Set(bookmarks.map((bm: any) => bm.project?.id ?? bm.projectId))
-  );
+  const [actionError,   setActionError]   = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
+  const [loadingId,     setLoadingId]     = useState<string | null>(null);
 
-  const toggleBookmark = async (projectId: number) => {
-    const isBookmarked = bookmarkedIds.has(projectId);
-    setBookmarkedIds(prev => {
-      const next = new Set(prev);
-      if (isBookmarked) { next.delete(projectId); } else { next.add(projectId); }
-      return next;
-    });
-    try {
-      await fetch(`/api/projects/${projectId}/bookmark`, {
-        method: isBookmarked ? "DELETE" : "POST",
-      });
-    } catch { /* silent */ }
-  };
+  // Clear messages on tab change
+  useEffect(() => { setActionError(""); setActionSuccess(""); }, [activeTab]);
 
   const [collabSearch,  setCollabSearch]  = useState("");
   const [collabDept,    setCollabDept]    = useState("");
   const [collabSkill,   setCollabSkill]   = useState("");
   const [collabStatus,  setCollabStatus]  = useState<"all" | "open" | "busy">("all");
-  const [actionError,   setActionError]   = useState("");
-  const [actionSuccess, setActionSuccess] = useState("");
-  const [loadingId,     setLoadingId]     = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
@@ -436,10 +413,10 @@ export default function DashboardViewClient({
   return (
     <div className="flex-1 p-4 sm:p-5 md:p-7 space-y-6">
       {actionError && (
-        <div className="p-3 text-[12px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">{actionError}</div>
+        <Toast message={actionError} type="error" onClose={() => setActionError("")} />
       )}
       {actionSuccess && (
-        <div className="p-3 text-[12px] rounded-lg bg-success/10 text-green-700 dark:text-green-400 border border-success/20">{actionSuccess}</div>
+        <Toast message={actionSuccess} type="success" onClose={() => setActionSuccess("")} />
       )}
 
       {/* ── HOME / DASHBOARD COMBINED VIEW ────────────────────── */}
@@ -455,8 +432,6 @@ export default function DashboardViewClient({
           myProjectsSidebar={myProjectsSidebar}
           myApplicationsSidebar={myApplicationsSidebar}
           recentNotifications={recentNotifications}
-          bookmarkedIds={bookmarkedIds}
-          toggleBookmark={toggleBookmark}
           getProjectIcon={getProjectIcon}
           nowMs={nowMs}
           departments={departments}
@@ -492,11 +467,6 @@ export default function DashboardViewClient({
       {/* ── EVENTS VIEW ─────────────────────────────────────── */}
       {(currentTab === "events" || currentTab === "hackathons") && (
         <EventsTab events={events} hackathons={hackathons} nowMs={nowMs} />
-      )}
-
-      {/* ── BOOKMARKS ─────────────────────────────────────── */}
-      {currentTab === "bookmarks" && (
-        <BookmarksTab bookmarks={bookmarks} getProjectIcon={getProjectIcon} />
       )}
 
       {/* ── MY PROJECTS ───────────────────────────────────── */}

@@ -16,7 +16,6 @@ import {
   Search,
   Users,
   Trophy,
-  Bookmark,
   Send,
   Mail,
   Inbox,
@@ -134,7 +133,6 @@ export default function AppShell({
     { label: "Dashboard",      icon: LayoutGrid, href: "/dashboard?tab=home",           active: isTabActive("home") || (pathname === "/dashboard" && !tab) },
     { label: "Collaborators",  icon: Users,      href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
     { label: "Events",         icon: Trophy,     href: "/dashboard?tab=events",         active: isTabActive("events") || isTabActive("hackathons") },
-    { label: "Bookmarks",      icon: Bookmark,   href: "/dashboard?tab=bookmarks",      active: isTabActive("bookmarks") },
   ];
 
   const spaceItems = [
@@ -499,10 +497,10 @@ export default function AppShell({
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
         {[
-          { href: "/dashboard?tab=home", icon: HomeIcon, label: "Home", active: isTabActive("home") || (pathname === "/dashboard" && !tab) },
-          { href: "/projects", icon: Search, label: "Discover", active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
-          { href: "/dashboard?tab=collaborations", icon: Users, label: "Collaborators", active: isTabActive("collaborations") },
           { href: "/dashboard?tab=events", icon: Calendar, label: "Events", active: isTabActive("events") || isTabActive("hackathons") },
+          { href: "/dashboard?tab=collaborations", icon: Users, label: "Collaborators", active: isTabActive("collaborations") },
+          { href: "/dashboard?tab=home", icon: HomeIcon, label: "Dashboard", active: isTabActive("home") || (pathname === "/dashboard" && !tab) },
+          { href: "/projects", icon: Search, label: "Discover", active: pathname.startsWith("/projects") && !pathname.endsWith("/create") },
         ].map(({ href, icon: Icon, label, active }) => (
           <Link
             key={label}
@@ -593,7 +591,6 @@ export default function AppShell({
               </p>
               {[
                 ...spaceItems,
-                { label: "Bookmarks", icon: Bookmark, href: "/dashboard?tab=bookmarks", active: isTabActive("bookmarks") },
               ].map((item) => (
                 <Link
                   key={item.label}

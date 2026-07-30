@@ -161,7 +161,7 @@ export default function CollaborationsFinderTab({
           value={collabSearch}
           onChange={(e) => setCollabSearch(e.target.value)}
           placeholder="Search by name, skill, department..."
-          className="forge-input pl-10 pr-9 py-2.5 w-full bg-card rounded-xl text-xs"
+          className="forge-input pl-9 pr-9 py-2.5 w-full bg-card rounded-xl text-xs"
         />
         {collabSearch && (
           <button
@@ -220,7 +220,7 @@ export default function CollaborationsFinderTab({
               value={collabSearch}
               onChange={(e) => setCollabSearch(e.target.value)}
               placeholder="Search..."
-              className="forge-input pl-8 pr-7 py-1.5 w-full bg-card rounded-lg text-xs"
+              className="forge-input pl-9 pr-7 py-1.5 w-full bg-card rounded-lg text-xs"
             />
             {collabSearch && (
               <button onClick={() => setCollabSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-textMuted">

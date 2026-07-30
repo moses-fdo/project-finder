@@ -45,7 +45,7 @@ export default async function ProjectsPage({
 
   const currentUserId = Number((session.user as any).id);
 
-  const [projects, skillsData, unreadNotificationsCount, userBookmarks] = await Promise.all([
+  const [projects, skillsData, unreadNotificationsCount] = await Promise.all([
     prisma.project.findMany({
       where,
       include: { owner: true, skills: true },
@@ -61,13 +61,7 @@ export default async function ProjectsPage({
         read: false,
       },
     }),
-    prisma.bookmark.findMany({
-      where: { userId: currentUserId },
-      select: { projectId: true },
-    }),
   ]);
-
-  const bookmarkedIds = new Set(userBookmarks.map((b: any) => b.projectId));
 
   const skills = skillsData.map((s: any) => s.name);
 
@@ -106,7 +100,6 @@ export default async function ProjectsPage({
               <ProjectCard
                 key={project.id}
                 project={project as any}
-                initialBookmarked={bookmarkedIds.has(project.id)}
               />
             ))}
           </div>

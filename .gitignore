@@ -47,12 +47,22 @@ next-env.d.ts
 SCALING_GUIDE.md
 
 # AI agent & editor directories
+.agents/
 .claude/
 .opencode/
 .impeccable/
 .gemini/
 .vscode/
 .idea/
+
+# Agent instruction & config files
+AGENTS.md
+
+# AI-generated docs & artifacts
+DESIGN.md
+PRODUCT.md
+colabro-full-audit.md
+words.csv
 
 # Audit & test artifacts
 /audit_screenshots/

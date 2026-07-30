@@ -14,7 +14,6 @@ export interface Project {
   };
   skills?: SkillRef[];
   applications?: Application[];
-  bookmarks?: Bookmark[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,14 +44,6 @@ export interface Application {
   project?: Project;
   message?: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED";
-  createdAt: Date;
-}
-
-export interface Bookmark {
-  id: number;
-  userId: number;
-  projectId: number;
-  project?: Project;
   createdAt: Date;
 }
 

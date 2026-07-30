@@ -28,7 +28,6 @@ model User {
   projects       Project[]       @relation("UserProjects")
   applications   Application[]
   notifications  Notification[]
-  bookmarks      Bookmark[]
   skills         Skill[]         @relation("UserSkills")
   sentInvitations     Invitation[] @relation("SentInvitations")
   receivedInvitations Invitation[] @relation("ReceivedInvitations")
@@ -54,7 +53,6 @@ model Project {
   ownerId        Int
   skills         Skill[]         @relation("ProjectSkills")
   applications   Application[]
-  bookmarks      Bookmark[]
   invitations    Invitation[]
 
   @@index([ownerId])
@@ -118,16 +116,6 @@ model Notification {
 
   @@index([userId, read])
   @@index([createdAt])
-}
-
-model Bookmark {
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId Int
-  createdAt DateTime @default(now())
-
-  @@id([userId, projectId])
 }
 
 model Event {

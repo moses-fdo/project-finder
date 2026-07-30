@@ -45,7 +45,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const needsCollaborations = activeTab === "home" || activeTab === "collaborations";
   const needsEvents = activeTab === "home" || activeTab === "events" || activeTab === "hackathons";
-  const needsBookmarks = activeTab === "home" || activeTab === "bookmarks";
   const needsProjects = activeTab === "home" || activeTab === "projects";
   const needsApplications = activeTab === "home" || activeTab === "applications";
   const needsInvitations = activeTab === "home" || activeTab === "invitations";
@@ -141,19 +140,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 orderBy: { createdAt: "desc" },
               })
             : Promise.resolve([]),
-          // 6: Saved Bookmarks (if needed)
-          needsBookmarks
-            ? prisma.bookmark.findMany({
-                where: { userId: currentUserId },
-                take: 15,
-                select: {
-                  createdAt: true,
-                  project: { select: projectCardSelect },
-                },
-                orderBy: { createdAt: "desc" },
-              })
-            : Promise.resolve([]),
-          // 7: Events (if needed)
+          // 6: Events (if needed)
           needsEvents
             ? prisma.event.findMany({
                 take: 20,
@@ -207,7 +194,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               })
             : Promise.resolve([]),
         ]),
-      [0, null, [], [], [], [], [], [], [], [], []]
+      [0, null, [], [], [], [], [], [], [], []]
     );
 
   const [
@@ -217,7 +204,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     projects,
     applications,
     collaborations,
-    bookmarks,
     hackathons,
     recommendedProjects,
     receivedInvitations,
@@ -253,8 +239,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
          collaborations={people}
           collabNextCursor={collabNextCursor}
           collabHasMore={collabHasMore}
-          bookmarks={bookmarks}
-          events={events}
+           events={events}
           hackathons={events}
           recommendedProjects={recommendedProjects}
           receivedInvitations={receivedInvitations}
