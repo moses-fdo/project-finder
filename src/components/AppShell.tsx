@@ -85,11 +85,16 @@ export default function AppShell({
       if (!insideDesktop && !insideMobile) setInboxOpen(false);
     }
     function handleKeyDown(e: KeyboardEvent) {
+      const activeTag = (document.activeElement?.tagName || "").toLowerCase();
+      const isInput = activeTag === "input" || activeTag === "textarea" || activeTag === "select" || (document.activeElement as HTMLElement)?.isContentEditable;
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setSearchModalOpen(prev => !prev);
-      }
-      if (e.key === "Escape") {
+        setSearchModalOpen((prev) => !prev);
+      } else if (e.key === "/" && !isInput) {
+        e.preventDefault();
+        setSearchModalOpen(true);
+      } else if (e.key === "Escape") {
         setSearchModalOpen(false);
       }
     }
