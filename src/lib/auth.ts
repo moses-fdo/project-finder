@@ -74,13 +74,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 profileImage: user.image || null,
               },
             });
-            (user as any).id = created.id.toString();
-            (user as any).role = created.role;
+            user.id = created.id.toString();
+            user.role = created.role as "USER" | "ADMIN";
           } else {
-            (user as any).id = dbUser.id.toString();
-            (user as any).role = dbUser.role;
-            (user as any).department = dbUser.department;
-            (user as any).year = dbUser.year;
+            user.id = dbUser.id.toString();
+            user.role = dbUser.role as "USER" | "ADMIN";
+            user.department = dbUser.department;
+            user.year = dbUser.year;
 
             if (!dbUser.verified) {
               await prisma.user.update({
@@ -99,10 +99,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       // 1. If user object is passed during initial sign-in, use it directly (0 extra DB calls)
       if (user) {
-        token.id = (user as any).id?.toString() || token.id;
-        token.role = (user as any).role || token.role || "USER";
-        token.department = (user as any).department || token.department || null;
-        token.year = (user as any).year || token.year || null;
+        token.id = user.id?.toString() || token.id;
+        token.role = user.role || token.role || "USER";
+        token.department = user.department || token.department || null;
+        token.year = user.year || token.year || null;
       }
 
       // 2. Only query DB if token attributes are missing
@@ -125,9 +125,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       try {
         if (session.user && token) {
           session.user.id = (token.id as string) || session.user.id;
-          session.user.role = (token.role as any) || "USER";
-          session.user.department = (token.department as any) || null;
-          session.user.year = (token.year as any) || null;
+          session.user.role = (token.role || "USER") as "USER" | "ADMIN";
+          session.user.department = (token.department as string | null) || null;
+          session.user.year = (token.year as number | null) || null;
         }
       } catch (err) {
         console.error("[auth] session callback error:", err);

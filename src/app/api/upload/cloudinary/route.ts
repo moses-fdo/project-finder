@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { clearUserDashboardCache } from "@/app/dashboard/page";
 
 export async function POST(req: Request) {
   try {
@@ -66,8 +65,6 @@ export async function POST(req: Request) {
       where: { id: currentUserId },
       data: { profileImage: imageUrl },
     });
-
-    clearUserDashboardCache(currentUserId);
 
     return NextResponse.json({
       message: "Profile picture updated successfully.",

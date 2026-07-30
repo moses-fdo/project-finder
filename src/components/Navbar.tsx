@@ -13,7 +13,7 @@ export default async function Navbar() {
   if (user) {
     unreadNotificationsCount = await prisma.notification.count({
       where: {
-        userId: Number((user as any).id),
+        userId: Number(user.id),
         read: false,
       },
     });
