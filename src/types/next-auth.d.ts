@@ -12,6 +12,13 @@ declare module "next-auth" {
       year?: number | null;
     };
   }
+
+  interface User {
+    id: string;
+    role?: UserRole;
+    department?: string | null;
+    year?: number | null;
+  }
 }
 
 declare module "next-auth/jwt" {

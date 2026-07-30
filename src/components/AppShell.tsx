@@ -313,7 +313,7 @@ export default function AppShell({
           </div>
 
           {/* Admin */}
-          {(user as any)?.role === "ADMIN" && (
+          {user?.role === "ADMIN" && (
             <div>
               <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/85 mb-1.5">
                 Admin

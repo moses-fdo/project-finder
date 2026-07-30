@@ -4,8 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { getErrorMessage } from "@/lib/error";
 import { checkAbuseServer } from "@/lib/moderation";
 
-import { clearUserDashboardCache } from "@/app/dashboard/page";
-
 export async function PATCH(req: Request) {
   try {
     const session = await auth();
@@ -79,8 +77,6 @@ export async function PATCH(req: Request) {
         },
       });
     }
-
-    clearUserDashboardCache(currentUserId);
 
     return NextResponse.json({
       message: "Profile updated successfully.",

@@ -17,34 +17,8 @@ const projectCardSelect = {
   skills: { select: { id: true, name: true } },
 } satisfies Prisma.ProjectSelect;
 
-// ── In-Memory Fast TTL Cache (5 seconds, keyed by userId + tab) ──
-const dashboardCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL_MS = 5000;
-
-function getValidCache(userId: number, tab: string): any | null {
-  const key = `${userId}:${tab}`;
-  const cached = dashboardCache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return cached.data;
-  }
-  return null;
-}
-
-export function setDashboardCache(userId: number, tab: string, data: any) {
-  const key = `${userId}:${tab}`;
-  dashboardCache.set(key, { data, timestamp: Date.now() });
-}
-
-export function clearUserDashboardCache(userId: number) {
-  for (const key of dashboardCache.keys()) {
-    if (key.startsWith(`${userId}:`)) {
-      dashboardCache.delete(key);
-    }
-  }
-}
-
 interface DashboardPageProps {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; collabCursor?: string }>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -55,7 +29,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   const user = session.user;
-  let currentUserId = Number((user as any).id);
+  let currentUserId = Number(user.id);
 
   // Fallback resolving if session user ID is missing
   if ((isNaN(currentUserId) || !currentUserId) && session.user?.email) {
@@ -69,20 +43,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const params = await searchParams;
   const activeTab = params.tab || "home";
 
-  /* ── TAB-CONDITIONAL CACHED FETCHING ── */
-  let tabData = getValidCache(currentUserId, activeTab);
+  const needsCollaborations = activeTab === "home" || activeTab === "collaborations";
+  const needsEvents = activeTab === "home" || activeTab === "events" || activeTab === "hackathons";
+  const needsBookmarks = activeTab === "home" || activeTab === "bookmarks";
+  const needsProjects = activeTab === "home" || activeTab === "projects";
+  const needsApplications = activeTab === "home" || activeTab === "applications";
+  const needsInvitations = activeTab === "home" || activeTab === "invitations";
+  const needsRecommended = activeTab === "home";
 
-  if (!tabData) {
-    // Determine which tab-specific queries to execute
-    const needsCollaborations = activeTab === "home" || activeTab === "collaborations";
-    const needsEvents = activeTab === "home" || activeTab === "events" || activeTab === "hackathons";
-    const needsBookmarks = activeTab === "home" || activeTab === "bookmarks";
-    const needsProjects = activeTab === "home" || activeTab === "projects";
-    const needsApplications = activeTab === "home" || activeTab === "applications";
-    const needsInvitations = activeTab === "home" || activeTab === "invitations";
-    const needsRecommended = activeTab === "home";
+  const collabCursor = params.collabCursor ? Number(params.collabCursor) : undefined;
 
-    tabData = await safeQuery(
+  const tabData = await safeQuery(
       () =>
         Promise.all([
           // 0: Unread notifications count
@@ -147,10 +118,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 orderBy: { createdAt: "desc" },
               })
             : Promise.resolve([]),
-          // 5: Collaborations directory (if needed)
+          // 5: Collaborations directory (cursor-based pagination)
           needsCollaborations
             ? prisma.user.findMany({
-                take: 200,
+                take: 49,
+                ...(collabCursor ? { cursor: { id: collabCursor }, skip: 1 } : {}),
                 select: {
                   id: true,
                   name: true,
@@ -237,8 +209,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         ]),
       [0, null, [], [], [], [], [], [], [], [], []]
     );
-    setDashboardCache(currentUserId, activeTab, tabData);
-  }
 
   const [
     unreadNotificationsCount,
@@ -255,35 +225,44 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   ] = tabData;
 
   const events = hackathons; // destructuring alias
+
+  // Cursor-based pagination for collaborations
+  const collabHasMore = Array.isArray(collaborations) && collaborations.length > 48;
+  const collabNextCursor = Array.isArray(collaborations) && collaborations.length > 0
+    ? collaborations[Math.min(47, collaborations.length - 1)]?.id
+    : undefined;
+  const people = Array.isArray(collaborations) ? collaborations.slice(0, 48) : collaborations;
+
   const inboxNotifications = (notifications || []).slice(0, 10); // Slice top 10 for dropdown navbar
 
   // Derived fast sidebars
-  const myProjectsSidebar = (projects || []).slice(0, 5).map((p: any) => ({ id: p.id, title: p.title, status: p.status }));
+  const userProjects = (projects || []).filter((p: any) => p.ownerId === currentUserId);
+  const myProjectsSidebar = userProjects.slice(0, 5).map((p: any) => ({ id: p.id, title: p.title, status: p.status }));
   const myApplicationsSidebar = (applications || []).slice(0, 5).map((a: any) => ({ id: a.id, status: a.status, project: { id: a.project.id, title: a.project.title } }));
-  const myBookmarksSidebar = (bookmarks || []).slice(0, 5).map((b: any) => ({ project: { id: b.project.id, title: b.project.title } }));
   const recentNotifications = (notifications || []).slice(0, 5);
 
   return (
     <AppShell user={user} unreadNotifications={unreadNotificationsCount} inboxNotifications={inboxNotifications}>
-      <DashboardViewClient
-        activeTab={activeTab}
-        currentUser={user}
-        projects={projects}
-        applications={applications}
-        notifications={notifications}
-        profileData={profileData}
-        collaborations={collaborations}
-        bookmarks={bookmarks}
-        events={events}
-        hackathons={events}
-        recommendedProjects={recommendedProjects}
-        receivedInvitations={receivedInvitations}
-        sentInvitations={sentInvitations}
-        myProjectsSidebar={myProjectsSidebar}
-        myApplicationsSidebar={myApplicationsSidebar}
-        myBookmarksSidebar={myBookmarksSidebar}
-        recentNotifications={recentNotifications}
-      />
+<DashboardViewClient
+         activeTab={activeTab}
+         currentUser={user}
+         projects={projects}
+         applications={applications}
+         notifications={notifications}
+         profileData={profileData}
+         collaborations={people}
+          collabNextCursor={collabNextCursor}
+          collabHasMore={collabHasMore}
+          bookmarks={bookmarks}
+          events={events}
+          hackathons={events}
+          recommendedProjects={recommendedProjects}
+          receivedInvitations={receivedInvitations}
+          sentInvitations={sentInvitations}
+          myProjectsSidebar={myProjectsSidebar}
+          myApplicationsSidebar={myApplicationsSidebar}
+          recentNotifications={recentNotifications}
+       />
     </AppShell>
   );
 }
