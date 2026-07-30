@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -49,15 +49,6 @@ export default function CollaborationsFinderTab({
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [rawPage, setRawPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    setIsDesktop(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
   const [extraPeople, setExtraPeople] = useState<any[]>([]);
   const [extraNextCursor, setExtraNextCursor] = useState<number | null>(collabNextCursor ?? null);
   const [extraHasMore, setExtraHasMore] = useState(collabHasMore);
@@ -115,7 +106,6 @@ export default function CollaborationsFinderTab({
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const page = Math.min(Math.max(1, rawPage), totalPages);
   const paginatedPeople = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const displayPeople = isDesktop ? paginatedPeople.slice(0, 8) : paginatedPeople;
 
   const changePage = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
@@ -315,9 +305,9 @@ export default function CollaborationsFinderTab({
         </div>
       )}
 
-      {displayPeople.length > 0 ? (
+      {paginatedPeople.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4.5">
-          {displayPeople.map((u: any) => {
+          {paginatedPeople.map((u: any) => {
             const open = isOpenToWork(u);
             const displayName = u.name || u.email?.split("@")[0] || "Student";
             const initial = (displayName[0] || "?").toUpperCase();
@@ -509,7 +499,7 @@ export default function CollaborationsFinderTab({
         </div>
       )}
 
-      {!isDesktop && extraHasMore && page === totalPages && (
+      {extraHasMore && page === totalPages && (
         <div className="flex justify-center pt-4">
           <button
             type="button"

@@ -26,13 +26,13 @@ interface ProjectCardProps {
 function statusBadge(status: string) {
   switch (status) {
     case "OPEN":
-      return <span className="badge badge-green" title="Open: Actively seeking collaborators & team members">Open</span>;
+      return <span className="badge badge-green">Open</span>;
     case "FULL":
-      return <span className="badge badge-yellow" title="Full: Team positions currently filled">Full</span>;
+      return <span className="badge badge-yellow">Full</span>;
     case "CLOSED":
-      return <span className="badge badge-red" title="Closed: Recruitment ended by project owner">Closed</span>;
+      return <span className="badge badge-red">Closed</span>;
     case "DONE":
-      return <span className="badge badge-green" title="Done: Project successfully completed">✓ Done</span>;
+      return <span className="badge badge-green">✓ Done</span>;
     default:
       return <span className="badge badge-gray">{status}</span>;
   }
@@ -63,7 +63,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       </div>
 
       {/* Title */}
-      <h3 className="text-[14px] font-semibold text-foreground leading-snug mb-2 line-clamp-2 break-words min-w-0 min-h-[2.4rem] flex items-center">
+      <h3 className="text-[14px] font-semibold text-foreground leading-snug mb-2 line-clamp-1 break-words min-w-0">
         <Link href={`/projects/${project.id}`} className="hover:underline underline-offset-2">
           {project.title}
         </Link>
@@ -81,16 +81,12 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             <span
               key={skill.id}
               className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-secondary text-muted-foreground max-w-[120px] truncate"
-              title={skill.name}
             >
               {skill.name}
             </span>
           ))}
           {project.skills.length > 4 && (
-            <span
-              className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-secondary text-muted-foreground cursor-help"
-              title={project.skills.slice(4).map((s) => s.name).join(", ")}
-            >
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-secondary text-muted-foreground">
               +{project.skills.length - 4}
             </span>
           )}
