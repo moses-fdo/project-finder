@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageSquare, Check, X, Clock, Settings, Bookmark, Copy, CheckCheck, Pencil } from "lucide-react";
+import { MessageSquare, Check, X, Clock, Settings, Copy, CheckCheck, Pencil } from "lucide-react";
 import EditProjectModal from "@/components/EditProjectModal";
 import { useAbuseCheck } from "@/components/moderation/useAbuseCheck";
 import AbuseWarningPopup from "@/components/moderation/AbuseWarningPopup";
@@ -13,7 +13,6 @@ interface ProjectDetailClientProps {
   hasApplied: boolean;
   applicationStatus?: string;
   projectStatus: string;
-  initialBookmarked: boolean;
   ownerEmail: string;
   projectData?: {
     id: number;
@@ -30,7 +29,6 @@ export default function ProjectDetailClient({
   hasApplied,
   applicationStatus,
   projectStatus,
-  initialBookmarked,
   ownerEmail,
   projectData,
 }: ProjectDetailClientProps) {
@@ -40,9 +38,6 @@ export default function ProjectDetailClient({
   const [submitting, setSubmitting]   = useState(false);
   const [applyError, setApplyError]   = useState("");
 
-  const [bookmarked, setBookmarked]   = useState(initialBookmarked);
-  const [bmLoading, setBmLoading]     = useState(false);
-
   const [copied, setCopied]           = useState(false);
 
   // Abuse moderation state
@@ -51,22 +46,6 @@ export default function ProjectDetailClient({
   const [flaggedWords, setFlaggedWords] = useState<string[]>([]);
 
   const router = useRouter();
-
-  /* ── Bookmark toggle ─────────────────────────────────────── */
-  const toggleBookmark = async () => {
-    if (bmLoading) return;
-    setBmLoading(true);
-    try {
-      const method = bookmarked ? "DELETE" : "POST";
-      const res = await fetch(`/api/projects/${projectId}/bookmark`, { method });
-      if (res.ok) {
-        setBookmarked(!bookmarked);
-        router.refresh(); // refresh sidebar bookmark panel
-      }
-    } finally {
-      setBmLoading(false);
-    }
-  };
 
   /* ── Copy email ──────────────────────────────────────────── */
   const copyEmail = async () => {
@@ -239,23 +218,6 @@ export default function ProjectDetailClient({
             className="btn-primary w-full justify-center text-[13px] py-2"
           >
             Apply to join
-          </button>
-
-          {/* Bookmark toggle */}
-          <button
-            type="button"
-            onClick={toggleBookmark}
-            disabled={bmLoading}
-            className={`btn-secondary w-full justify-center text-[13px] py-2 gap-1.5 transition-all ${
-              bookmarked ? "text-foreground border-foreground/30" : ""
-            }`}
-          >
-            <Bookmark
-              size={14}
-              strokeWidth={1.75}
-              className={bookmarked ? "fill-foreground" : ""}
-            />
-            {bookmarked ? "Bookmarked" : "Save project"}
           </button>
 
           {/* Contact */}

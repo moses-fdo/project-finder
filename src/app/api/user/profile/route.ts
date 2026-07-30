@@ -113,12 +113,8 @@ export async function DELETE() {
 
     // Execute sequential deletes instead of $transaction for Neon HTTP mode compatibility
     await prisma.application.deleteMany({ where: { userId: currentUserId } });
-    await prisma.bookmark.deleteMany({ where: { userId: currentUserId } });
     await prisma.notification.deleteMany({ where: { userId: currentUserId } });
     await prisma.application.deleteMany({
-      where: { project: { ownerId: currentUserId } },
-    });
-    await prisma.bookmark.deleteMany({
       where: { project: { ownerId: currentUserId } },
     });
     await prisma.project.deleteMany({ where: { ownerId: currentUserId } });

@@ -666,7 +666,7 @@ export default function AdminClient({
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                   placeholder="Search users…"
-                  className="forge-input pl-8 text-[12px]"
+                  className="forge-input pl-9 text-[12px]"
                 />
               </div>
             </div>
@@ -753,7 +753,7 @@ export default function AdminClient({
                   value={projSearch}
                   onChange={(e) => setProjSearch(e.target.value)}
                   placeholder="Search projects…"
-                  className="forge-input pl-8 text-[12px]"
+                  className="forge-input pl-9 text-[12px]"
                 />
               </div>
             </div>
@@ -1081,7 +1081,7 @@ export default function AdminClient({
                   value={allowedSearch}
                   onChange={(e) => setAllowedSearch(e.target.value)}
                   placeholder="Search allowed emails…"
-                  className="forge-input pl-8 text-[12px]"
+                  className="forge-input pl-9 text-[12px]"
                 />
               </div>
             </div>
@@ -1145,7 +1145,7 @@ export default function AdminClient({
                   value={idSearch}
                   onChange={(e) => setIdSearch(e.target.value)}
                   placeholder="Search student, email, college…"
-                  className="forge-input pl-8 text-[12px]"
+                  className="forge-input pl-9 text-[12px]"
                 />
               </div>
             </div>
@@ -1274,7 +1274,7 @@ export default function AdminClient({
                   value={abuseSearch}
                   onChange={(e) => setAbuseSearch(e.target.value)}
                   placeholder="Search user, email, reason…"
-                  className="forge-input pl-8 text-[12px]"
+                  className="forge-input pl-9 text-[12px]"
                 />
               </div>
             </div>

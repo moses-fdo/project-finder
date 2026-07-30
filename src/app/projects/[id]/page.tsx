@@ -28,7 +28,7 @@ export default async function ProjectPage({ params }: PageProps) {
 
   const currentUserId = Number((session.user as any).id);
 
-  const [project, application, existingBookmark, unreadNotificationsCount] = await Promise.all([
+  const [project, application, unreadNotificationsCount] = await Promise.all([
     prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -41,9 +41,6 @@ export default async function ProjectPage({ params }: PageProps) {
     prisma.application.findUnique({
       where: { projectId_userId: { projectId, userId: currentUserId } },
     }),
-    prisma.bookmark.findUnique({
-      where: { userId_projectId: { userId: currentUserId, projectId } },
-    }),
     prisma.notification.count({
       where: { userId: currentUserId, read: false },
     }),
@@ -54,7 +51,6 @@ export default async function ProjectPage({ params }: PageProps) {
   const isOwner = currentUserId === project.ownerId;
   const hasApplied = !isOwner && !!application;
   const applicationStatus = !isOwner && application ? application.status : undefined;
-  const initialBookmarked = !!existingBookmark;
 
   const iconInfo = getProjectIcon(project.title);
   const Icon = iconInfo.icon;
@@ -98,7 +94,6 @@ export default async function ProjectPage({ params }: PageProps) {
               hasApplied={hasApplied}
               applicationStatus={applicationStatus}
               projectStatus={project.status}
-              initialBookmarked={initialBookmarked}
               ownerEmail={project.owner.email}
               projectData={project}
             />
@@ -113,13 +108,6 @@ export default async function ProjectPage({ params }: PageProps) {
                 <div className={`h-14 w-14 rounded-xl ${iconInfo.bg} border border-border flex items-center justify-center shrink-0`}>
                   <Icon size={26} className={iconInfo.text} />
                 </div>
-
-                {/* Bookmark button lives here in main column for non-owners */}
-                {!isOwner && (
-                  <span className="text-[10px] text-muted-foreground font-medium mt-1 select-none">
-                    {/* Placeholder — bookmark toggled from sidebar widget */}
-                  </span>
-                )}
               </div>
 
               <div>
@@ -209,7 +197,6 @@ export default async function ProjectPage({ params }: PageProps) {
               hasApplied={hasApplied}
               applicationStatus={applicationStatus}
               projectStatus={project.status}
-              initialBookmarked={initialBookmarked}
               ownerEmail={project.owner.email}
               projectData={project}
             />

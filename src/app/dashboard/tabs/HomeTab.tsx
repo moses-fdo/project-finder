@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
-  Folder, Bookmark, Send, Users, Trophy, Plus, Search, X, CheckCircle2,
-  Calendar, MapPin, Globe, Sparkles, LucideIcon, Sprout, Brain, Dumbbell,
+  Folder, Send, Users, Trophy, Plus, Search, X, Clock, CheckCircle2,
+  Calendar, MapPin, Globe, Sparkles, LucideIcon,
 } from "lucide-react";
 import { getNotificationLink } from "@/lib/notifications";
 
@@ -19,8 +19,6 @@ interface HomeTabProps {
   myProjectsSidebar: any[];
   myApplicationsSidebar: any[];
   recentNotifications: any[];
-  bookmarkedIds: Set<number>;
-  toggleBookmark: (id: number) => void;
   getProjectIcon: (title: string) => { icon: LucideIcon; bg: string; text: string };
   nowMs: number;
   departments: string[];
@@ -37,8 +35,6 @@ export default function HomeTab({
   myProjectsSidebar,
   myApplicationsSidebar,
   recentNotifications,
-  bookmarkedIds,
-  toggleBookmark,
   getProjectIcon,
   nowMs,
   departments,
@@ -71,9 +67,52 @@ export default function HomeTab({
   });
   const topEvents = (activeEventsList.length > 0 ? activeEventsList : eventsList).slice(0, 4);
 
-  const userProjects = projects.filter((p: any) => p.ownerId === currentUser?.id);
-  const userApplications = applications || [];
-  const activityNotifs = notifications || [];
+  const userProjects = projects.filter((p: any) => p.ownerId === Number(currentUser?.id));
+  const userApplications = useMemo(() => applications || [], [applications]);
+
+  const activityItems = useMemo(() => {
+    const items: {
+      id: string; message: string; link: string; createdAt: Date; dot: string;
+    }[] = [];
+
+    for (const p of userProjects) {
+      items.push({
+        id: `proj-${p.id}`,
+        message: `Created ${p.title}`,
+        link: `/projects/${p.id}`,
+        createdAt: new Date(p.createdAt),
+        dot: "bg-blue-500",
+      });
+    }
+
+    for (const a of userApplications) {
+      const msg = a.status === "ACCEPTED"
+        ? `Joined ${a.project?.title || "a project"}`
+        : a.status === "REJECTED"
+        ? `Application to ${a.project?.title || "a project"} declined`
+        : `Applied to ${a.project?.title || "a project"}`;
+      items.push({
+        id: `app-${a.id}`,
+        message: msg,
+        link: `/projects/${a.project?.id || a.projectId}`,
+        createdAt: new Date(a.createdAt),
+        dot: a.status === "ACCEPTED" ? "bg-emerald-500" : a.status === "REJECTED" ? "bg-rose-500" : "bg-amber-500",
+      });
+    }
+
+    for (const n of notifications || []) {
+      items.push({
+        id: `notif-${n.id}`,
+        message: n.message,
+        link: getNotificationLink(n),
+        createdAt: new Date(n.createdAt),
+        dot: n.read ? "bg-textMuted/30" : "bg-primary",
+      });
+    }
+
+    items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return items.slice(0, 10);
+  }, [userProjects, userApplications, notifications]);
 
   const getSkillMatchScore = (userSkillsList: any[], projSkillsList: any[]) => {
     if (!projSkillsList || projSkillsList.length === 0) return { matchingCount: 0, totalRequired: 0, matchLabel: "" };
@@ -173,7 +212,7 @@ export default function HomeTab({
             <div className="h-7 w-7 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
               <Folder size={14} />
             </div>
-            <span className="text-[15px] font-extrabold text-textPrimary leading-none">{projects.length}</span>
+            <span className="text-[15px] font-extrabold text-textPrimary leading-none">{userProjects.length}</span>
             <span className="text-[9px] text-textMuted font-medium truncate w-full">My projects</span>
           </Link>
 
@@ -187,7 +226,7 @@ export default function HomeTab({
 
           <Link href="/dashboard?tab=applications" className="card p-2.5 flex flex-col items-center justify-center text-center space-y-1 hover:bg-card-hover transition-all">
             <div className="h-7 w-7 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-              <Bookmark size={14} />
+              <Clock size={14} />
             </div>
             <span className="text-[15px] font-extrabold text-textPrimary leading-none">{applications.filter((a: any) => a.status === "PENDING").length}</span>
             <span className="text-[9px] text-textMuted font-medium truncate w-full">Pending</span>
@@ -216,7 +255,6 @@ export default function HomeTab({
               recommendedProjects.slice(0, 3).map((project) => {
                 const iconInfo = getProjectIcon(project.title);
                 const Icon = iconInfo.icon;
-                const isBookmarked = bookmarkedIds.has(project.id);
                 return (
                   <article key={project.id} className="card p-3.5 flex items-start gap-3 hover:bg-card-hover transition-all">
                     <div className={`h-10 w-10 rounded-xl ${iconInfo.bg} flex items-center justify-center shrink-0 mt-0.5`}>
@@ -231,12 +269,6 @@ export default function HomeTab({
                           {project.status === "OPEN" && <span className="badge badge-green text-[9px] font-bold">OPEN</span>}
                           {project.status === "FULL" && <span className="badge badge-yellow text-[9px] font-bold">FULL</span>}
                           {project.status === "CLOSED" && <span className="badge badge-red text-[9px] font-bold">CLOSED</span>}
-                          <button
-                            onClick={() => toggleBookmark(project.id)}
-                            className={`p-0.5 rounded transition-colors ${isBookmarked ? "text-textPrimary" : "text-textMuted/40 hover:text-textMuted"}`}
-                          >
-                            <Bookmark size={12} className={isBookmarked ? "fill-textPrimary" : ""} />
-                          </button>
                         </div>
                       </div>
                       <p className="text-[11px] text-textMuted line-clamp-2 leading-relaxed mb-2">
@@ -325,17 +357,17 @@ export default function HomeTab({
           </div>
 
           <div className="card divide-y divide-border/60 max-h-[300px] overflow-y-auto">
-            {recentNotifications && recentNotifications.length > 0 ? (
-              recentNotifications.slice(0, 4).map((notif) => (
+            {activityItems.length > 0 ? (
+              activityItems.slice(0, 5).map((item) => (
                 <Link
-                  key={notif.id}
-                  href={getNotificationLink(notif)}
+                  key={item.id}
+                  href={item.link}
                   className="flex items-center gap-3 px-3.5 py-3 hover:bg-secondary/30 transition-colors"
                 >
-                  <span className={`h-2 w-2 rounded-full shrink-0 ${notif.read ? "bg-textMuted/30" : "bg-primary"}`} />
-                  <p className="text-[11px] text-textPrimary flex-1 truncate leading-snug">{notif.message}</p>
+                  <span className={`h-2 w-2 rounded-full shrink-0 ${item.dot}`} />
+                  <p className="text-[11px] text-textPrimary flex-1 truncate leading-snug">{item.message}</p>
                   <span className="text-[9.5px] text-textMuted shrink-0 font-medium ml-1">
-                    {new Date(notif.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    {item.createdAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                   </span>
                 </Link>
               ))
@@ -739,21 +771,21 @@ export default function HomeTab({
               </Link>
             </div>
 
-            {activityNotifs.length > 0 ? (
+            {activityItems.length > 0 ? (
               <div className="space-y-1 divide-y divide-border/30">
-                {activityNotifs.slice(0, 4).map((notif: any) => (
+                {activityItems.slice(0, 5).map((item) => (
                   <Link
-                    key={notif.id}
-                    href={getNotificationLink(notif)}
+                    key={item.id}
+                    href={item.link}
                     className="flex items-start gap-2 py-2 first:pt-0 last:pb-0 hover:bg-secondary/20 px-1 rounded-lg transition-colors group"
                   >
-                    <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${notif.read ? "bg-textMuted/30" : "bg-primary"}`} />
+                    <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${item.dot}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] text-textPrimary leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                        {notif.message}
+                        {item.message}
                       </p>
                       <p className="text-[9.5px] text-textMuted mt-0.5">
-                        {new Date(notif.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        {item.createdAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                       </p>
                     </div>
                   </Link>
