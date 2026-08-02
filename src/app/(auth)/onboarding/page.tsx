@@ -5,17 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ColabroLogo from "@/components/ColabroLogo";
 import { User, GraduationCap, Calendar, ArrowRight } from "lucide-react";
-
-const departments = [
-  "Computer Science",
-  "Information Technology",
-  "Electronics & Communication",
-  "Electrical & Electronics",
-  "Mechanical Engineering",
-  "Civil Engineering",
-  "Biotechnology",
-  "Food Processing Technology",
-];
+import { departments } from "@/lib/projects";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -74,11 +64,20 @@ export default function OnboardingPage() {
           </Link>
         </div>
 
-        <div className="card p-7">
-          <h1 className="text-[18px] font-semibold text-foreground mb-1">Complete your profile</h1>
-          <p className="text-[12px] text-muted-foreground mb-6">
-            Tell us your department and year to personalize your experience.
-          </p>
+        <div className="card p-7 sm:p-8 space-y-5">
+          <div className="text-center space-y-3">
+            <div className="flex justify-center">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <GraduationCap size={24} strokeWidth={1.75} className="text-primary" />
+              </div>
+            </div>
+            <div>
+              <h1 className="type-page-title text-[22px] mb-1.5">Complete your profile</h1>
+              <p className="text-[13px] text-muted-foreground leading-relaxed">
+                Tell us your department and year to personalize your experience.
+              </p>
+            </div>
+          </div>
 
           {error && (
             <div className="p-3 mb-5 text-[12px] rounded-md bg-destructive/10 text-destructive border border-destructive/20">
@@ -117,7 +116,7 @@ export default function OnboardingPage() {
                   required
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="forge-input pl-9 cursor-pointer"
+                  className="forge-input pl-9 pr-10 cursor-pointer forge-select"
                 >
                   <option value="">Select your department…</option>
                   {departments.map((d) => (
@@ -139,7 +138,7 @@ export default function OnboardingPage() {
                   required
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
-                  className="forge-input pl-9 cursor-pointer"
+                  className="forge-input pl-9 pr-10 cursor-pointer forge-select"
                 >
                   <option value="">Select year…</option>
                   <option value="1">1st Year</option>

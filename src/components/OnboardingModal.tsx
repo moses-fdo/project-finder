@@ -2,18 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
-
-const departments = [
-  "Computer Science",
-  "Information Technology",
-  "Electronics & Communication",
-  "Electrical & Electronics",
-  "Mechanical Engineering",
-  "Civil Engineering",
-  "Biotechnology",
-  "Food Processing Technology",
-];
+import { CheckCircle2, Sparkles } from "lucide-react";
+import { departments } from "@/lib/projects";
 
 interface OnboardingModalProps {
   user: any;
@@ -109,8 +99,8 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
     <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="card w-full max-w-[420px] p-7 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-border bg-card">
         <div className="flex items-center gap-3 mb-5">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-semibold text-[18px]">
-            👋
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+            <Sparkles size={18} strokeWidth={1.75} />
           </div>
           <div>
             <h2 className="text-[17px] font-bold text-foreground">Welcome to Colabro!</h2>

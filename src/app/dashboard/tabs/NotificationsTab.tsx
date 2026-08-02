@@ -20,8 +20,8 @@ export default function NotificationsTab({
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-[17px] font-semibold text-textPrimary tracking-tight">Notifications</h2>
-          <p className="text-[12px] text-textMuted mt-0.5">Application status updates and alerts.</p>
+          <h2 className="type-section-title">Notifications</h2>
+          <p className="text-[12px] text-muted-foreground mt-0.5">Application status updates and alerts.</p>
         </div>
         {localNotifications.some((n) => !n.read) && (
           <button
@@ -52,10 +52,10 @@ export default function NotificationsTab({
                     }`}
                     aria-hidden="true"
                   />
-                  <p className="text-[13px] text-textPrimary leading-relaxed">{notif.message}</p>
+                  <p className="text-[13px] text-foreground leading-relaxed">{notif.message}</p>
                 </div>
-                <span className="text-[11px] text-textMuted whitespace-nowrap shrink-0 pt-0.5">
-                  {new Date(notif.createdAt).toLocaleDateString()}
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0 pt-0.5">
+                  {new Date(notif.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </span>
               </div>
             </div>
@@ -63,7 +63,7 @@ export default function NotificationsTab({
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <p className="text-[13px] text-textMuted">You&apos;re all caught up.</p>
+          <p className="text-[13px] text-muted-foreground">You&apos;re all caught up.</p>
         </div>
       )}
     </div>

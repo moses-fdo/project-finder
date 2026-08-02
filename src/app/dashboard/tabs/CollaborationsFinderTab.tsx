@@ -1,20 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Search,
-  X,
-  Users,
-  Folder,
-  Send,
-  CheckCheck,
-  MoreVertical,
-  SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
+  Search, X, Users, Send, CheckCheck, SlidersHorizontal,
+  ChevronLeft, ChevronRight, Folder, Star, AlertCircle,
+  ArrowUpDown,
 } from "lucide-react";
+import { getDeveloperReputation } from "@/lib/reputation/utils";
 
 interface CollaborationsFinderTabProps {
   people: any[];
@@ -33,6 +27,40 @@ interface CollaborationsFinderTabProps {
   onInviteUser?: (user: any) => void;
 }
 
+type SortKey = "recommended" | "rating" | "newest";
+
+/* ─── Tier helpers ──────────────────────────────────────────── */
+function tierColor(tier: string) {
+  switch (tier?.toLowerCase()) {
+    case "elite":    return { dot: "#a855f7", bg: "rgba(168,85,247,.12)", text: "#a855f7", border: "rgba(168,85,247,.3)" };
+    case "excellent":return { dot: "#10b981", bg: "rgba(16,185,129,.12)", text: "#10b981", border: "rgba(16,185,129,.3)" };
+    case "strong":   return { dot: "#3b82f6", bg: "rgba(59,130,246,.12)", text: "#3b82f6", border: "rgba(59,130,246,.3)" };
+    case "growing":  return { dot: "#f59e0b", bg: "rgba(245,158,11,.12)",  text: "#f59e0b", border: "rgba(245,158,11,.3)" };
+    default:         return { dot: "#6b7280", bg: "rgba(107,114,128,.1)",  text: "#6b7280", border: "rgba(107,114,128,.2)" };
+  }
+}
+
+/* ─── Star strip ─────────────────────────────────────────── */
+function StarStrip({ stars }: { stars: number }) {
+  return (
+    <span className="collab-stars" aria-label={`${stars} stars`}>
+      {[1, 2, 3, 4, 5].map((n) => {
+        const fill = Math.min(1, Math.max(0, stars - (n - 1)));
+        return (
+          <span key={n} className="collab-star-wrap">
+            <Star size={11} className="collab-star-empty" />
+            {fill > 0 && (
+              <span className="collab-star-fill" style={{ width: `${fill * 100}%` }}>
+                <Star size={11} className="collab-star-full" />
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 export default function CollaborationsFinderTab({
   people: initialPeople,
   currentUser,
@@ -46,471 +74,570 @@ export default function CollaborationsFinderTab({
   onInviteUser,
 }: CollaborationsFinderTabProps) {
   const topRef = useRef<HTMLDivElement>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-  const [rawPage, setRawPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
-  const [extraPeople, setExtraPeople] = useState<any[]>([]);
-  const [extraNextCursor, setExtraNextCursor] = useState<number | null>(collabNextCursor ?? null);
-  const [extraHasMore, setExtraHasMore] = useState(collabHasMore);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [copiedId, setCopiedId]     = useState<number | null>(null);
+  const [sortKey, setSortKey]       = useState<SortKey>("recommended");
+  const [rawPage, setRawPage]       = useState(1);
+  const PAGE_SIZE                   = 15;
 
-  const people = [...initialPeople, ...extraPeople];
+  const [extraPeople, setExtraPeople]         = useState<any[]>([]);
+  const [extraNextCursor, setExtraNextCursor] = useState<number | null>(collabNextCursor ?? null);
+  const [extraHasMore, setExtraHasMore]       = useState(collabHasMore);
+  const [loadingMore, setLoadingMore]         = useState(false);
+
+  const isOpen = (u: any) => u.availability !== "BUSY";
+
+  /* ── merged + de-duped people list ─────────────────────── */
+  const allPeople = useMemo(() => {
+    const raw = [...initialPeople, ...extraPeople];
+    if (currentUser?.id) {
+      // Normalize to String so session id "4" === DB id 4
+      const curIdStr = String(currentUser.id);
+      const idx = raw.findIndex((u: any) => String(u.id) === curIdStr);
+      if (idx !== -1) raw[idx] = { ...raw[idx], ...currentUser };
+      else raw.unshift(currentUser);
+    }
+    // De-dup by string id to handle mixed string/number id types
+    const seen = new Set<string>();
+    return raw.filter((u: any) => {
+      const key = String(u.id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [initialPeople, extraPeople, currentUser]);
+
+  const allDepts = useMemo(() =>
+    Array.from(new Set(allPeople.map((u: any) => u.department as string).filter(Boolean))).sort(),
+  [allPeople]);
+
+  const allSkills = useMemo(() =>
+    Array.from(new Set(allPeople.flatMap((u: any) =>
+      (u.skills || []).map((s: any) => (typeof s === "string" ? s : s?.name) as string).filter(Boolean)
+    ))).sort(),
+  [allPeople]);
+
+  /* ── filter ─────────────────────────────────────────────── */
+  const filtered = useMemo(() => {
+    const q = collabSearch.trim().toLowerCase();
+    return allPeople.filter((u: any) => {
+      if (q && !(u.name || "").toLowerCase().includes(q) &&
+               !(u.email || "").toLowerCase().includes(q) &&
+               !(u.department || "").toLowerCase().includes(q) &&
+               !(u.bio ?? "").toLowerCase().includes(q) &&
+               !(u.skills || []).some((s: any) => (s?.name || "").toLowerCase().includes(q))) return false;
+      if (collabDept && u.department !== collabDept) return false;
+      if (collabSkill && !(u.skills || []).some((s: any) => s?.name === collabSkill)) return false;
+      if (collabStatus === "open" && !isOpen(u)) return false;
+      if (collabStatus === "busy" &&  isOpen(u)) return false;
+      return true;
+    });
+  }, [allPeople, collabSearch, collabDept, collabSkill, collabStatus]);
+
+  /* ── sort ───────────────────────────────────────────────── */
+  const sorted = useMemo(() => {
+    const withRep = filtered.map((u: any) => ({ u, rep: getDeveloperReputation(u) }));
+    if (sortKey === "rating") {
+      withRep.sort((a, b) => {
+        if (a.rep.githubConnected !== b.rep.githubConnected) return a.rep.githubConnected ? -1 : 1;
+        return (b.rep.score ?? 0) - (a.rep.score ?? 0);
+      });
+    } else if (sortKey === "recommended") {
+      withRep.sort((a, b) => {
+        if (a.rep.githubConnected !== b.rep.githubConnected) return a.rep.githubConnected ? -1 : 1;
+        return (b.rep.score ?? 0) - (a.rep.score ?? 0);
+      });
+    }
+    // "newest" keeps server order
+    return withRep;
+  }, [filtered, sortKey]);
+
+  /* ── pagination ─────────────────────────────────────────── */
+  const totalPages   = Math.ceil(sorted.length / PAGE_SIZE) || 1;
+  const page         = Math.min(Math.max(1, rawPage), totalPages);
+  const paginated    = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const changePage = (n: number) => {
+    if (n < 1 || n > totalPages) return;
+    setRawPage(n);
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const loadMore = async () => {
-    const cursor = extraNextCursor;
-    if (!cursor || loadingMore) return;
+    if (!extraNextCursor || loadingMore) return;
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/users?cursor=${cursor}`);
-      if (!res.ok) throw new Error("Failed to load more");
+      const res  = await fetch(`/api/users?cursor=${extraNextCursor}`);
+      if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       setExtraPeople(prev => [...prev, ...data.users]);
       setExtraNextCursor(data.nextCursor);
       setExtraHasMore(data.hasMore);
-    } catch (e) {
-      console.error("Failed to load more collaborators:", e);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  const isOpenToWork = (u: any) => {
-    return u.availability !== "BUSY";
-  };
-
-  const allDepts = Array.from(
-    new Set(people.map((u: any) => u.department as string).filter(Boolean))
-  ).sort();
-
-  const allSkills = Array.from(
-    new Set(people.flatMap((u: any) => (u.skills || []).map((s: any) => s?.name as string).filter(Boolean)))
-  ).sort();
-
-  const filtered = people.filter((u: any) => {
-    const q = collabSearch.trim().toLowerCase();
-    if (
-      q &&
-      !(u.name || "").toLowerCase().includes(q) &&
-      !(u.email || "").toLowerCase().includes(q) &&
-      !(u.department || "").toLowerCase().includes(q) &&
-      !(u.bio ?? "").toLowerCase().includes(q) &&
-      !(u.skills || []).some((s: any) => (s?.name || "").toLowerCase().includes(q))
-    ) return false;
-    if (collabDept && u.department !== collabDept) return false;
-    if (collabSkill && !(u.skills || []).some((s: any) => s?.name === collabSkill)) return false;
-    if (collabStatus === "open" && !isOpenToWork(u)) return false;
-    if (collabStatus === "busy" &&  isOpenToWork(u)) return false;
-    return true;
-  });
-
-  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
-  const page = Math.min(Math.max(1, rawPage), totalPages);
-  const paginatedPeople = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  const changePage = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return;
-    setRawPage(newPage);
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) { console.error(e); }
+    finally { setLoadingMore(false); }
   };
 
   const copyEmail = async (userId: number, email: string) => {
-    try {
-      await navigator.clipboard.writeText(email);
-    } catch {
+    try { await navigator.clipboard.writeText(email); } catch {
       const el = document.createElement("textarea");
-      el.value = email;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand("copy");
-      document.body.removeChild(el);
+      el.value = email; document.body.appendChild(el); el.select();
+      document.execCommand("copy"); document.body.removeChild(el);
     }
     setCopiedId(userId);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const selectBg = {
-    backgroundImage:
-      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-    backgroundRepeat: "no-repeat" as const,
-    backgroundPosition: "right 8px center",
-  };
+  const activeFilters = [
+    collabDept   && { label: `Dept: ${collabDept}`,               clear: () => setCollabDept("") },
+    collabSkill  && { label: `Skill: ${collabSkill}`,             clear: () => setCollabSkill("") },
+    collabStatus !== "all" && { label: collabStatus === "open" ? "Available" : "Busy", clear: () => setCollabStatus("all") },
+    collabSearch && { label: `"${collabSearch}"`,                 clear: () => setCollabSearch("") },
+  ].filter(Boolean) as { label: string; clear: () => void }[];
 
+  /* ─────────────────────── RENDER ────────────────────────── */
   return (
-    <div ref={topRef} className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl sm:text-2xl font-bold text-textPrimary tracking-tight flex items-center gap-2">
-              Find collaborators
-              <Users size={20} className="text-indigo-400" />
-            </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-secondary text-textMuted text-xs font-semibold border border-border">
-              {filtered.length}
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-textMuted mt-1">
-            Connect with verified students across campus and build project teams.
-          </p>
-        </div>
-      </div>
+    <>
+      {/* Scoped styles */}
+      <style>{`
+        .collab-root { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+        @media (max-width: 768px) { .collab-root { grid-template-columns: 1fr; } }
 
-      <div className="relative block sm:hidden">
-        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none" />
-        <input
-          type="text"
-          value={collabSearch}
-          onChange={(e) => setCollabSearch(e.target.value)}
-          placeholder="Search by name, skill, department..."
-          className="forge-input pl-9 pr-9 py-2.5 w-full bg-card rounded-xl text-xs"
-        />
-        {collabSearch && (
-          <button
-            onClick={() => setCollabSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-textPrimary"
-          >
-            <X size={13} />
-          </button>
-        )}
-      </div>
+        .collab-sidebar { position: sticky; top: 80px; }
 
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2 bg-secondary/30 rounded-2xl border border-border/80">
-        <div className="flex items-center gap-1.5 p-1 bg-card rounded-xl border border-border/60">
-          <button
-            onClick={() => setCollabStatus("all")}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              collabStatus === "all"
-                ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-xs"
-                : "text-textMuted hover:text-textPrimary"
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-indigo-500" />
-            All
-          </button>
+        /* ── Row ── */
+        .collab-row {
+          display: grid;
+          grid-template-columns: 44px 1fr auto;
+          gap: 0 14px;
+          align-items: center;
+          padding: 13px 16px;
+          border-bottom: 1px solid var(--border);
+          transition: background 150ms cubic-bezier(0.16,1,0.3,1);
+          cursor: default;
+        }
+        .collab-row:last-child { border-bottom: none; }
+        .collab-row:hover { background: var(--bg-surface-2); }
+        .collab-row.is-me { background: rgba(108,92,231,.04); border-left: 2px solid var(--accent); }
 
-          <button
-            onClick={() => setCollabStatus("open")}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              collabStatus === "open"
-                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-xs"
-                : "text-textMuted hover:text-textPrimary"
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Available
-          </button>
+        /* ── Avatar ── */
+        .collab-avatar {
+          width: 40px; height: 40px; border-radius: 50%;
+          background: var(--bg-surface-2); border: 1px solid var(--border);
+          display: flex; align-items: center; justify-content: center;
+          font-weight: 700; font-size: 15px; color: var(--text-primary);
+          overflow: hidden; flex-shrink: 0; position: relative;
+        }
+        .collab-avail-dot {
+          position: absolute; bottom: 1px; right: 1px;
+          width: 10px; height: 10px; border-radius: 50%;
+          border: 1.5px solid var(--bg-surface);
+        }
 
-          <button
-            onClick={() => setCollabStatus("busy")}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              collabStatus === "busy"
-                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-xs"
-                : "text-textMuted hover:text-textPrimary"
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
-            Busy
-          </button>
-        </div>
+        /* ── Identity ── */
+        .collab-identity { min-width: 0; }
+        .collab-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .collab-name {
+          font-size: 13.5px; font-weight: 700; color: var(--text-primary);
+          text-decoration: none; white-space: nowrap;
+          transition: color 120ms;
+        }
+        .collab-name:hover { color: var(--accent); }
+        .collab-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+        .collab-skills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .collab-skill-tag {
+          font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+          background: var(--bg-surface-2); border: 1px solid var(--border);
+          color: var(--text-secondary); cursor: pointer; transition: all 120ms;
+          white-space: nowrap;
+        }
+        .collab-skill-tag:hover { border-color: var(--accent); color: var(--accent); }
+        .collab-skill-tag.active { background: rgba(108,92,231,.1); border-color: rgba(108,92,231,.4); color: var(--accent); }
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative hidden sm:block w-48 lg:w-60">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none" />
-            <input
-              type="text"
-              value={collabSearch}
-              onChange={(e) => setCollabSearch(e.target.value)}
-              placeholder="Search..."
-              className="forge-input pl-9 pr-7 py-1.5 w-full bg-card rounded-lg text-xs"
-            />
-            {collabSearch && (
-              <button onClick={() => setCollabSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-textMuted">
-                <X size={11} />
+        /* ── Rep badge ── */
+        .collab-rep {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 2px 8px 2px 6px; border-radius: 5px; border: 1px solid;
+          font-size: 10.5px; font-weight: 700; white-space: nowrap;
+        }
+        .collab-rep-nr {
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 2px 8px; border-radius: 5px;
+          background: var(--bg-surface-2); border: 1px solid var(--border);
+          font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+        }
+
+        /* ── Stars ── */
+        .collab-stars { display: inline-flex; gap: 1px; }
+        .collab-star-wrap { position: relative; display: inline-block; width: 11px; height: 11px; }
+        .collab-star-empty { position: absolute; inset: 0; color: var(--border); opacity: 0.5; }
+        .collab-star-fill { position: absolute; inset: 0; overflow: hidden; }
+        .collab-star-full { color: #f59e0b; }
+
+        /* ── Actions ── */
+        .collab-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .collab-btn-view {
+          font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 7px;
+          border: 1px solid var(--border); background: transparent; color: var(--text-secondary);
+          text-decoration: none; display: inline-flex; align-items: center;
+          transition: all 140ms; white-space: nowrap; cursor: pointer;
+        }
+        .collab-btn-view:hover { background: var(--bg-surface-2); border-color: var(--text-tertiary); color: var(--text-primary); }
+        .collab-btn-invite {
+          font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 7px;
+          border: 1px solid rgba(108,92,231,.4); background: rgba(108,92,231,.1);
+          color: var(--accent); display: inline-flex; align-items: center; gap: 5px;
+          transition: all 140ms; white-space: nowrap; cursor: pointer;
+        }
+        .collab-btn-invite:hover { background: rgba(108,92,231,.18); }
+        .collab-btn-invite.copied { background: rgba(34,197,94,.1); border-color: rgba(34,197,94,.4); color: #16a34a; }
+
+        /* ── Stat chips in action col ── */
+        .collab-stat { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--text-tertiary); }
+
+        /* ── Sidebar filter ── */
+        .collab-filter-section { margin-bottom: 20px; }
+        .collab-filter-label {
+          font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+          color: var(--text-tertiary); margin-bottom: 6px; display: block;
+        }
+        .collab-filter-option {
+          display: flex; align-items: center; gap: 8px; padding: 6px 9px; border-radius: 7px;
+          font-size: 12px; font-weight: 500; color: var(--text-secondary);
+          cursor: pointer; transition: all 120ms; border: 1px solid transparent;
+          width: 100%; text-align: left; background: none;
+        }
+        .collab-filter-option:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+        .collab-filter-option.active {
+          background: rgba(108,92,231,.08); border-color: rgba(108,92,231,.25);
+          color: var(--accent); font-weight: 700;
+        }
+        .collab-filter-input {
+          width: 100%; padding: 7px 10px; border-radius: 8px;
+          border: 1px solid var(--border); background: var(--bg-surface);
+          color: var(--text-primary); font-size: 12px;
+          outline: none; transition: border 140ms;
+        }
+        .collab-filter-input:focus { border-color: var(--accent); }
+        .collab-filter-select {
+          width: 100%; padding: 6px 10px; border-radius: 8px;
+          border: 1px solid var(--border); background: var(--bg-surface);
+          color: var(--text-primary); font-size: 12px;
+          outline: none; cursor: pointer; transition: border 140ms;
+          appearance: none;
+        }
+        .collab-filter-select:focus { border-color: var(--accent); }
+
+        /* ── Pagination ── */
+        .collab-page-btn {
+          min-width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+          border-radius: 7px; border: 1px solid var(--border); background: var(--bg-surface);
+          font-size: 12px; font-weight: 600; color: var(--text-tertiary); cursor: pointer;
+          transition: all 140ms;
+        }
+        .collab-page-btn:hover:not(:disabled) { color: var(--text-primary); border-color: var(--text-tertiary); }
+        .collab-page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .collab-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .collab-row, .collab-btn-view, .collab-btn-invite, .collab-filter-option { transition: none; }
+        }
+      `}</style>
+
+      <div ref={topRef} className="collab-root">
+
+        {/* ══ LEFT SIDEBAR ════════════════════════════════════ */}
+        <aside className="collab-sidebar hidden md:block">
+          <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "16px 14px" }}>
+
+            {/* Search */}
+            <div className="collab-filter-section">
+              <label className="collab-filter-label">Search</label>
+              <div style={{ position: "relative" }}>
+                <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", pointerEvents: "none" }} />
+                <input
+                  type="text"
+                  value={collabSearch}
+                  onChange={e => { setCollabSearch(e.target.value); setRawPage(1); }}
+                  placeholder="Name, skill, dept…"
+                  className="collab-filter-input"
+                  style={{ paddingLeft: 30, paddingRight: collabSearch ? 28 : 10 }}
+                />
+                {collabSearch && (
+                  <button onClick={() => setCollabSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer", display: "flex", padding: 0 }}>
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Availability */}
+            <div className="collab-filter-section">
+              <span className="collab-filter-label">Availability</span>
+              {(["all", "open", "busy"] as const).map(s => {
+                const map = { all: { label: "Everyone", color: "#6b7280" }, open: { label: "Available", color: "#10b981" }, busy: { label: "Busy", color: "#f59e0b" } };
+                const m = map[s];
+                return (
+                  <button key={s} className={`collab-filter-option ${collabStatus === s ? "active" : ""}`} onClick={() => { setCollabStatus(s); setRawPage(1); }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: m.color, flexShrink: 0 }} />
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Department */}
+            {allDepts.length > 0 && (
+              <div className="collab-filter-section">
+                <label className="collab-filter-label">Department</label>
+                <select
+                  value={collabDept}
+                  onChange={e => { setCollabDept(e.target.value); setRawPage(1); }}
+                  className="collab-filter-select"
+                >
+                  <option value="">All departments</option>
+                  {allDepts.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            )}
+
+            {/* Skills */}
+            {allSkills.length > 0 && (
+              <div className="collab-filter-section">
+                <label className="collab-filter-label">Skill</label>
+                <select
+                  value={collabSkill}
+                  onChange={e => { setCollabSkill(e.target.value); setRawPage(1); }}
+                  className="collab-filter-select"
+                >
+                  <option value="">All skills</option>
+                  {allSkills.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
+
+            {/* Clear all */}
+            {activeFilters.length > 0 && (
+              <button
+                onClick={() => { setCollabSearch(""); setCollabDept(""); setCollabSkill(""); setCollabStatus("all"); setRawPage(1); }}
+                style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer", padding: "4px 0", marginTop: 4 }}
+              >
+                <X size={11} /> Clear all filters
               </button>
             )}
           </div>
+        </aside>
 
-          <select
-            value={collabDept}
-            onChange={(e) => setCollabDept(e.target.value)}
-            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-textPrimary focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
-            style={selectBg}
-          >
-            <option value="">Departments</option>
-            {allDepts.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+        {/* ══ RIGHT PANEL ══════════════════════════════════════ */}
+        <div style={{ minWidth: 0 }}>
 
-          <select
-            value={collabSkill}
-            onChange={(e) => setCollabSkill(e.target.value)}
-            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-textPrimary focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
-            style={selectBg}
-          >
-            <option value="">Skills</option>
-            {allSkills.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {/* ── Mobile search bar ── */}
+          <div className="block md:hidden" style={{ marginBottom: 12 }}>
+            <div style={{ position: "relative" }}>
+              <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", pointerEvents: "none" }} />
+              <input
+                type="text" value={collabSearch}
+                onChange={e => { setCollabSearch(e.target.value); setRawPage(1); }}
+                placeholder="Search collaborators…"
+                style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 9, paddingBottom: 9, borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: 13, outline: "none" }}
+              />
+            </div>
+          </div>
 
-          <select
-            className="text-xs py-1.5 pl-3 pr-7 bg-card border border-border rounded-lg text-textPrimary focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary/50 transition-colors appearance-none truncate"
-            style={selectBg}
-          >
-            <option>Sort by: Recommended</option>
-            <option>Newest First</option>
-            <option>Highest Rated</option>
-          </select>
+          {/* ── Toolbar row ── */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, gap: 10, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Users size={15} style={{ color: "var(--text-tertiary)" }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                {filtered.length} {filtered.length === 1 ? "student" : "students"}
+              </span>
+              {activeFilters.length > 0 && (
+                <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>— filtered</span>
+              )}
+            </div>
 
-          <button className="p-2 bg-card border border-border rounded-lg text-textMuted hover:text-textPrimary cursor-pointer">
-            <SlidersHorizontal size={14} />
-          </button>
-        </div>
-      </div>
+            {/* Sort */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <ArrowUpDown size={12} style={{ color: "var(--text-tertiary)" }} />
+              {(["recommended", "rating", "newest"] as SortKey[]).map(k => (
+                <button
+                  key={k}
+                  onClick={() => setSortKey(k)}
+                  style={{
+                    fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                    border: sortKey === k ? "1px solid rgba(108,92,231,.35)" : "1px solid var(--border)",
+                    background: sortKey === k ? "rgba(108,92,231,.08)" : "var(--bg-surface)",
+                    color: sortKey === k ? "var(--accent)" : "var(--text-secondary)",
+                    transition: "all 140ms",
+                  }}
+                >
+                  {{ recommended: "Recommended", rating: "Highest Rated", newest: "Newest" }[k]}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {(collabDept || collabSkill || collabSearch || collabStatus !== "all") && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-xs text-textMuted font-medium mr-1">Active filters:</span>
-          {collabDept && (
-            <button
-              onClick={() => setCollabDept("")}
-              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-textPrimary border border-border hover:bg-secondary"
-            >
-              Dept: {collabDept} <X size={11} />
-            </button>
+          {/* ── Active filter chips (mobile too) ── */}
+          {activeFilters.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+              {activeFilters.map(f => (
+                <button key={f.label} onClick={f.clear}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 5, border: "1px solid var(--border)", background: "var(--bg-surface-2)", color: "var(--text-secondary)", cursor: "pointer" }}>
+                  {f.label} <X size={10} />
+                </button>
+              ))}
+            </div>
           )}
-          {collabSkill && (
-            <button
-              onClick={() => setCollabSkill("")}
-              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-textPrimary border border-border hover:bg-secondary"
-            >
-              Skill: {collabSkill} <X size={11} />
-            </button>
-          )}
-          {collabStatus !== "all" && (
-            <button
-              onClick={() => setCollabStatus("all")}
-              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-md bg-card text-textPrimary border border-border hover:bg-secondary"
-            >
-              Status: {collabStatus === "open" ? "Available" : "Busy"} <X size={11} />
-            </button>
-          )}
-          <button
-            onClick={() => {
-              setCollabSearch("");
-              setCollabDept("");
-              setCollabSkill("");
-              setCollabStatus("all");
-            }}
-            className="text-xs text-textMuted hover:text-textPrimary underline ml-auto cursor-pointer"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
 
-      {paginatedPeople.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4.5">
-          {paginatedPeople.map((u: any) => {
-            const open = isOpenToWork(u);
-            const displayName = u.name || u.email?.split("@")[0] || "Student";
-            const initial = (displayName[0] || "?").toUpperCase();
-            const projectCount = (u.projects || []).length;
-            const collabCount = (u.applications || []).filter((a: any) => a.status === "ACCEPTED").length;
-            const lookingForText = u.bio || (u.department ? `${u.department} Projects, AI Hackathons` : "Web & Full Stack Projects");
+          {/* ── Roster table ── */}
+          <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
 
-            return (
-              <div
-                key={u.id}
-                className="card p-5 space-y-4 bg-card rounded-2xl flex flex-col justify-between hover:bg-card-hover transition-all duration-200 shadow-xs group relative"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="relative shrink-0">
-                    <div className="h-16 w-16 rounded-full bg-secondary border-2 border-border flex items-center justify-center font-bold text-lg text-textPrimary shrink-0 overflow-hidden shadow-xs">
-                      {u.profileImage ? (
-                        <Image src={u.profileImage} alt={displayName} width={64} height={64} className="h-full w-full object-cover" unoptimized />
+            {/* Table header */}
+            <div style={{ display: "grid", gridTemplateColumns: "44px 1fr auto", gap: "0 14px", padding: "9px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-surface-2)" }}>
+              <div />
+              <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text-tertiary)" }}>Student</span>
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text-tertiary)" }}>Rating</span>
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text-tertiary)" }}>Actions</span>
+            </div>
+
+            {/* Rows */}
+            {paginated.length > 0 ? paginated.map(({ u, rep }) => {
+              const open        = isOpen(u);
+              const displayName = u.name || u.email?.split("@")[0] || "Student";
+              const initial     = (displayName[0] || "?").toUpperCase();
+              const isMe        = currentUser?.id && String(u.id) === String(currentUser.id);
+              const tc          = tierColor(rep.tier);
+              const projCount   = (u.projects || []).length;
+              const collabCount = (u.applications || []).filter((a: any) => a.status === "ACCEPTED").length;
+
+              return (
+                <div key={String(u.id)} className={`collab-row${isMe ? " is-me" : ""}`}>
+
+                  {/* Avatar */}
+                  <div className="collab-avatar">
+                    {u.profileImage
+                      ? <Image src={u.profileImage} alt={displayName} width={40} height={40} style={{ width: "100%", height: "100%", objectFit: "cover" }} unoptimized />
+                      : initial
+                    }
+                    <span className="collab-avail-dot" style={{ background: open ? "#10b981" : "#f59e0b" }} />
+                  </div>
+
+                  {/* Identity + meta */}
+                  <div className="collab-identity">
+                    <div className="collab-name-row">
+                      <Link href={`/profile/${u.id}`} className="collab-name">{displayName}</Link>
+                      {isMe && <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 6px", borderRadius: 3, background: "rgba(108,92,231,.12)", color: "var(--accent)", border: "1px solid rgba(108,92,231,.3)", textTransform: "uppercase", letterSpacing: ".08em" }}>You</span>}
+                      {/* Rep badge — inline with name */}
+                      {rep.githubConnected && rep.score !== null ? (
+                        <span className="collab-rep" style={{ background: tc.bg, borderColor: tc.border, color: tc.text }}>
+                          <Star size={10} style={{ fill: "currentColor" }} />
+                          <span style={{ fontSize: 11, fontWeight: 700 }}>{rep.stars.toFixed(1)}</span>
+                        </span>
                       ) : (
-                        initial
+                        <span className="collab-rep-nr">
+                          <AlertCircle size={10} style={{ opacity: .6 }} />
+                          Not Rated
+                        </span>
                       )}
                     </div>
-                    <span className={`absolute bottom-0.5 right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card ${open ? "bg-emerald-500" : "bg-amber-500"}`} />
-                  </div>
 
-                  <div className="flex items-center gap-1">
-                    <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide border ${
-                      open
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
-                        : "bg-amber-500/10 border-amber-500/30 text-amber-500"
-                    }`}>
-                      {open ? "Available" : "Busy"}
-                    </span>
-                    <button className="p-1 text-textMuted hover:text-textPrimary rounded-lg cursor-pointer">
-                      <MoreVertical size={14} />
-                    </button>
-                  </div>
-                </div>
+                    <div className="collab-meta">
+                      Year {u.year || 2} · {u.department || "Computer Science"}
+                      {" · "}
+                      <span style={{ color: open ? "#10b981" : "#f59e0b" }}>{open ? "Available" : "Busy"}</span>
+                    </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <Link href={`/profile/${u.id}`} className="text-[15px] font-bold text-textPrimary hover:underline truncate">
-                      {displayName}
-                    </Link>
-                  </div>
-                  <p className="text-xs text-textMuted font-medium">
-                    Year {u.year || 2} • {u.department || "CSE"}
-                  </p>
-                </div>
-
-                {u.skills && u.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {u.skills.slice(0, 3).map((s: any) => (
-                      <span
-                        key={s.id}
-                        className="text-[10px] font-medium px-2.5 py-1 rounded-lg bg-secondary/80 text-textPrimary border border-border/60 hover:bg-card-hover cursor-pointer transition-colors"
-                        onClick={() => setCollabSkill(collabSkill === s.name ? "" : s.name)}
-                      >
-                        {s.name}
-                      </span>
-                    ))}
-                    {u.skills.length > 3 && (
-                      <span className="text-[10px] font-medium px-2 py-1 rounded-lg bg-secondary text-textMuted border border-border/60">
-                        +{u.skills.length - 3}
-                      </span>
+                    {u.skills && u.skills.length > 0 && (
+                      <div className="collab-skills">
+                        {u.skills.slice(0, 5).map((s: any) => (
+                          <button
+                            key={s.id ?? s.name}
+                            className={`collab-skill-tag${collabSkill === s.name ? " active" : ""}`}
+                            onClick={() => setCollabSkill(collabSkill === s.name ? "" : s.name)}
+                          >
+                            {s.name}
+                          </button>
+                        ))}
+                        {u.skills.length > 5 && (
+                          <span style={{ fontSize: 10, color: "var(--text-tertiary)", alignSelf: "center" }}>+{u.skills.length - 5}</span>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
 
-                <div className="text-[11.5px] text-textMuted line-clamp-1">
-                  <span className="font-semibold text-textPrimary/80">Looking for: </span>
-                  {lookingForText}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 py-2 border-y border-border/60 text-center">
-                  <div>
-                    <div className="flex items-center justify-center gap-1 text-[12px] font-bold text-textPrimary">
-                      <Folder size={11} className="text-textMuted" />
-                      {projectCount}
+                  {/* Actions col */}
+                  <div className="collab-actions">
+                    {/* Mini stats */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, marginRight: 8 }}>
+                      <span className="collab-stat"><Folder size={10} />{projCount} Projects</span>
+                      <span className="collab-stat"><Users size={10} />{collabCount} Collabs</span>
                     </div>
-                    <div className="text-[9.5px] text-textMuted font-medium">Projects</div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-center gap-1 text-[12px] font-bold text-textPrimary">
-                      <Users size={11} className="text-textMuted" />
-                      {collabCount}
-                    </div>
-                    <div className="text-[9.5px] text-textMuted font-medium">Collaborations</div>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <Link
-                    href={`/profile/${u.id}`}
-                    className="btn-secondary text-[11.5px] py-2 px-3 justify-center rounded-xl font-semibold border border-border hover:bg-secondary text-center"
-                  >
-                    View Profile
-                  </Link>
-                  {u.id !== currentUser?.id && hasProjects && onInviteUser ? (
-                    <button
-                      type="button"
-                      onClick={() => onInviteUser(u)}
-                      className="btn-primary bg-indigo-600 hover:bg-indigo-700 text-white text-[11.5px] py-2 px-3 justify-center rounded-xl font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    >
-                      <Send size={12} /> Invite
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => copyEmail(u.id, u.email ?? "")}
-                      className="btn-primary bg-indigo-600 hover:bg-indigo-700 text-white text-[11.5px] py-2 px-3 justify-center rounded-xl font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    >
-                      {copiedId === u.id ? <CheckCheck size={12} /> : <Send size={12} />}
-                      {copiedId === u.id ? "Copied!" : "Invite"}
-                    </button>
-                  )}
+                    <Link href={`/profile/${u.id}`} className="collab-btn-view">Profile</Link>
+
+                    {u.id !== currentUser?.id && hasProjects && onInviteUser ? (
+                      <button type="button" className="collab-btn-invite" onClick={() => onInviteUser(u)}>
+                        <Send size={11} /> Invite
+                      </button>
+                    ) : u.id !== currentUser?.id ? (
+                      <button type="button" className={`collab-btn-invite${copiedId === u.id ? " copied" : ""}`}
+                        onClick={() => copyEmail(u.id, u.email ?? "")}>
+                        {copiedId === u.id ? <CheckCheck size={11} /> : <Send size={11} />}
+                        {copiedId === u.id ? "Copied!" : "Invite"}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
+              );
+            }) : (
+              <div style={{ padding: "56px 24px", textAlign: "center" }}>
+                <Users size={28} style={{ margin: "0 auto 10px", color: "var(--text-tertiary)", opacity: 0.4 }} />
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>No students found</p>
+                <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>Try adjusting your filters or search query.</p>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="card p-14 text-center border border-border bg-card rounded-2xl space-y-2">
-          <Users size={32} className="mx-auto text-textMuted/40" />
-          <p className="text-base font-bold text-textPrimary">No collaborators found</p>
-          <p className="text-xs text-textMuted">Try adjusting your filters or search query.</p>
-        </div>
-      )}
+            )}
+          </div>
 
-      {filtered.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border/80">
-          <p className="text-xs text-textMuted font-medium">
-            Showing <span className="font-semibold text-textPrimary">{(page - 1) * pageSize + 1}</span>–
-            <span className="font-semibold text-textPrimary">{Math.min(page * pageSize, filtered.length)}</span> of{" "}
-            <span className="font-semibold text-textPrimary">{filtered.length}</span> collaborators
-          </p>
+          {/* ── Pagination ── */}
+          {sorted.length > PAGE_SIZE && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, gap: 12, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                Showing <strong style={{ color: "var(--text-primary)" }}>{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)}</strong> of <strong style={{ color: "var(--text-primary)" }}>{sorted.length}</strong>
+              </span>
 
-          <div className="flex items-center gap-1.5 mx-auto sm:mx-0">
-            <button
-              type="button"
-              disabled={page === 1}
-              onClick={() => changePage(page - 1)}
-              className="p-2 text-textMuted hover:text-textPrimary rounded-lg border border-border bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Previous Page"
-            >
-              <ChevronLeft size={14} />
-            </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <button className="collab-page-btn" disabled={page === 1} onClick={() => changePage(page - 1)}>
+                  <ChevronLeft size={13} />
+                </button>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  const pNum = totalPages <= 7 ? i + 1 : page <= 4 ? i + 1 : page >= totalPages - 3 ? totalPages - 6 + i : page - 3 + i;
+                  if (pNum < 1 || pNum > totalPages) return null;
+                  return (
+                    <button key={pNum} className={`collab-page-btn${pNum === page ? " active" : ""}`} onClick={() => changePage(pNum)}>
+                      {pNum}
+                    </button>
+                  );
+                })}
+                <button className="collab-page-btn" disabled={page === totalPages} onClick={() => changePage(page + 1)}>
+                  <ChevronRight size={13} />
+                </button>
+              </div>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => (
-              <button
-                key={pNum}
-                type="button"
-                onClick={() => changePage(pNum)}
-                className={`min-w-[32px] h-8 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
-                  pNum === page
-                    ? "bg-indigo-600 text-white border-indigo-600 font-bold shadow-xs"
-                    : "bg-card text-textMuted hover:text-textPrimary border-border"
-                }`}
-              >
-                {pNum}
+              <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{totalPages} page{totalPages !== 1 ? "s" : ""}</span>
+            </div>
+          )}
+
+          {/* ── Load more ── */}
+          {extraHasMore && page === totalPages && (
+            <div style={{ textAlign: "center", marginTop: 14 }}>
+              <button type="button" onClick={loadMore} disabled={loadingMore}
+                style={{ fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-secondary)", cursor: loadingMore ? "not-allowed" : "pointer", opacity: loadingMore ? 0.6 : 1 }}>
+                {loadingMore ? "Loading…" : "Load more students"}
               </button>
-            ))}
-
-            <button
-              type="button"
-              disabled={page === totalPages}
-              onClick={() => changePage(page + 1)}
-              className="p-2 text-textMuted hover:text-textPrimary rounded-lg border border-border bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Next Page"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-textMuted">
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setRawPage(1);
-              }}
-              className="bg-card border border-border rounded-lg text-textPrimary px-3 py-1.5 font-medium appearance-none cursor-pointer"
-              style={selectBg}
-            >
-              <option value={12}>12 per page</option>
-              <option value={24}>24 per page</option>
-              <option value={48}>48 per page</option>
-            </select>
-          </div>
+            </div>
+          )}
         </div>
-      )}
-
-      {extraHasMore && page === totalPages && (
-        <div className="flex justify-center pt-4">
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={loadingMore}
-            className="btn-secondary text-[12px] py-2 px-6 font-semibold flex items-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {loadingMore ? "Loading..." : "Load More Collaborators"}
-          </button>
-        </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }

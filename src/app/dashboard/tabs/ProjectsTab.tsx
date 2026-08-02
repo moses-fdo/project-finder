@@ -28,10 +28,10 @@ export default function ProjectsTab({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-[17px] font-semibold text-textPrimary tracking-tight">My projects</h2>
-          <p className="text-[12px] text-textMuted mt-0.5">Manage recruitment and review applications.</p>
+          <h2 className="type-section-title">My projects</h2>
+          <p className="type-meta mt-0.5">Manage recruitment and review applications.</p>
         </div>
-        <Link href="/projects/create" className="btn-primary text-[12px] py-1.5 px-3">
+        <Link href="/projects/create" className="btn-primary text-[12px] py-1.5 px-3.5">
           New project
         </Link>
       </div>
@@ -44,7 +44,7 @@ export default function ProjectsTab({
               <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border bg-muted/30">
                 <div className="flex items-center gap-3">
                   <div>
-                    <h3 className="text-[14px] font-semibold text-textPrimary">
+                    <h3 className="text-[14px] font-semibold text-foreground">
                       <Link href={`/projects/${project.id}`} className="hover:underline underline-offset-2">
                         {project.title}
                       </Link>
@@ -57,7 +57,7 @@ export default function ProjectsTab({
                       }>
                         {project.status === "DONE" ? "✓ Done" : project.status}
                       </span>
-                      <span className="text-[11px] text-textMuted">
+                      <span className="text-[11px] text-muted-foreground">
                         {project.applications.length} application{project.applications.length !== 1 ? "s" : ""}
                       </span>
                     </div>
@@ -121,16 +121,16 @@ export default function ProjectsTab({
                           <div className="flex items-center gap-2 flex-wrap">
                             <Link
                               href={`/profile/${app.user.id}`}
-                              className="text-[13px] font-semibold text-textPrimary hover:underline underline-offset-2"
+                              className="text-[13px] font-semibold text-foreground hover:underline underline-offset-2"
                             >
                               {app.user.name}
                             </Link>
-                            <span className="text-[11px] text-textMuted">
+                            <span className="text-[11px] text-muted-foreground">
                               {app.user.department} · Year {app.user.year}
                             </span>
                           </div>
                           {app.message && (
-                            <p className="text-[12px] text-textPrimary leading-relaxed bg-secondary rounded-md p-3 border border-border">
+                            <p className="text-[12px] text-foreground leading-relaxed bg-secondary rounded-md p-3 border border-border">
                               {app.message}
                             </p>
                           )}
@@ -161,7 +161,7 @@ export default function ProjectsTab({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[12px] text-textMuted italic">No applications yet.</p>
+                  <p className="text-[12px] text-muted-foreground italic">No applications yet.</p>
                 )}
               </div>
             </div>
@@ -169,8 +169,8 @@ export default function ProjectsTab({
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <p className="text-[14px] font-medium text-textPrimary mb-1">No projects yet</p>
-          <p className="text-[12px] text-textMuted mb-4">Post your first project to start finding collaborators.</p>
+          <p className="text-[14px] font-medium text-foreground mb-1">No projects yet</p>
+          <p className="text-[12px] text-muted-foreground mb-4">Post your first project to start finding collaborators.</p>
           <Link href="/projects/create" className="btn-primary text-[13px] py-2 px-4 inline-flex">
             Create a project
           </Link>

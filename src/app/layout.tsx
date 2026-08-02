@@ -5,7 +5,6 @@ import NavigationProgress from "@/components/NavigationProgress";
 import ThemeProvider from "@/components/ThemeProvider";
 import CustomCursor from "@/components/CustomCursor";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import Script from "next/script";
 import "./globals.css";
 import "../styles/animations.css";
 
@@ -62,13 +61,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
-        <Script
-          id="theme-script"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('colabro-theme');var s=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&s)){document.documentElement.classList.add('dark')}else if(t==='light'){document.documentElement.classList.remove('dark')}}catch(e){}})()`,
-          }}
-        />
         <ThemeProvider>
           <CustomCursor />
           <Suspense fallback={null}>

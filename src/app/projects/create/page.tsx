@@ -20,17 +20,17 @@ export default async function CreateProjectPage() {
 
   return (
     <AppShell user={session.user} unreadNotifications={unreadNotificationsCount}>
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-[20px] font-bold tracking-tight text-foreground mb-0.5">
+          <h1 className="type-page-title text-[22px] sm:text-[28px] mb-1">
             New project
           </h1>
-          <p className="text-[12px] text-muted-foreground">
+          <p className="type-meta">
             Share your idea and specify the skills you&apos;re looking for in collaborators.
           </p>
         </div>
 
-        <ProjectCreateForm userId={Number((session.user as any).id)} />
+        <ProjectCreateForm userId={Number((session.user as any).id)} user={session.user} />
       </main>
     </AppShell>
   );

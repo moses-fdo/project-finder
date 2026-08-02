@@ -49,6 +49,14 @@ interface AppShellProps {
 
 const EMPTY_NOTIFS: NotificationItem[] = [];
 
+const QUICK_NAV = [
+  { label: "Discover Projects", href: "/projects", icon: Search },
+  { label: "Create New Project", href: "/projects/create", icon: FolderOpen },
+  { label: "Events & Competitions", href: "/dashboard?tab=events", icon: Trophy },
+  { label: "My Applications", href: "/dashboard?tab=applications", icon: Send },
+  { label: "Profile Settings", href: "/dashboard?tab=profile", icon: Settings },
+];
+
 export default function AppShell({
   children,
   user,
@@ -198,7 +206,7 @@ export default function AppShell({
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] text-foreground leading-relaxed">{n.message}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  {new Date(n.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   {!n.read && (
                     <span className="ml-2 text-[9px] font-semibold uppercase tracking-wide text-foreground/60">New</span>
                   )}
@@ -246,11 +254,27 @@ export default function AppShell({
   return (
     <div className="min-h-screen flex bg-background text-foreground">
 
+      {/* ── Ambient accent glow — fixed, decorative, non-interactive ── */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div
+          className="absolute -top-40 -right-40 h-[36rem] w-[36rem] rounded-full opacity-60 dark:opacity-40"
+          style={{
+            background: "radial-gradient(circle, color-mix(in oklab, var(--accent) 14%, transparent) 0%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 -left-40 h-[28rem] w-[28rem] rounded-full opacity-40 dark:opacity-30"
+          style={{
+            background: "radial-gradient(circle, color-mix(in oklab, var(--accent) 10%, transparent) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+
       {/* ── Desktop Sidebar ─────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-60 border-r border-border bg-card shrink-0 h-screen sticky top-0">
+      <aside className="hidden md:flex flex-col w-60 border-r border-border bg-card shrink-0 h-screen sticky top-0 relative z-10">
 
         {/* Logo row */}
-        <div className="h-14 border-b border-border px-4 flex items-center gap-2">
+        <div className="h-14 border-b border-border px-4 flex items-center gap-2 bg-gradient-to-b from-primary/5 to-transparent">
           <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
             <ColabroLogo size={28} />
             <span className="text-[16px] font-logo text-foreground truncate">
@@ -268,17 +292,17 @@ export default function AppShell({
                 key={item.label}
                 href={item.href}
                 prefetch={true}
-                className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors group ${
+                className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ease-out-quart ${
                   item.active
-                    ? "bg-secondary text-foreground font-semibold"
-                    : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                    ? "bg-primary/10 text-foreground font-semibold"
+                    : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground hover:shadow-xs"
                 }`}
               >
                 {/* Active indicator bar */}
                 {item.active && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-foreground" aria-hidden="true" />
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-primary" aria-hidden="true" />
                 )}
-                <item.icon size={15} strokeWidth={item.active ? 2.25 : 1.75} className="shrink-0" />
+                <item.icon size={15} strokeWidth={2} className={`shrink-0 transition-all duration-200 ${item.active ? "text-primary" : ""}`} />
                 {item.label}
               </Link>
             ))}
@@ -296,14 +320,14 @@ export default function AppShell({
                   href={item.href}
                   className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                     item.active
-                      ? "bg-secondary text-foreground font-semibold"
+                      ? "bg-primary/10 text-foreground font-semibold"
                       : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                   }`}
                 >
                   {item.active && (
-                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-foreground" aria-hidden="true" />
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-primary" aria-hidden="true" />
                   )}
-                  <item.icon size={15} strokeWidth={item.active ? 2.25 : 1.75} className="shrink-0" />
+                  <item.icon size={15} strokeWidth={item.active ? 2.25 : 1.75} className={`shrink-0 ${item.active ? "text-primary" : ""}`} />
                   {item.label}
                 </Link>
               ))}
@@ -387,16 +411,20 @@ export default function AppShell({
       </aside>
 
       {/* ── Main column ─────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
 
         {/* Desktop header */}
-        <header className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card/95 backdrop-blur-sm sticky top-0 z-40">
+        <header
+          className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card/95 backdrop-blur-sm sticky top-0 z-40"
+          style={{ boxShadow: "0 1px 0 0 color-mix(in oklab, var(--accent) 6%, transparent), 0 1px 3px rgba(16,24,40,0.03)" }}
+        >
           <div className="relative w-64">
             <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <button
               type="button"
               onClick={() => setSearchModalOpen(true)}
               className="w-full text-left pl-9 pr-2.5 py-1.5 bg-secondary/50 border border-border rounded-lg text-[12px] text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer flex items-center justify-between"
+              style={{ boxShadow: "inset 0 1px 2px rgba(16,24,40,0.04)" }}
             >
               <span className="truncate">Search projects, skills…</span>
               <kbd className="text-[10px] font-mono text-muted-foreground bg-card border border-border px-1.5 py-0.5 rounded shadow-sm shrink-0 ml-1">⌘K</kbd>
@@ -427,8 +455,7 @@ export default function AppShell({
 
               {inboxOpen && (
                 <div
-                  className="absolute right-0 top-[calc(100%+8px)] w-80 bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden"
-                  style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)" }}
+                  className="absolute right-0 top-[calc(100%+8px)] w-80 bg-card border border-border rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden dropdown"
                 >
                   {inboxDropdownContent}
                 </div>
@@ -475,8 +502,7 @@ export default function AppShell({
             {/* Inbox dropdown — fixed position clears the sticky header */}
             {inboxOpen && (
               <div
-                className="fixed right-4 w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-xl shadow-xl z-[60] animate-fade-in overflow-hidden"
-                style={{ top: '3.5rem' }}
+                className="fixed right-4 w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-xl shadow-xl z-[60] animate-fade-in overflow-hidden dropdown top-14"
               >
                 {inboxDropdownContent}
               </div>
@@ -693,13 +719,7 @@ export default function AppShell({
                 {searchQuery.trim() ? "Matching Actions" : "Quick Navigation"}
               </p>
 
-              {[
-                { label: "Discover Projects", href: "/projects", icon: Search },
-                { label: "Create New Project", href: "/projects/create", icon: FolderOpen },
-                { label: "Events & Competitions", href: "/dashboard?tab=events", icon: Trophy },
-                { label: "My Applications", href: "/dashboard?tab=applications", icon: Send },
-                { label: "Profile Settings", href: "/dashboard?tab=profile", icon: Settings },
-              ]
+              {QUICK_NAV
                 .filter((item) => item.label.toLowerCase().includes(searchQuery.toLowerCase().trim()))
                 .map((item) => (
                   <button
@@ -716,14 +736,8 @@ export default function AppShell({
                   </button>
                 ))}
 
-              {searchQuery.trim() &&
-                [
-                  { label: "Discover Projects", href: "/projects", icon: Search },
-                  { label: "Create New Project", href: "/projects/create", icon: FolderOpen },
-                  { label: "Events & Competitions", href: "/dashboard?tab=events", icon: Trophy },
-                  { label: "My Applications", href: "/dashboard?tab=applications", icon: Send },
-                  { label: "Profile Settings", href: "/dashboard?tab=profile", icon: Settings },
-                ].filter((item) => item.label.toLowerCase().includes(searchQuery.toLowerCase().trim())).length === 0 && (
+              {searchQuery.trim() && QUICK_NAV
+                .filter((item) => item.label.toLowerCase().includes(searchQuery.toLowerCase().trim())).length === 0 && (
                   <div className="px-3 py-6 text-center text-muted-foreground text-[12px]">
                     No matching quick actions. Press Enter to search all projects.
                   </div>

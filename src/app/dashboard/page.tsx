@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma, safeQuery } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
+import { calculateUserReputation } from "@/lib/reputation/calculator";
 
 // Shared select shape for project cards
 const projectCardSelect = {
@@ -13,7 +14,7 @@ const projectCardSelect = {
   status: true,
   createdAt: true,
   ownerId: true,
-  owner: { select: { id: true, name: true, department: true } },
+  owner: { select: { id: true, name: true, department: true, githubUrl: true } },
   skills: { select: { id: true, name: true } },
 } satisfies Prisma.ProjectSelect;
 
@@ -221,11 +222,46 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const inboxNotifications = (notifications || []).slice(0, 10); // Slice top 10 for dropdown navbar
 
-  // Derived fast sidebars
-  const userProjects = (projects || []).filter((p: any) => p.ownerId === currentUserId);
-  const myProjectsSidebar = userProjects.slice(0, 5).map((p: any) => ({ id: p.id, title: p.title, status: p.status }));
-  const myApplicationsSidebar = (applications || []).slice(0, 5).map((a: any) => ({ id: a.id, status: a.status, project: { id: a.project.id, title: a.project.title } }));
   const recentNotifications = (notifications || []).slice(0, 5);
+
+  // Pre-compute reputations server-side for all collaborators using the same
+  // calculateUserReputation function as the profile page so scores match.
+  // GitHub API calls are cached by Next.js (revalidate: 3600) — fast after first load.
+  let peopleWithReputation: any[] = people;
+  if (needsCollaborations && Array.isArray(people) && people.length > 0) {
+    const repResults = await Promise.allSettled(
+      people.map((u: any) =>
+        calculateUserReputation({
+          userId: u.id,
+          githubUrl: u.githubUrl,
+          linkedinUrl: u.linkedinUrl,
+          bio: u.bio,
+          year: u.year,
+          skills: u.skills,
+          userProjectsCount: u.projects?.length || 0,
+          userApplicationsCount: u.applications?.length || 0,
+        })
+      )
+    );
+    peopleWithReputation = people.map((u: any, i: number) => {
+      const result = repResults[i];
+      if (result.status === "fulfilled") {
+        const rep = result.value;
+        return {
+          ...u,
+          // Inject reputation so getDeveloperReputation() reads from this
+          // object (path 1) instead of falling back to the hash fallback
+          reputation: {
+            score: rep.score,
+            stars: rep.stars,
+            tier: rep.tier,
+            githubConnected: rep.githubConnected,
+          },
+        };
+      }
+      return u;
+    });
+  }
 
   return (
     <AppShell user={user} unreadNotifications={unreadNotificationsCount} inboxNotifications={inboxNotifications}>
@@ -236,7 +272,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
          applications={applications}
          notifications={notifications}
          profileData={profileData}
-         collaborations={people}
+         collaborations={peopleWithReputation}
           collabNextCursor={collabNextCursor}
           collabHasMore={collabHasMore}
            events={events}
@@ -244,8 +280,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           recommendedProjects={recommendedProjects}
           receivedInvitations={receivedInvitations}
           sentInvitations={sentInvitations}
-          myProjectsSidebar={myProjectsSidebar}
-          myApplicationsSidebar={myApplicationsSidebar}
           recentNotifications={recentNotifications}
        />
     </AppShell>

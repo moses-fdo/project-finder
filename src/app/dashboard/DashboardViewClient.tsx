@@ -24,16 +24,12 @@ import {
   Trash2,
   GitBranch,
   Link2,
-  Sprout,
-  Brain,
-  Dumbbell,
-  Folder,
   Mail,
   Send,
   UserPlus,
-  LucideIcon,
   Upload,
 } from "lucide-react";
+import { departments, getProjectIcon } from "@/lib/projects";
 
 interface DashboardViewClientProps {
   activeTab: string;
@@ -50,42 +46,7 @@ interface DashboardViewClientProps {
   recommendedProjects?: any[];
   receivedInvitations?: any[];
   sentInvitations?: any[];
-  myProjectsSidebar?: any[];
-  myApplicationsSidebar?: any[];
   recentNotifications?: any[];
-}
-
-function getProjectIcon(title: string): { icon: LucideIcon; bg: string; text: string } {
-  const t = (title || "").toLowerCase();
-  if (
-    t.includes("eco") ||
-    t.includes("track") ||
-    t.includes("waste") ||
-    t.includes("green") ||
-    t.includes("environ")
-  ) {
-    return { icon: Sprout, bg: "bg-green-500/10", text: "text-green-600 dark:text-green-400" };
-  }
-  if (
-    t.includes("study") ||
-    t.includes("buddy") ||
-    t.includes("learn") ||
-    t.includes("book") ||
-    t.includes("ai") ||
-    t.includes("companion")
-  ) {
-    return { icon: Brain, bg: "bg-purple-500/10", text: "text-purple-600 dark:text-purple-400" };
-  }
-  if (
-    t.includes("fit") ||
-    t.includes("forge") ||
-    t.includes("gym") ||
-    t.includes("health") ||
-    t.includes("workout")
-  ) {
-    return { icon: Dumbbell, bg: "bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400" };
-  }
-  return { icon: Folder, bg: "bg-secondary", text: "text-textPrimary" };
 }
 
 export default function DashboardViewClient({
@@ -103,9 +64,7 @@ export default function DashboardViewClient({
   recommendedProjects = [],
   receivedInvitations = [],
   sentInvitations = [],
-   myProjectsSidebar = [],
-   myApplicationsSidebar = [],
-   recentNotifications = [],
+  recentNotifications = [],
 }: DashboardViewClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -113,6 +72,11 @@ export default function DashboardViewClient({
   const [nowMs] = useState(() => Date.now());
   const [projects, setProjects] = useState(initialProjects);
   const [editingProject, setEditingProject] = useState<any | null>(null);
+
+  const [activeUser, setActiveUser] = useState(currentUser);
+  useEffect(() => {
+    setActiveUser(currentUser);
+  }, [currentUser]);
 
   // Derive currentTab directly from prop — no effect needed
   const currentTab = activeTab || "home";
@@ -317,7 +281,7 @@ export default function DashboardViewClient({
         body: JSON.stringify({ status: "DONE" }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      setActionSuccess("Project marked as done! 🎉 It will now appear on your completed projects.");
+      setActionSuccess("Project marked as done! It will now appear on your completed projects.");
       refresh();
     } catch (e: any) { setActionError(e.message); }
     finally { setLoadingId(null); }
@@ -389,8 +353,29 @@ export default function DashboardViewClient({
           skills: profileSkills.split(",").map((s: string) => s.trim()).filter(Boolean),
         }),
       });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      setActionSuccess("Profile saved.");
+      // Update activeUser state for immediate real-time rating updates across Leaderboard and Collaborators View
+      const updatedSkills = profileSkills.split(",").map((s: string, i: number) => ({ id: i, name: s.trim() })).filter((s: { name: string }) => s.name);
+      setActiveUser((prev: any) => ({
+        ...prev,
+        name: profileName,
+        department: profileDept,
+        year: Number(profileYear),
+        bio: profileBio,
+        githubUrl: profileGithub,
+        linkedinUrl: profileLinkedin,
+        availability: profileAvailability,
+        profileImage: profileImage,
+        skills: updatedSkills,
+      }));
+
+      // Real-time Developer Reputation recalculation trigger
+      if (currentUser?.id) {
+        try {
+          await fetch(`/api/reputation/${currentUser.id}`, { method: "POST" });
+        } catch { /* fallback */ }
+      }
+
+      setActionSuccess("Profile & Developer Reputation updated in real time!");
       refresh();
     } catch (e: any) { setActionError(e.message); }
     finally { setLoadingId(null); }
@@ -402,12 +387,6 @@ export default function DashboardViewClient({
     if (s === "REJECTED") return "badge badge-red";
     return "badge badge-yellow";
   };
-
-  const departments = [
-    "Computer Science", "Information Technology", "Electronics & Communication",
-    "Electrical & Electronics", "Mechanical Engineering", "Civil Engineering",
-    "Biotechnology", "Food Processing Technology",
-  ];
 
   /* ══════════════════════════════════════════════════════════ */
   return (
@@ -425,13 +404,13 @@ export default function DashboardViewClient({
           projects={projects}
           applications={applications}
           notifications={notifications}
-          currentUser={currentUser}
+          currentUser={activeUser}
           events={events}
           hackathons={hackathons}
           recommendedProjects={recommendedProjects}
-          myProjectsSidebar={myProjectsSidebar}
-          myApplicationsSidebar={myApplicationsSidebar}
           recentNotifications={recentNotifications}
+          receivedInvitations={receivedNotifs}
+          collaborations={collaborations}
           getProjectIcon={getProjectIcon}
           nowMs={nowMs}
           departments={departments}
@@ -442,7 +421,7 @@ export default function DashboardViewClient({
       {currentTab === "collaborations" && (
         <CollaborationsFinderTab
           people={collaborations}
-          currentUser={currentUser}
+          currentUser={activeUser}
           collabSearch={collabSearch}
           setCollabSearch={setCollabSearch}
           collabDept={collabDept}
@@ -493,11 +472,11 @@ export default function DashboardViewClient({
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
             <div>
-              <h2 className="text-[17px] font-bold text-textPrimary tracking-tight flex items-center gap-2">
+              <h2 className="text-[17px] font-bold text-foreground tracking-tight flex items-center gap-2">
                 <Mail size={18} strokeWidth={2} />
                 Project Invitations
               </h2>
-              <p className="text-[12px] text-textMuted mt-0.5">
+              <p className="text-[12px] text-muted-foreground mt-0.5">
                 Manage collaboration invitations sent to you or sent by you.
               </p>
             </div>
@@ -523,8 +502,8 @@ export default function DashboardViewClient({
               onClick={() => setInvitationSubTab("received")}
               className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
                 invitationSubTab === "received"
-                  ? "bg-secondary text-textPrimary"
-                  : "text-textMuted hover:text-textPrimary"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Received
@@ -540,8 +519,8 @@ export default function DashboardViewClient({
               onClick={() => setInvitationSubTab("sent")}
               className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
                 invitationSubTab === "sent"
-                  ? "bg-secondary text-textPrimary"
-                  : "text-textMuted hover:text-textPrimary"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sent ({sentNotifs.length})
@@ -558,7 +537,7 @@ export default function DashboardViewClient({
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <h3 className="text-[14px] font-semibold text-textPrimary">
+                            <h3 className="text-[14px] font-semibold text-foreground">
                               <Link href={`/projects/${inv.project.id}`} className="hover:underline underline-offset-2">
                                 {inv.project.title}
                               </Link>
@@ -572,8 +551,8 @@ export default function DashboardViewClient({
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-textMuted">
-                            Invited by <strong className="text-textPrimary">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString()}
+                          <p className="text-[11px] text-muted-foreground">
+                            Invited by <strong className="text-foreground">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                           </p>
                         </div>
 
@@ -606,7 +585,7 @@ export default function DashboardViewClient({
                       </div>
 
                       {inv.message && (
-                        <div className="text-[12px] text-textPrimary bg-secondary/60 rounded-lg p-3 border border-border italic leading-relaxed">
+                        <div className="text-[12px] text-foreground bg-secondary/60 rounded-lg p-3 border border-border italic leading-relaxed">
                           &ldquo;{inv.message}&rdquo;
                         </div>
                       )}
@@ -614,7 +593,7 @@ export default function DashboardViewClient({
                       {inv.project.skills && inv.project.skills.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
                           {inv.project.skills.map((s: any) => (
-                            <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-textMuted">
+                            <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
                               {s.name}
                             </span>
                           ))}
@@ -625,9 +604,9 @@ export default function DashboardViewClient({
                 </div>
               ) : (
                 <div className="card p-12 text-center space-y-2">
-                  <Mail size={32} className="mx-auto text-textMuted/40" />
-                  <p className="text-[14px] font-medium text-textPrimary">No invitations received yet</p>
-                  <p className="text-[12px] text-textMuted max-w-sm mx-auto">
+                  <Mail size={32} className="mx-auto text-muted-foreground/40" />
+                  <p className="text-[14px] font-medium text-foreground">No invitations received yet</p>
+                  <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
                     When project owners invite you to join their projects, their invitations will appear here.
                   </p>
                 </div>
@@ -644,23 +623,23 @@ export default function DashboardViewClient({
                     <div key={inv.id} className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-[13px] font-semibold text-textPrimary">
+                          <span className="text-[13px] font-semibold text-foreground">
                             Invite to {inv.receiver?.name}
                           </span>
-                          <span className="text-[11px] text-textMuted">
+                          <span className="text-[11px] text-muted-foreground">
                             ({inv.receiver?.department})
                           </span>
                           {inv.role && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-secondary text-textPrimary border border-border">
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-secondary text-foreground border border-border">
                               {inv.role}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-textMuted">
-                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-textPrimary hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString()}
+                        <p className="text-[11px] text-muted-foreground">
+                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-foreground hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </p>
                         {inv.message && (
-                          <p className="text-[11px] text-textMuted italic mt-1.5 line-clamp-1">
+                          <p className="text-[11px] text-muted-foreground italic mt-1.5 line-clamp-1">
                             &ldquo;{inv.message}&rdquo;
                           </p>
                         )}
@@ -687,9 +666,9 @@ export default function DashboardViewClient({
                 </div>
               ) : (
                 <div className="card p-12 text-center space-y-2">
-                  <Send size={32} className="mx-auto text-textMuted/40" />
-                  <p className="text-[14px] font-medium text-textPrimary">No invitations sent</p>
-                  <p className="text-[12px] text-textMuted max-w-sm mx-auto">
+                  <Send size={32} className="mx-auto text-muted-foreground/40" />
+                  <p className="text-[14px] font-medium text-foreground">No invitations sent</p>
+                  <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
                     You haven&apos;t sent any project invitations yet. Browse the Collaborators directory to find students and invite them!
                   </p>
                   <Link href="/dashboard?tab=collaborations" className="btn-secondary text-[12px] py-2 px-4 inline-flex mt-2">
@@ -708,15 +687,15 @@ export default function DashboardViewClient({
           <div className="card w-full max-w-md p-6 space-y-4 bg-card shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <UserPlus size={18} className="text-textPrimary" />
-                <h3 className="text-[15px] font-bold text-textPrimary">
+                <UserPlus size={18} className="text-foreground" />
+                <h3 className="text-[15px] font-bold text-foreground">
                   {inviteTargetUser ? `Invite ${inviteTargetUser.name}` : "Send Project Invitation"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setInviteModalOpen(false)}
-                className="btn-ghost p-1 text-textMuted hover:text-textPrimary cursor-pointer"
+                className="btn-ghost p-1 text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -749,8 +728,8 @@ export default function DashboardViewClient({
                     {inviteTargetUser.name[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[13px] font-semibold text-textPrimary">{inviteTargetUser.name}</p>
-                    <p className="text-[10px] text-textMuted">{inviteTargetUser.department}</p>
+                    <p className="text-[13px] font-semibold text-foreground">{inviteTargetUser.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{inviteTargetUser.department}</p>
                   </div>
                 </div>
               )}
@@ -828,8 +807,8 @@ export default function DashboardViewClient({
       {currentTab === "profile" && (
         <div className="space-y-5">
           <div>
-            <h2 className="text-[17px] font-semibold text-textPrimary tracking-tight">Profile settings</h2>
-            <p className="text-[12px] text-textMuted mt-0.5">Manage your account details and public profile.</p>
+            <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Profile settings</h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Manage your account details and public profile.</p>
           </div>
 
           <div className="card p-6">
@@ -840,14 +819,14 @@ export default function DashboardViewClient({
                   {profileImage ? (
                     <Image src={profileImage} alt="Profile" width={64} height={64} className="h-full w-full object-cover" unoptimized />
                   ) : (
-                    <span className="text-xl font-bold text-textPrimary">
+                    <span className="text-xl font-bold text-foreground">
                       {(profileName[0] || "?").toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-[13px] font-semibold text-textPrimary">Profile Picture (Cloudinary)</label>
-                  <p className="text-[11px] text-textMuted">Upload your avatar to Cloudinary.</p>
+                  <label className="block text-[13px] font-semibold text-foreground">Profile Picture (Cloudinary)</label>
+                  <p className="text-[11px] text-muted-foreground">Upload your avatar to Cloudinary.</p>
                   <div className="pt-1">
                     <label className="btn-secondary text-[11px] py-1.5 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-medium hover:bg-secondary">
                       <Upload size={12} />
@@ -918,7 +897,7 @@ export default function DashboardViewClient({
                     className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border text-[12px] font-bold transition-all cursor-pointer ${
                       profileAvailability === "AVAILABLE"
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 shadow-xs"
-                        : "bg-card text-textMuted border-border hover:text-textPrimary"
+                        : "bg-card text-muted-foreground border-border hover:text-foreground"
                     }`}
                   >
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -931,7 +910,7 @@ export default function DashboardViewClient({
                     className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border text-[12px] font-bold transition-all cursor-pointer ${
                       profileAvailability === "BUSY"
                         ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 shadow-xs"
-                        : "bg-card text-textMuted border-border hover:text-textPrimary"
+                        : "bg-card text-muted-foreground border-border hover:text-foreground"
                     }`}
                   >
                     <span className="h-2 w-2 rounded-full bg-rose-500" />
@@ -1011,7 +990,7 @@ export default function DashboardViewClient({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="text-[13px] font-bold text-destructive">Danger Zone</h4>
-                  <p className="text-[11px] text-textMuted mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     Permanently delete your account and all associated projects, applications, and data.
                   </p>
                 </div>
@@ -1036,8 +1015,8 @@ export default function DashboardViewClient({
               <Trash2 size={22} />
               <h3 className="text-[16px] font-bold">Delete Account?</h3>
             </div>
-            <p className="text-[12px] text-textMuted leading-relaxed">
-              This action is <strong className="text-textPrimary">permanent and cannot be undone</strong>. All your projects, applications, bookmarks, and account data will be permanently deleted.
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              This action is <strong className="text-foreground">permanent and cannot be undone</strong>. All your projects, applications, bookmarks, and account data will be permanently deleted.
             </p>
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
               <button

@@ -3,13 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import {
-  ChevronLeft,
-  Sprout,
-  Brain,
-  Dumbbell,
-  Folder,
-} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import { getProjectIcon } from "@/lib/projects";
 import ProjectDetailClient from "./ProjectDetailClient";
 
 interface PageProps {
@@ -71,10 +66,10 @@ export default async function ProjectPage({ params }: PageProps) {
 
   return (
     <AppShell user={session.user} unreadNotifications={unreadNotificationsCount}>
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Back link */}
-        <div className="mb-6">
+        <div className="mb-7">
           <Link
             href="/projects"
             className="inline-flex items-center gap-1 text-[12px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
@@ -86,80 +81,109 @@ export default async function ProjectPage({ params }: PageProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          {/* Apply widget — shown at top on mobile only, hidden on desktop (lives in sidebar there) */}
-          <div className="lg:hidden">
-            <ProjectDetailClient
-              projectId={projectId}
-              isOwner={isOwner}
-              hasApplied={hasApplied}
-              applicationStatus={applicationStatus}
-              projectStatus={project.status}
-              ownerEmail={project.owner.email}
-              projectData={project}
-            />
+          {/* ── Sidebar column — first on mobile (apply above fold), right rail on desktop ── */}
+          <div className="lg:col-span-4 space-y-4 order-1 lg:order-2">
+            <div className="flex flex-col gap-4">
+              {/* Owner card — top of sidebar on desktop, after apply widget on mobile */}
+              <div className="order-2 lg:order-1">
+                <div className="card p-5 space-y-4">
+                  <h3 className="section-label mb-0">Project Owner</h3>
+
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-[13px] text-foreground shrink-0 shadow-sm">
+                      {((project.owner?.name || "U").trim()[0] || "U").toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="text-[13px] font-semibold text-foreground">
+                        <Link href={`/profile/${project.owner.id}`} className="hover:underline">
+                          {project.owner.name}
+                        </Link>
+                      </h4>
+                      <p className="type-meta mt-0.5">
+                        {project.owner.department} · Year {project.owner.year}
+                      </p>
+                    </div>
+                  </div>
+
+                  {project.owner.bio && (
+                    <p className="text-[11px] text-muted-foreground leading-relaxed italic border-l-2 border-border pl-3">
+                      {project.owner.bio}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Apply / manage widget — rendered once */}
+              <div className="order-1 lg:order-2">
+                <ProjectDetailClient
+                  projectId={projectId}
+                  isOwner={isOwner}
+                  hasApplied={hasApplied}
+                  applicationStatus={applicationStatus}
+                  projectStatus={project.status}
+                  ownerEmail={project.owner.email}
+                  projectData={project}
+                />
+              </div>
+            </div>
           </div>
 
           {/* ── Main column ──────────────────────────────────── */}
-          <div className="lg:col-span-8 space-y-5">
+          <div className="lg:col-span-8 space-y-5 order-2 lg:order-1">
 
             {/* Hero card */}
-            <div className="card p-6 flex flex-col gap-4">
+            <div className="card p-6 sm:p-7 flex flex-col gap-5">
               <div className="flex items-start justify-between gap-4">
-                <div className={`h-14 w-14 rounded-xl ${iconInfo.bg} border border-border flex items-center justify-center shrink-0`}>
+                <div className={`h-14 w-14 rounded-2xl ${iconInfo.bg} border border-border flex items-center justify-center shrink-0 shadow-sm`}>
                   <Icon size={26} className={iconInfo.text} />
                 </div>
               </div>
 
               <div>
-                <div className="mb-2">
+                <div className="mb-2.5">
                   {project.status === "OPEN" ? (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">Looking for team</span>
+                    <span className="badge badge-green">Looking for team</span>
                   ) : project.status === "FULL" ? (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded-full">In Progress</span>
+                    <span className="badge badge-yellow">In Progress</span>
                   ) : (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">Closed</span>
+                    <span className="badge badge-red">Closed</span>
                   )}
                 </div>
-                <h1 className="text-[20px] sm:text-[24px] font-bold tracking-tight text-foreground leading-snug">
+                <h1 className="type-page-title text-[22px] sm:text-[28px] mb-2 leading-tight">
                   {project.title}
                 </h1>
-                <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">
+                <p className="text-[13px] sm:text-[14px] text-muted-foreground mt-1.5 leading-relaxed max-w-2xl">
                   {project.description.split("\n")[0] || ""}
                 </p>
               </div>
             </div>
 
-            {/* Metadata */}
-            <div className="card p-5 space-y-3">
-              <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Project Information</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] text-muted-foreground font-medium">Category</span>
-                  <p className="text-[12px] font-semibold text-foreground">{category}</p>
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-[10px] text-muted-foreground font-medium">Type</span>
-                  <p className="text-[12px] font-semibold text-foreground">{type}</p>
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-[10px] text-muted-foreground font-medium">Experience</span>
-                  <p className="text-[12px] font-semibold text-foreground">{experience}</p>
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-[10px] text-muted-foreground font-medium">Posted</span>
-                  <p className="text-[12px] font-semibold text-foreground">{postedTime}</p>
-                </div>
+            {/* Full description */}
+            <div className="card p-5 sm:p-6 space-y-4">
+              <h3 className="section-label mb-0">About this project</h3>
+              <div className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap">
+                {project.description}
               </div>
             </div>
 
+            {/* What you'll do */}
+            <div className="card p-5 sm:p-6 space-y-4">
+              <h3 className="section-label mb-0">What you&apos;ll do</h3>
+              <ul className="text-[13px] text-muted-foreground space-y-2.5 list-disc pl-5">
+                <li>Collaborate with the team to define scope and specifications.</li>
+                <li>Design, build, and test features according to the project goals.</li>
+                <li>Participate in code reviews and weekly syncs.</li>
+              </ul>
+            </div>
+
             {/* Skills */}
-            <div className="card p-5 space-y-3">
-              <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Skills &amp; Tech Stack</h3>
+            <div className="card p-5 sm:p-6 space-y-4">
+              <h3 className="section-label mb-0">Skills &amp; Tech Stack</h3>
               <div className="flex flex-wrap gap-1.5">
                 {project.skills.map((skill: any) => (
                   <span
                     key={skill.id}
-                    className="text-[11px] font-medium px-2.5 py-1 rounded bg-secondary border border-border text-muted-foreground"
+                    className="text-[11px] font-medium px-2.5 py-1 rounded-md bg-secondary border border-border text-muted-foreground"
                   >
                     {skill.name}
                   </span>
@@ -167,65 +191,27 @@ export default async function ProjectPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Full description */}
-            <div className="card p-5 space-y-3">
-              <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">About this project</h3>
-              <div className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap">
-                {project.description}
-              </div>
-            </div>
-
-            {/* What you'll do */}
-            <div className="card p-5 space-y-3">
-              <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">What you&apos;ll do</h3>
-              <ul className="text-[13px] text-muted-foreground space-y-2 list-disc pl-5">
-                <li>Collaborate with the team to define scope and specifications.</li>
-                <li>Design, build, and test features according to the project goals.</li>
-                <li>Participate in code reviews and weekly syncs.</li>
-              </ul>
-            </div>
-
-          </div>
-
-          {/* ── Sidebar column — hidden on mobile, widget shown above instead ── */}
-          <div className="hidden lg:block lg:col-span-4 space-y-4">
-
-            {/* Apply / bookmark / contact widget */}
-            <ProjectDetailClient
-              projectId={projectId}
-              isOwner={isOwner}
-              hasApplied={hasApplied}
-              applicationStatus={applicationStatus}
-              projectStatus={project.status}
-              ownerEmail={project.owner.email}
-              projectData={project}
-            />
-
-            {/* Owner card */}
-            <div className="card p-5 space-y-4">
-              <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Project Owner</h3>
-
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-[13px] text-foreground shrink-0">
-                  {((project.owner?.name || "U").trim()[0] || "U").toUpperCase()}
+            {/* Metadata */}
+            <div className="card p-5 sm:p-6 space-y-4">
+              <h3 className="section-label mb-0">Project Information</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+                <div className="space-y-1">
+                  <span className="type-meta block">Category</span>
+                  <p className="text-[12px] font-semibold text-foreground">{category}</p>
                 </div>
-                <div>
-                  <h4 className="text-[13px] font-semibold text-foreground">
-                    <Link href={`/profile/${project.owner.id}`} className="hover:underline">
-                      {project.owner.name}
-                    </Link>
-                  </h4>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {project.owner.department} · Year {project.owner.year}
-                  </p>
+                <div className="space-y-1">
+                  <span className="type-meta block">Type</span>
+                  <p className="text-[12px] font-semibold text-foreground">{type}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="type-meta block">Experience</span>
+                  <p className="text-[12px] font-semibold text-foreground">{experience}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="type-meta block">Posted</span>
+                  <p className="text-[12px] font-semibold text-foreground">{postedTime}</p>
                 </div>
               </div>
-
-              {project.owner.bio && (
-                <p className="text-[11px] text-muted-foreground leading-relaxed italic border-l-2 border-border pl-3">
-                  {project.owner.bio}
-                </p>
-              )}
             </div>
 
           </div>
@@ -236,17 +222,6 @@ export default async function ProjectPage({ params }: PageProps) {
 }
 
 /* ── helpers ──────────────────────────────────────────────── */
-
-function getProjectIcon(title: string) {
-  const t = title.toLowerCase();
-  if (t.includes("eco") || t.includes("track") || t.includes("waste") || t.includes("green") || t.includes("environ"))
-    return { icon: Sprout,   bg: "bg-green-500/10",  text: "text-green-600 dark:text-green-400" };
-  if (t.includes("study") || t.includes("buddy") || t.includes("learn") || t.includes("book") || t.includes("ai") || t.includes("companion"))
-    return { icon: Brain,    bg: "bg-purple-500/10", text: "text-purple-600 dark:text-purple-400" };
-  if (t.includes("fit") || t.includes("gym") || t.includes("health") || t.includes("workout"))
-    return { icon: Dumbbell, bg: "bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400" };
-  return { icon: Folder, bg: "bg-secondary", text: "text-foreground" };
-}
 
 function getRelativeTimeString(date: Date) {
   const diffMs    = Date.now() - date.getTime();
