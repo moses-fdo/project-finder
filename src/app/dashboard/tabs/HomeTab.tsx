@@ -114,15 +114,27 @@ export default function HomeTab({
       : projects.map((p: any) => p.owner).filter(Boolean);
 
     // Ensure currentUser is included in candidate pool for live leaderboard updates
-    const list = (currentUser && currentUser.id) ? [currentUser, ...rawList] : rawList;
+    const list = currentUser ? [currentUser, ...rawList] : rawList;
 
-    const uniqueMap = new Map<number, any>();
+    const uniqueMap = new Map<string, any>();
+    const seenEmails = new Set<string>();
+    const seenIds = new Set<string>();
+
     for (const c of list) {
-      if (!c || !c.id || uniqueMap.has(c.id)) continue;
+      if (!c) continue;
+      const idKey = c.id ? String(c.id) : '';
+      const emailKey = c.email ? c.email.toLowerCase().trim() : '';
+
+      if (idKey && seenIds.has(idKey)) continue;
+      if (emailKey && seenEmails.has(emailKey)) continue;
+
+      if (idKey) seenIds.add(idKey);
+      if (emailKey) seenEmails.add(emailKey);
 
       const rep = getDeveloperReputation(c);
 
-      uniqueMap.set(c.id, {
+      // Use idKey as map key so we keep a clean map
+      uniqueMap.set(idKey || emailKey || Math.random().toString(), {
         id: c.id,
         name: c.name || "Student",
         department: c.department || "Computer Science",
@@ -694,7 +706,7 @@ export default function HomeTab({
                   ];
                   return (
                     <div
-                      key={c.id || index}
+                      key={String(c.id)}
                       className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-secondary/30 hover:bg-secondary/70 border border-border/40 transition-colors group"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">

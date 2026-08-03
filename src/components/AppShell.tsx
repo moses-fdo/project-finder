@@ -363,11 +363,16 @@ export default function AppShell({
             className="w-full flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-secondary/60 cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0 overflow-hidden">
-                {user?.image
-                  ? <Image src={user.image} alt={user.name || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
-                  : <span className="text-[11px] font-bold text-foreground">{initials}</span>
-                }
+              <div className="relative shrink-0">
+                <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden">
+                  {user?.image
+                    ? <Image src={user.image} alt={user.name || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
+                    : <span className="text-[11px] font-bold text-foreground">{initials}</span>
+                  }
+                </div>
+                {user && (
+                  <span className="absolute -bottom-0.5 -right-0.5 block h-2.5 w-2.5 rounded-full bg-success border-2 border-card" />
+                )}
               </div>
               <div className="text-left overflow-hidden">
                 <p className="text-[12px] font-semibold text-foreground leading-snug truncate">{user?.name || "User"}</p>
@@ -547,11 +552,16 @@ export default function AppShell({
             isTabActive("profile") ? "text-foreground" : "text-muted-foreground"
           }`}
         >
-          <div className="h-[22px] w-[22px] rounded-full border-[1.5px] border-current flex items-center justify-center overflow-hidden">
-            {user?.image
-              ? <Image src={user.image} alt={user.name || "Avatar"} width={22} height={22} className="object-cover h-full w-full" unoptimized />
-              : <span className="text-[9px] font-bold">{initials}</span>
-            }
+          <div className="relative">
+            <div className="h-[22px] w-[22px] rounded-full border-[1.5px] border-current flex items-center justify-center overflow-hidden">
+              {user?.image
+                ? <Image src={user.image} alt={user.name || "Avatar"} width={22} height={22} className="object-cover h-full w-full" unoptimized />
+                : <span className="text-[9px] font-bold">{initials}</span>
+              }
+            </div>
+            {user && (
+              <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full bg-success border border-card" />
+            )}
           </div>
           <span className="text-[10px] font-medium">Profile</span>
         </button>
@@ -577,11 +587,16 @@ export default function AppShell({
 
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border">
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="h-11 w-11 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
-                  {user?.image
-                    ? <Image src={user.image} alt={user.name || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
-                    : <span className="text-[15px] font-bold text-foreground">{initials}</span>
-                  }
+                <div className="relative shrink-0">
+                  <div className="h-11 w-11 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden">
+                    {user?.image
+                      ? <Image src={user.image} alt={user.name || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
+                      : <span className="text-[15px] font-bold text-foreground">{initials}</span>
+                    }
+                  </div>
+                  {user && (
+                    <span className="absolute bottom-0 right-0 block h-3.5 w-3.5 rounded-full bg-success border-2 border-card" />
+                  )}
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-[14px] font-semibold text-foreground truncate">{user?.name || "User"}</p>

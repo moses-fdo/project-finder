@@ -263,6 +263,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     });
   }
 
+  console.log("SERVER SIDE DEBUG:", {
+    userId: user.id,
+    userType: typeof user.id,
+    userEmail: user.email,
+    collaborationsLength: peopleWithReputation.length,
+    collaborationsIds: peopleWithReputation.map(u => ({ id: u.id, name: u.name, email: u.email }))
+  });
+
   return (
     <AppShell user={user} unreadNotifications={unreadNotificationsCount} inboxNotifications={inboxNotifications}>
 <DashboardViewClient
