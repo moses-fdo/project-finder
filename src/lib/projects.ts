@@ -2,6 +2,7 @@ import { Sprout, Brain, Dumbbell, Folder, type LucideIcon } from "lucide-react";
 
 export const departments = [
   "Computer Science",
+  "Artificial Intelligence & Machine Learning",
   "Information Technology",
   "Electronics & Communication",
   "Electrical & Electronics",

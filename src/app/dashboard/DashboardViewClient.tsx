@@ -48,6 +48,7 @@ interface DashboardViewClientProps {
   receivedInvitations?: any[];
   sentInvitations?: any[];
   recentNotifications?: any[];
+  leaderboardUsers?: any[];
 }
 
 function parseNameAndRollNumber(fullName: string): { name: string; rollNumber: string } {
@@ -82,6 +83,7 @@ export default function DashboardViewClient({
   receivedInvitations = [],
   sentInvitations = [],
   recentNotifications = [],
+  leaderboardUsers = [],
 }: DashboardViewClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -459,6 +461,7 @@ export default function DashboardViewClient({
           recentNotifications={recentNotifications}
           receivedInvitations={receivedNotifs}
           collaborations={collaborations}
+          leaderboardUsers={leaderboardUsers}
           getProjectIcon={getProjectIcon}
           nowMs={nowMs}
           departments={departments}

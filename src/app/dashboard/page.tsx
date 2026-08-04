@@ -264,6 +264,76 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     });
   }
 
+  // ── Dedicated campus-wide leaderboard query ──────────────────────────
+  // Fetches up to 100 users (independent of collabPage/collabLimit) and
+  // ranks them by Developer Reputation score so the leaderboard on the
+  // Home tab always reflects the true campus-wide top contributors.
+  let leaderboardUsers: any[] = [];
+  if (activeTab === "home" || activeTab === "collaborations") {
+    const leaderboardRaw = await prisma.user.findMany({
+      take: 100,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        department: true,
+        year: true,
+        bio: true,
+        githubUrl: true,
+        linkedinUrl: true,
+        profileImage: true,
+        availability: true,
+        skills: { select: { id: true, name: true } },
+        projects: { select: { id: true, status: true } },
+        applications: { select: { id: true, status: true } },
+      },
+      // Use id asc (stable insertion order) so the pool isn't biased
+      // toward newest registrations the way createdAt desc would be.
+      orderBy: { id: "asc" },
+    });
+
+    const leaderboardRepResults = await Promise.allSettled(
+      leaderboardRaw.map((u: any) =>
+        calculateUserReputation({
+          userId: u.id,
+          githubUrl: u.githubUrl,
+          linkedinUrl: u.linkedinUrl,
+          bio: u.bio,
+          year: u.year,
+          skills: u.skills,
+          userProjectsCount: u.projects?.length || 0,
+          userApplicationsCount: u.applications?.length || 0,
+        })
+      )
+    );
+
+    leaderboardUsers = leaderboardRaw
+      .map((u: any, i: number) => {
+        const result = leaderboardRepResults[i];
+        if (result.status === "fulfilled") {
+          const rep = result.value;
+          return {
+            ...u,
+            reputation: {
+              score: rep.score,
+              stars: rep.stars,
+              tier: rep.tier,
+              githubConnected: rep.githubConnected,
+            },
+          };
+        }
+        return u;
+      })
+      // Sort: GitHub-connected first, then by score descending
+      .sort((a: any, b: any) => {
+        const aConnected = a.reputation?.githubConnected ?? false;
+        const bConnected = b.reputation?.githubConnected ?? false;
+        if (aConnected !== bConnected) return aConnected ? -1 : 1;
+        return (b.reputation?.score ?? 0) - (a.reputation?.score ?? 0);
+      })
+      .slice(0, 10);
+  }
+
   console.log("SERVER SIDE DEBUG:", {
     userId: user.id,
     userType: typeof user.id,
@@ -291,6 +361,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           receivedInvitations={receivedInvitations}
           sentInvitations={sentInvitations}
           recentNotifications={recentNotifications}
+          leaderboardUsers={leaderboardUsers}
        />
     </AppShell>
   );

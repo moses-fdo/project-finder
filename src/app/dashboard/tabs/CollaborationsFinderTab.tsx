@@ -514,7 +514,7 @@ export default function CollaborationsFinderTab({
               return (
                 <div
                   key={c.id}
-                  className="card px-4 py-3.5 border border-border/50 bg-gradient-to-br from-card/85 via-card to-secondary/15 shadow-xs hover:border-accent/40 hover:shadow-[0_0_15px_rgba(108,92,231,0.06)] hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between h-full relative group overflow-hidden"
+                  className="card px-4 py-3.5 border border-border/50 bg-gradient-to-br from-card/85 via-card to-secondary/15 shadow-xs transition-none flex flex-col justify-between h-full relative overflow-hidden"
                 >
                   {/* Status Badge in Top Right */}
                   <span className={cn(
@@ -620,7 +620,7 @@ export default function CollaborationsFinderTab({
                       href={`/profile/${c.id}`}
                       className="w-full py-2 px-3 bg-secondary/60 hover:bg-accent border border-border/60 hover:border-accent text-[11.5px] font-bold text-zinc-300 hover:text-white rounded-lg flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-xs"
                     >
-                      View Profile <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
+                      View Profile <ArrowRight size={12} />
                     </Link>
                   </div>
                 </div>
