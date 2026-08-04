@@ -3,9 +3,9 @@
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, X, Mail, ExternalLink, ArrowRight, UserCheck, FolderGit2, Users, Star } from "lucide-react";
+import { Search, X, ArrowRight, UserCheck, Star } from "lucide-react";
 import { getDeveloperReputation } from "@/lib/reputation/utils";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 // ── 1. Clean Data Models & Helper functions ───────────────────────
 
@@ -156,15 +156,14 @@ export default function CollaborationsFinderTab({
   collabDept,   setCollabDept,
   collabSkill,  setCollabSkill,
   collabStatus, setCollabStatus,
-  hasProjects = false,
+  hasProjects: _hasProjects = false,
   collabPage = 1,
   collabLimit = 24,
   totalCollabs = 0,
-  onInviteUser,
+  onInviteUser: _onInviteUser,
 }: CollaborationsFinderTabProps) {
   
   const router = useRouter();
-  const searchParams = useSearchParams();
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -173,7 +172,7 @@ export default function CollaborationsFinderTab({
   const [gridWidth, setGridWidth] = useState<number>(1200);
   const [gridHeight, setGridHeight] = useState<number>(0);
 
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const totalPages = Math.ceil((totalCollabs || 0) / (collabLimit || 24));
 
