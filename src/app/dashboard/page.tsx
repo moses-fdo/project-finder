@@ -14,7 +14,7 @@ const projectCardSelect = {
   status: true,
   createdAt: true,
   ownerId: true,
-  owner: { select: { id: true, name: true, department: true, githubUrl: true } },
+  owner: { select: { id: true, name: true, email: true, department: true, githubUrl: true } },
   skills: { select: { id: true, name: true } },
 } satisfies Prisma.ProjectSelect;
 

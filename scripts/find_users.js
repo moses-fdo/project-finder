@@ -30,7 +30,7 @@ async function main() {
       githubUrl: true,
     }
   });
-  console.log("Users in database:", JSON.stringify(users, null, 2));
+  console.log("All users in database:", JSON.stringify(users, null, 2));
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

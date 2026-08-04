@@ -4,6 +4,61 @@ import { prisma } from "@/lib/prisma";
 import { getErrorMessage } from "@/lib/error";
 import { checkAbuseServer } from "@/lib/moderation";
 
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    const session = await auth();
+    const currentUser = session?.user;
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: "You must be logged in to view your profile." },
+        { status: 401 }
+      );
+    }
+
+    const currentUserId = Number((currentUser as any).id);
+    if (isNaN(currentUserId)) {
+      return NextResponse.json(
+        { error: "Invalid user ID." },
+        { status: 400 }
+      );
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        department: true,
+        year: true,
+        bio: true,
+        githubUrl: true,
+        linkedinUrl: true,
+        profileImage: true,
+        availability: true,
+      },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "User not found." },
+        { status: 444 }
+      );
+    }
+
+    return NextResponse.json(dbUser);
+  } catch (error) {
+    console.error("Fetch profile error:", error);
+    return NextResponse.json(
+      { error: getErrorMessage(error) },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(req: Request) {
   try {
     const session = await auth();

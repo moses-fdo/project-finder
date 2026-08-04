@@ -48,6 +48,7 @@ export default function HomeTab({
   const [dashDept, setDashDept] = useState("");
   const [dashStatus, setDashStatus] = useState("ALL");
   const [dashPage, setDashPage] = useState(1);
+  const [mobileHomeSegment, setMobileHomeSegment] = useState<"projects" | "insights">("projects");
 
   const eventsList = (events && events.length > 0) ? events : hackathons;
 
@@ -109,18 +110,29 @@ export default function HomeTab({
 
   // Derive top campus collaborators / leaderboard based on profile Developer Reputation Score
   const topCollaborators = useMemo(() => {
-    const rawList = (collaborations && collaborations.length > 0)
+    const rawList = [...((collaborations && collaborations.length > 0)
       ? collaborations
-      : projects.map((p: any) => p.owner).filter(Boolean);
+      : projects.map((p: any) => p.owner).filter(Boolean))];
 
-    // Ensure currentUser is included in candidate pool for live leaderboard updates
-    const list = currentUser ? [currentUser, ...rawList] : rawList;
+    if (currentUser) {
+      const curEmail = currentUser.email?.toLowerCase().trim() || '';
+      const curIdStr = currentUser.id ? String(currentUser.id) : '';
+      const idx = rawList.findIndex((u: any) => 
+        (u.email && curEmail && u.email.toLowerCase().trim() === curEmail) || 
+        (u.id && curIdStr && String(u.id) === curIdStr)
+      );
+      if (idx !== -1) {
+        rawList[idx] = { ...rawList[idx], ...currentUser };
+      } else {
+        rawList.unshift(currentUser);
+      }
+    }
 
     const uniqueMap = new Map<string, any>();
     const seenEmails = new Set<string>();
     const seenIds = new Set<string>();
 
-    for (const c of list) {
+    for (const c of rawList) {
       if (!c) continue;
       const idKey = c.id ? String(c.id) : '';
       const emailKey = c.email ? c.email.toLowerCase().trim() : '';
@@ -328,11 +340,60 @@ export default function HomeTab({
         </Link>
       </div>
 
+      {/* Mobile Segment Tabs */}
+      <style>{`
+        .home-segment-tabs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          background: var(--bg-surface-2);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 3.5px;
+        }
+        .home-tab-btn {
+          padding: 10px 16px;
+          font-size: 12.5px;
+          font-weight: 700;
+          text-align: center;
+          border-radius: 9px;
+          border: none;
+          background: none;
+          color: var(--text-tertiary);
+          cursor: pointer;
+          transition: all 180ms ease;
+        }
+        .home-tab-btn.active {
+          background: var(--bg-surface);
+          color: var(--text-primary);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+        @media (min-width: 1024px) {
+          .home-segment-tabs {
+            display: none !important;
+          }
+        }
+      `}</style>
+      
+      <div className="lg:hidden home-segment-tabs">
+        <button
+          onClick={() => setMobileHomeSegment("projects")}
+          className={`home-tab-btn ${mobileHomeSegment === "projects" ? "active" : ""}`}
+        >
+          Explore Projects
+        </button>
+        <button
+          onClick={() => setMobileHomeSegment("insights")}
+          className={`home-tab-btn ${mobileHomeSegment === "insights" ? "active" : ""}`}
+        >
+          Leaderboard &amp; Insights
+        </button>
+      </div>
+
       {/* ── 3. ASYMMETRIC 2-COLUMN WORKSPACE MATRIX ────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
         {/* ── LEFT / MAIN STAGE (8 COLS) ─────────────────────────────── */}
-        <div className="lg:col-span-8 space-y-7 min-w-0">
+        <div className={`lg:col-span-8 space-y-7 min-w-0 ${mobileHomeSegment === "projects" ? "block" : "hidden lg:block"}`}>
 
           {/* SPOTLIGHT MATCH BLOCK (Hero Recommendation) */}
           {topRecommendedSpotlight && (
@@ -649,7 +710,7 @@ export default function HomeTab({
         </div>{/* END LEFT STAGE */}
 
         {/* ── RIGHT CONTROL SIDEBAR (4 COLS) ─────────────────────────── */}
-        <div className="lg:col-span-4 space-y-6 min-w-0">
+        <div className={`lg:col-span-4 space-y-6 min-w-0 ${mobileHomeSegment === "insights" ? "block" : "hidden lg:block"}`}>
 
           {/* INVITATIONS ACTION WIDGET */}
           {receivedInvitations && receivedInvitations.length > 0 && (

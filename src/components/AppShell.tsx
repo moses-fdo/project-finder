@@ -76,6 +76,30 @@ export default function AppShell({
   const [searchQuery,       setSearchQuery]       = useState("");
   const [localNotifs, setLocalNotifs] = useState<NotificationItem[]>(stableNotifs);
 
+  const [clientName, setClientName] = useState(user?.name || "");
+  const [clientImage, setClientImage] = useState(user?.image || "");
+
+  useEffect(() => {
+    setClientName(user?.name || "");
+    setClientImage(user?.image || "");
+  }, [user]);
+
+  useEffect(() => {
+    async function syncProfile() {
+      try {
+        const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.name) setClientName(data.name);
+          if (data.profileImage) setClientImage(data.profileImage);
+        }
+      } catch { /* silent */ }
+    }
+    syncProfile();
+  }, []);
+
   const profileRef   = useRef<HTMLDivElement>(null);
   const inboxDesktop = useRef<HTMLDivElement>(null);
   const inboxMobile  = useRef<HTMLDivElement>(null);
@@ -109,7 +133,7 @@ export default function AppShell({
     };
   }, []);
 
-  const initials = ((user?.name || "U").trim()[0] || "U").toUpperCase();
+  const initials = ((clientName || "U").trim()[0] || "U").toUpperCase();
   const unreadCount = inboxNotifications
     ? localNotifs.filter((n) => !n.read).length
     : unreadNotifications;
@@ -365,8 +389,8 @@ export default function AppShell({
             <div className="flex items-center gap-2.5 overflow-hidden">
               <div className="relative shrink-0">
                 <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden">
-                  {user?.image
-                    ? <Image src={user.image} alt={user.name || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
+                  {clientImage
+                    ? <Image src={clientImage} alt={clientName || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
                     : <span className="text-[11px] font-bold text-foreground">{initials}</span>
                   }
                 </div>
@@ -375,7 +399,7 @@ export default function AppShell({
                 )}
               </div>
               <div className="text-left overflow-hidden">
-                <p className="text-[12px] font-semibold text-foreground leading-snug truncate">{user?.name || "User"}</p>
+                <p className="text-[12px] font-semibold text-foreground leading-snug truncate">{clientName || "User"}</p>
                 <p className="text-[10px] text-muted-foreground leading-none truncate mt-0.5">{user?.email || ""}</p>
               </div>
             </div>
@@ -554,8 +578,8 @@ export default function AppShell({
         >
           <div className="relative">
             <div className="h-[22px] w-[22px] rounded-full border-[1.5px] border-current flex items-center justify-center overflow-hidden">
-              {user?.image
-                ? <Image src={user.image} alt={user.name || "Avatar"} width={22} height={22} className="object-cover h-full w-full" unoptimized />
+              {clientImage
+                ? <Image src={clientImage} alt={clientName || "Avatar"} width={22} height={22} className="object-cover h-full w-full" unoptimized />
                 : <span className="text-[9px] font-bold">{initials}</span>
               }
             </div>
@@ -589,8 +613,8 @@ export default function AppShell({
               <div className="flex items-center gap-3 overflow-hidden">
                 <div className="relative shrink-0">
                   <div className="h-11 w-11 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden">
-                    {user?.image
-                      ? <Image src={user.image} alt={user.name || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
+                    {clientImage
+                      ? <Image src={clientImage} alt={clientName || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
                       : <span className="text-[15px] font-bold text-foreground">{initials}</span>
                     }
                   </div>
@@ -599,7 +623,7 @@ export default function AppShell({
                   )}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-[14px] font-semibold text-foreground truncate">{user?.name || "User"}</p>
+                  <p className="text-[14px] font-semibold text-foreground truncate">{clientName || "User"}</p>
                   <p className="text-[11px] text-muted-foreground truncate">{user?.email || ""}</p>
                 </div>
               </div>
