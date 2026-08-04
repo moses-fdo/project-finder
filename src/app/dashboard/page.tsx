@@ -19,7 +19,7 @@ const projectCardSelect = {
 } satisfies Prisma.ProjectSelect;
 
 interface DashboardPageProps {
-  searchParams: Promise<{ tab?: string; collabCursor?: string }>;
+  searchParams: Promise<{ tab?: string; collabCursor?: string; collabPage?: string; collabLimit?: string }>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -51,7 +51,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const needsInvitations = activeTab === "home" || activeTab === "invitations";
   const needsRecommended = activeTab === "home";
 
-  const collabCursor = params.collabCursor ? Number(params.collabCursor) : undefined;
+  const collabPage = params.collabPage ? Number(params.collabPage) : 1;
+  const collabLimit = params.collabLimit ? Number(params.collabLimit) : 24;
 
   const tabData = await safeQuery(
       () =>
@@ -118,11 +119,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 orderBy: { createdAt: "desc" },
               })
             : Promise.resolve([]),
-          // 5: Collaborations directory (cursor-based pagination)
+          // 5: Collaborations directory (offset-based pagination)
           needsCollaborations
             ? prisma.user.findMany({
-                take: 49,
-                ...(collabCursor ? { cursor: { id: collabCursor }, skip: 1 } : {}),
+                skip: (collabPage - 1) * collabLimit,
+                take: collabLimit,
                 select: {
                   id: true,
                   name: true,
@@ -194,8 +195,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 orderBy: { createdAt: "desc" },
               })
             : Promise.resolve([]),
+          // 11: Total collaborations count
+          needsCollaborations
+            ? prisma.user.count()
+            : Promise.resolve(0),
         ]),
-      [0, null, [], [], [], [], [], [], [], []]
+      [0, null, [], [], [], [], [], [], [], [], 0]
     );
 
   const [
@@ -209,16 +214,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     recommendedProjects,
     receivedInvitations,
     sentInvitations,
+    totalCollabs = 0,
   ] = tabData;
 
   const events = hackathons; // destructuring alias
 
-  // Cursor-based pagination for collaborations
-  const collabHasMore = Array.isArray(collaborations) && collaborations.length > 48;
-  const collabNextCursor = Array.isArray(collaborations) && collaborations.length > 0
-    ? collaborations[Math.min(47, collaborations.length - 1)]?.id
-    : undefined;
-  const people = Array.isArray(collaborations) ? collaborations.slice(0, 48) : collaborations;
+  const people = Array.isArray(collaborations) ? collaborations : [];
 
   const inboxNotifications = (notifications || []).slice(0, 10); // Slice top 10 for dropdown navbar
 
@@ -281,8 +282,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
          notifications={notifications}
          profileData={profileData}
          collaborations={peopleWithReputation}
-          collabNextCursor={collabNextCursor}
-          collabHasMore={collabHasMore}
+         collabPage={collabPage}
+         collabLimit={collabLimit}
+         totalCollabs={totalCollabs}
            events={events}
           hackathons={events}
           recommendedProjects={recommendedProjects}

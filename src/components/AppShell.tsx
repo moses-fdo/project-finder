@@ -444,21 +444,10 @@ export default function AppShell({
 
         {/* Desktop header */}
         <header
-          className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card/95 backdrop-blur-sm sticky top-0 z-40"
+          className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card backdrop-blur-sm sticky top-0 z-50"
           style={{ boxShadow: "0 1px 0 0 color-mix(in oklab, var(--accent) 6%, transparent), 0 1px 3px rgba(16,24,40,0.03)" }}
         >
-          <div className="relative w-64">
-            <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <button
-              type="button"
-              onClick={() => setSearchModalOpen(true)}
-              className="w-full text-left pl-9 pr-2.5 py-1.5 bg-secondary/50 border border-border rounded-lg text-[12px] text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer flex items-center justify-between"
-              style={{ boxShadow: "inset 0 1px 2px rgba(16,24,40,0.04)" }}
-            >
-              <span className="truncate">Search projects, skills…</span>
-              <kbd className="text-[10px] font-mono text-muted-foreground bg-card border border-border px-1.5 py-0.5 rounded shadow-sm shrink-0 ml-1">⌘K</kbd>
-            </button>
-          </div>
+          <div />
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -494,7 +483,7 @@ export default function AppShell({
         </header>
 
         {/* Mobile header */}
-        <header className="flex md:hidden h-14 border-b border-border items-center justify-between px-4 bg-card sticky top-0 z-40">
+        <header className="flex md:hidden h-14 border-b border-border items-center justify-between px-4 bg-card sticky top-0 z-50">
           <Link href="/dashboard" className="flex items-center gap-2">
             <ColabroLogo size={28} />
             <span className="text-[16px] font-logo text-foreground">
@@ -503,16 +492,6 @@ export default function AppShell({
           </Link>
 
           <div className="flex items-center gap-1 relative" ref={inboxMobile}>
-            {/* Mobile Search trigger — 44×44 touch target */}
-            <button
-              onClick={() => setSearchModalOpen(true)}
-              className="flex items-center justify-center w-11 h-11 text-muted-foreground hover:text-foreground rounded-xl transition-colors cursor-pointer"
-              aria-label="Search projects"
-              title="Search projects"
-            >
-              <Search size={18} strokeWidth={1.75} />
-            </button>
-
             <ThemeToggle />
 
             {/* Inbox trigger — 44×44 touch target */}

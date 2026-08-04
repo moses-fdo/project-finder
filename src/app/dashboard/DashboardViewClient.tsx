@@ -39,8 +39,9 @@ interface DashboardViewClientProps {
   notifications: any[];
   profileData: any;
   collaborations?: any[];
-  collabNextCursor?: number;
-  collabHasMore?: boolean;
+  collabPage?: number;
+  collabLimit?: number;
+  totalCollabs?: number;
   events?: any[];
   hackathons?: any[];
   recommendedProjects?: any[];
@@ -72,8 +73,9 @@ export default function DashboardViewClient({
   notifications,
   profileData,
   collaborations = [],
-  collabNextCursor,
-  collabHasMore,
+  collabPage = 1,
+  collabLimit = 24,
+  totalCollabs = 0,
   events = [],
   hackathons = [],
   recommendedProjects = [],
@@ -90,6 +92,7 @@ export default function DashboardViewClient({
 
   const [activeUser, setActiveUser] = useState(() => ({
     ...currentUser,
+    ...profileData,
     name: profileData?.name || currentUser?.name || "",
     image: profileData?.profileImage || currentUser?.image || "",
   }));
@@ -98,6 +101,7 @@ export default function DashboardViewClient({
     setActiveUser((prev: any) => ({
       ...prev,
       ...currentUser,
+      ...profileData,
       name: profileData?.name || currentUser?.name || prev?.name || "",
       image: profileData?.profileImage || currentUser?.image || prev?.image || "",
     }));
@@ -475,8 +479,9 @@ export default function DashboardViewClient({
           collabStatus={collabStatus}
           setCollabStatus={setCollabStatus}
           hasProjects={projects.length > 0}
-          collabNextCursor={collabNextCursor}
-          collabHasMore={collabHasMore}
+          collabPage={collabPage}
+          collabLimit={collabLimit}
+          totalCollabs={totalCollabs}
           onInviteUser={(user: any) => {
             setInviteTargetUser(user);
             setInviteProjectId(projects[0]?.id?.toString() || "");

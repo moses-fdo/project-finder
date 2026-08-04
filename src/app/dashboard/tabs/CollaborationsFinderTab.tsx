@@ -1,16 +1,21 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, X, Mail, ExternalLink, ArrowRight, UserCheck } from "lucide-react";
+import { Search, X, Mail, ExternalLink, ArrowRight, UserCheck, FolderGit2, Users, Star } from "lucide-react";
 import { getDeveloperReputation } from "@/lib/reputation/utils";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // ── 1. Clean Data Models & Helper functions ───────────────────────
 
 function cn(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
+
+// Estimated height of a collaborator profile card — used to compute how many
+// full rows fit inside the grid area without scrolling.
+const PROFILE_CARD_HEIGHT = 200;
 
 interface Collaborator {
   id: string;
@@ -138,8 +143,9 @@ interface CollaborationsFinderTabProps {
   collabStatus: "all" | "open" | "busy";
   setCollabStatus: (v: "all" | "open" | "busy") => void;
   hasProjects?: boolean;
-  collabNextCursor?: number;
-  collabHasMore?: boolean;
+  collabPage?: number;
+  collabLimit?: number;
+  totalCollabs?: number;
   onInviteUser?: (user: any) => void;
 }
 
@@ -151,16 +157,111 @@ export default function CollaborationsFinderTab({
   collabSkill,  setCollabSkill,
   collabStatus, setCollabStatus,
   hasProjects = false,
-  collabNextCursor,
-  collabHasMore = false,
+  collabPage = 1,
+  collabLimit = 24,
+  totalCollabs = 0,
   onInviteUser,
 }: CollaborationsFinderTabProps) {
   
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   
-  // Selected user for the preview drawer
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  
+  const [layoutHeight, setLayoutHeight] = useState<number>(500);
+  const [gridWidth, setGridWidth] = useState<number>(1200);
+  const [gridHeight, setGridHeight] = useState<number>(0);
+
+  const [isPending, startTransition] = useTransition();
+
+  const totalPages = Math.ceil((totalCollabs || 0) / (collabLimit || 24));
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, collabPage - 2);
+    const end = Math.min(totalPages, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  const handlePageChange = (pageNum: number) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("collabPage", String(pageNum));
+    startTransition(() => {
+      router.push(`/dashboard?${params.toString()}`);
+      router.refresh();
+    });
+  };
+
+  // Lock body scrolling when Collaborators tab is active
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
+
+  // Measure the grid's live dimensions so the card count always matches the
+  // visible area (re-measured after any layout change, not just on mount).
+  useEffect(() => {
+    if (!gridRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setGridWidth(width);
+        setGridHeight(height);
+      }
+    });
+    observer.observe(gridRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Keep the collaborator section locked to the visible viewport height.
+  useEffect(() => {
+    function updateLayoutHeight() {
+      const height = window.innerHeight;
+      const headerHeight = 56;
+      const isMobile = window.innerWidth <= 768;
+      const padding = isMobile ? 32 : 56;
+      const navHeight = isMobile ? 64 : 0;
+      setLayoutHeight(height - headerHeight - padding - navHeight);
+    }
+    updateLayoutHeight();
+    window.addEventListener("resize", updateLayoutHeight);
+    return () => window.removeEventListener("resize", updateLayoutHeight);
+  }, []);
+
+  // Keep collabLimit in sync with the number of cards that fit on screen
+  // (full rows only) — no vertical scrolling, remaining profiles paginated.
+  useEffect(() => {
+    if (!gridWidth || !gridHeight) return;
+    const timer = setTimeout(() => {
+      const cols = Math.max(1, Math.floor(gridWidth / 300));
+      const GRID_GAP = 12;
+      const rows = Math.max(1, Math.floor((gridHeight + GRID_GAP) / (PROFILE_CARD_HEIGHT + GRID_GAP)));
+      const targetLimit = cols * rows;
+      if (collabLimit !== targetLimit) {
+        const params = new URLSearchParams(window.location.search);
+        params.set("collabLimit", String(targetLimit));
+        params.set("collabPage", "1"); // Reset to page 1
+        startTransition(() => {
+          router.push(`/dashboard?${params.toString()}`);
+          router.refresh();
+        });
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [gridWidth, gridHeight, collabLimit, router]);
 
   // Focus search input on mount
   useEffect(() => {
@@ -240,73 +341,46 @@ export default function CollaborationsFinderTab({
     });
   }, [filtered]);
 
-  // Derive active selected user details
-  const activeSelectedUser = useMemo(() => {
-    if (!selectedUserId) return null;
-    return parsedPeople.find(p => p.c.id === selectedUserId) || null;
-  }, [selectedUserId, parsedPeople]);
+  // Calculate the columns dynamically
+  const cols = Math.max(1, Math.floor(gridWidth / 300));
 
-  // Drawer handling
-  const openUserDrawer = (userId: string) => {
-    setSelectedUserId(userId);
-    setIsDrawerOpen(true);
-  };
+  // Number of full rows that fit inside the grid area without scrolling
+  const GRID_GAP = 12;
+  const availableGridHeight = gridHeight || layoutHeight;
+  const rows = Math.max(1, Math.floor((availableGridHeight + GRID_GAP) / (PROFILE_CARD_HEIGHT + GRID_GAP)));
+  const cardsPerPage = cols * rows;
 
-  const closeUserDrawer = () => {
-    setIsDrawerOpen(false);
-  };
+  // Render only the profiles that fit on screen — the rest are reached via
+  // pagination. Sliced to full rows so the grid stays rectangular (no empty slots).
+  const displayPeople = useMemo(() => {
+    if (sorted.length === 0) return [];
+    const cap = Math.min(sorted.length, cardsPerPage);
+    return sorted.slice(0, Math.floor(cap / cols) * cols);
+  }, [sorted, cols, cardsPerPage]);
 
-  // Close drawer on escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeUserDrawer();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+
 
   return (
     <>
       {/* Scope-contained custom styling matching aesthetic requirements */}
       <style>{`
         .collab-page {
-          background-color: #0a0a0b;
-          min-height: 100vh;
-        }
-        
-        .collab-card {
-          background-color: #151517;
-          border: 0.5px solid #2a2a2e;
-          border-radius: 12px;
-          padding: 16px;
           display: flex;
           flex-direction: column;
-          height: max-content;
-          cursor: pointer;
-          transition: border-color 180ms ease, background-color 180ms ease;
-        }
-
-        .collab-card:hover {
-          border-color: #3e3e44;
-          background-color: #1b1b1e;
+          justify-content: space-between;
+          overflow: hidden;
         }
 
         .sticky-topbar {
-          position: sticky;
-          top: 0;
-          background-color: #0a0a0b;
-          z-index: 40;
-          padding-bottom: 12px;
-          border-bottom: 0.5px solid #2a2a2e;
+          padding-bottom: 8px;
+          border-bottom: 1px solid var(--border);
         }
 
         /* Skill chips styling */
         .skill-chip {
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 600;
-          padding: 2.5px 6.5px;
+          padding: 1.5px 5.5px;
           border-radius: 6px;
           border: 1px solid transparent;
           transition: filter 150ms ease;
@@ -315,90 +389,49 @@ export default function CollaborationsFinderTab({
         .skill-chip:hover {
           filter: brightness(1.15);
         }
-
-        /* Drawer Slide & Fade Animation */
-        .drawer-overlay {
-          position: fixed;
-          inset: 0;
-          background-color: rgba(0, 0, 0, 0.7);
-          backdrop-filter: blur(4px);
-          z-index: 50;
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .drawer-overlay.active {
-          opacity: 1;
-          pointer-events: auto;
-        }
-
-        .drawer-content {
-          position: fixed;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: 100%;
-          max-width: 360px;
-          background-color: #151517;
-          border-left: 0.5px solid #2a2a2e;
-          box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-          z-index: 60;
-          transform: translateX(100%);
-          transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-
-        .drawer-content.active {
-          transform: translateX(0);
-        }
-
-        /* Violet Accent Rule */
-        .accent-btn-primary {
-          background-color: #3C3489;
-          color: #ffffff;
-          transition: background-color 150ms ease;
-        }
-        .accent-btn-primary:hover {
-          background-color: #4a41a3;
-        }
       `}</style>
 
-      <div className="collab-page space-y-6 pb-12 animate-in fade-in duration-300">
+      <div className="collab-page space-y-3.5 animate-in fade-in duration-300" style={{ height: `${layoutHeight}px` }}>
         
-        {/* ── STICKY TOPBAR ─────────────────────────────────── */}
-        <div className="sticky-topbar pt-2 space-y-3">
-          
-          {/* Search Row */}
-          <div className="relative">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={collabSearch}
-              onChange={e => setCollabSearch(e.target.value)}
-              placeholder="Search name, roll number, or skill..."
-              className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-[#151517] border border-[#2a2a2e] text-[12.5px] text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-700 focus:border-zinc-600 transition-all"
-            />
-            {collabSearch && (
-              <button
-                onClick={() => setCollabSearch("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
+        {/* Tab Introduction Header */}
+        <div className="flex flex-col gap-0.5 shrink-0">
+          <h2 className="type-section-title">Find Collaborators</h2>
+          <p className="type-meta mt-0.5">
+            Connect with peers, discover expertise, and build your project team.
+          </p>
+        </div>
 
-          {/* Filter dropdowns + Active chips row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+        {/* ── STICKY TOPBAR ─────────────────────────────────── */}
+        <div className="sticky-topbar pt-1 pb-3 space-y-2.5 shrink-0 border-b border-border/30">
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            {/* Search Input on the Left */}
+            <div className="relative flex-1 max-w-md">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={collabSearch}
+                onChange={e => setCollabSearch(e.target.value)}
+                placeholder="Search name, roll number, or skill..."
+                className="w-full pl-10 pr-9 py-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 border border-border/60 text-[12.5px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all duration-150"
+              />
+              {collabSearch && (
+                <button
+                  onClick={() => setCollabSearch("")}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown Filters on the Right */}
+            <div className="flex flex-wrap items-center gap-2">
               <select
                 value={collabDept}
                 onChange={e => setCollabDept(e.target.value)}
-                className="text-[11px] font-bold px-3 py-2 rounded-lg bg-[#151517] border border-[#2a2a2e] text-zinc-300 hover:text-zinc-100 cursor-pointer outline-none transition-all"
+                className="text-[11.5px] font-semibold px-3 py-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 border border-border/60 text-muted-foreground hover:text-foreground cursor-pointer outline-none transition-all duration-150"
               >
                 <option value="">All Departments</option>
                 {allDepts.map(d => <option key={d} value={d}>{d}</option>)}
@@ -407,317 +440,253 @@ export default function CollaborationsFinderTab({
               <select
                 value={collabStatus}
                 onChange={e => setCollabStatus(e.target.value as any)}
-                className="text-[11px] font-bold px-3 py-2 rounded-lg bg-[#151517] border border-[#2a2a2e] text-zinc-300 hover:text-zinc-100 cursor-pointer outline-none transition-all"
+                className="text-[11.5px] font-semibold px-3 py-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 border border-border/60 text-muted-foreground hover:text-foreground cursor-pointer outline-none transition-all duration-150"
               >
                 <option value="all">All Status</option>
                 <option value="open">Available</option>
                 <option value="busy">Busy</option>
               </select>
             </div>
-
-            {/* Active Filter Chips */}
-            {(collabSkill || collabDept || collabStatus !== "all") && (
-              <div className="flex flex-wrap gap-1.5 items-center">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mr-1">Active:</span>
-                
-                {collabSkill && (
-                  <button
-                    onClick={() => setCollabSkill("")}
-                    className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-purple-950/60 border border-purple-800/30 text-purple-300 font-bold"
-                  >
-                    Skill: {collabSkill} <X size={10} />
-                  </button>
-                )}
-
-                {collabDept && (
-                  <button
-                    onClick={() => setCollabDept("")}
-                    className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700/60 text-zinc-300 font-bold"
-                  >
-                    Dept: {collabDept} <X size={10} />
-                  </button>
-                )}
-
-                {collabStatus !== "all" && (
-                  <button
-                    onClick={() => setCollabStatus("all")}
-                    className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/30 text-emerald-300 font-bold"
-                  >
-                    Status: {collabStatus === "open" ? "Available" : "Busy"} <X size={10} />
-                  </button>
-                )}
-
-                <button
-                  onClick={() => {
-                    setCollabSkill("");
-                    setCollabDept("");
-                    setCollabStatus("all");
-                    setCollabSearch("");
-                  }}
-                  className="text-[10px] text-zinc-500 hover:text-zinc-300 font-bold underline px-1 ml-1"
-                >
-                  Clear All
-                </button>
-              </div>
-            )}
           </div>
+
+          {/* Active Chips Row (Only visible when active filters exist) */}
+          {(collabSkill || collabDept || collabStatus !== "all") && (
+            <div className="flex flex-wrap gap-2 items-center pt-1 animate-in fade-in duration-150">
+              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Active Filters:</span>
+              
+              {collabSkill && (
+                <button
+                  onClick={() => setCollabSkill("")}
+                  className="inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-500 dark:text-purple-400 font-semibold hover:bg-purple-500/20 transition-colors cursor-pointer"
+                >
+                  Skill: {collabSkill} <X size={10} />
+                </button>
+              )}
+
+              {collabDept && (
+                <button
+                  onClick={() => setCollabDept("")}
+                  className="inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 dark:text-blue-400 font-semibold hover:bg-blue-500/20 transition-colors cursor-pointer"
+                >
+                  Dept: {collabDept} <X size={10} />
+                </button>
+              )}
+
+              {collabStatus !== "all" && (
+                <button
+                  onClick={() => setCollabStatus("all")}
+                  className="inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 font-semibold hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                >
+                  Status: {collabStatus === "open" ? "Available" : "Busy"} <X size={10} />
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  setCollabSkill("");
+                  setCollabDept("");
+                  setCollabStatus("all");
+                  setCollabSearch("");
+                }}
+                className="text-[10px] text-muted-foreground hover:text-foreground font-bold underline px-1 cursor-pointer transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ── CARD GRID ────────────────────────────────────── */}
-        {sorted.length > 0 ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-[12px]">
-            {sorted.map(({ u, rep, c }) => {
+        {displayPeople.length > 0 ? (
+          <div className="flex-1 flex flex-col justify-between overflow-hidden py-2">
+            <div 
+              ref={gridRef} 
+              className="grid gap-3 auto-rows-auto flex-1 min-h-0 overflow-y-auto pr-1 content-start"
+              style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+            >
+            {displayPeople.map(({ u, rep, c }) => {
               const skills = u.skills || [];
               const visibleSkills = skills.slice(0, 3);
               const overflowCount = skills.length - 3;
+              const projectsCount = (u.projects || []).length;
+              const collabCount = (u.applications || []).filter((a: any) => a?.status === "ACCEPTED").length;
+              const isRated = rep.githubConnected && rep.score !== null;
 
               return (
                 <div
                   key={c.id}
-                  onClick={() => openUserDrawer(c.id)}
-                  className="collab-card"
+                  className="card px-4 py-3.5 border border-border/50 bg-gradient-to-br from-card/85 via-card to-secondary/15 shadow-xs hover:border-accent/40 hover:shadow-[0_0_15px_rgba(108,92,231,0.06)] hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between h-full relative group overflow-hidden"
                 >
+                  {/* Status Badge in Top Right */}
+                  <span className={cn(
+                    "absolute top-3.5 right-3.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-all duration-300 z-10",
+                    c.status === 'available'
+                      ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/20'
+                      : c.status === 'busy'
+                      ? 'bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/20'
+                      : 'bg-muted/30 text-muted-foreground border-border/40'
+                  )}>
+                    <span className={cn(
+                      "h-1.5 w-1.5 rounded-full shrink-0",
+                      c.status === 'available' ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : c.status === 'busy' ? 'bg-amber-500 shadow-[0_0_6px_#f59e0b]' : 'bg-muted-foreground/50',
+                      c.status !== 'unavailable' && 'animate-pulse'
+                    )} />
+                    {c.status === 'available' ? 'Available' : c.status === 'busy' ? 'Busy' : 'Unavailable'}
+                  </span>
+
                   {/* Top: Info Row */}
-                  <div className="space-y-2.5">
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      <Avatar name={c.name} size={32} imageUrl={c.avatarUrl} />
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-[14px] font-medium text-zinc-100 truncate" title={c.name}>
+                  <div className="space-y-2">
+                    <Link href={`/profile/${c.id}`} className="flex items-start gap-3 min-w-0 hover:opacity-85 transition-opacity">
+                      <Avatar name={c.name} size={40} imageUrl={c.avatarUrl} />
+                      <div className="min-w-0 flex-1 flex flex-col gap-0.5 pr-20">
+                        <h4 className="text-[13.5px] sm:text-[14px] font-bold text-foreground truncate" title={c.name}>
                           {c.name}
                         </h4>
-                        {c.rollNumber && (
-                          <p className="font-mono text-[11px] text-zinc-500 leading-tight">
+                        {c.rollNumber ? (
+                          <span className="self-start font-mono text-[9px] font-semibold text-muted-foreground bg-secondary/50 border border-border/60 px-1.5 py-0.5 rounded-md leading-none truncate">
                             {c.rollNumber}
-                          </p>
+                          </span>
+                        ) : (
+                          <span className="self-start font-mono text-[9px] text-muted-foreground/30 px-1 py-0.5 leading-none select-none">
+                            &nbsp;
+                          </span>
                         )}
-                        <p className="text-[11.5px] text-zinc-400 mt-0.5 truncate">
+                        <p className="text-[11px] text-muted-foreground truncate leading-normal mt-0.5">
                           Year {c.year} · {c.department}
                         </p>
                       </div>
-                    </div>
+                    </Link>
 
                     {/* Middle: Skills Chips */}
-                    {skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {visibleSkills.map((s: any) => {
-                          const sName = typeof s === "string" ? s : s.name;
-                          return (
-                            <button
-                              key={sName}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCollabSkill(sName);
-                              }}
-                              className={`skill-chip ${getSkillColorClass(sName)}`}
-                            >
-                              {sName}
-                            </button>
-                          );
-                        })}
-                        {overflowCount > 0 && (
-                          <span className="text-[9px] text-zinc-500 font-bold px-1.5 py-0.5 bg-zinc-900 border border-zinc-800/80 rounded-md">
-                            +{overflowCount} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bottom: Status Dot Row */}
-                  <div className="mt-4 pt-2 border-t border-[#2a2a2e]/60 flex items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className={cn(
-                        "h-2 w-2 rounded-full",
-                        c.status === 'available' ? 'bg-emerald-500' : c.status === 'busy' ? 'bg-amber-500' : 'bg-zinc-500'
-                      )} />
-                      <span className="text-[9.5px] font-bold uppercase tracking-wider text-zinc-500">
-                        {c.status === 'available' ? 'Available' : c.status === 'busy' ? 'Busy' : 'Unavailable'}
-                      </span>
+                    <div className="flex flex-wrap gap-1 pt-0.5 h-[22px] items-center overflow-hidden">
+                      {skills.length > 0 ? (
+                        <>
+                          {visibleSkills.map((s: any) => {
+                            const sName = typeof s === "string" ? s : s.name;
+                            return (
+                              <button
+                                key={sName}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCollabSkill(sName);
+                                }}
+                                className={`skill-chip ${getSkillColorClass(sName)}`}
+                              >
+                                {sName}
+                              </button>
+                            );
+                          })}
+                          {overflowCount > 0 && (
+                            <span className="text-[9px] text-muted-foreground font-bold px-1.5 py-0.5 bg-secondary border border-border rounded-md">
+                              +{overflowCount}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/45 italic px-2 py-0.5 bg-secondary/30 border border-border/30 rounded-md">
+                          No skills specified
+                        </span>
+                      )}
                     </div>
 
-                    {rep.githubConnected && rep.score !== null && (
-                      <span className="text-[11px] font-bold text-zinc-400">
-                        ★ {rep.stars.toFixed(1)}
-                      </span>
-                    )}
+                    {/* Stats Dashboard Strip */}
+                    <div className="grid grid-cols-3 gap-0 rounded-lg bg-secondary/20 border border-border/40 divide-x divide-border/30 py-1.5 mt-2">
+                      <div className="flex flex-col items-center justify-center gap-0.5">
+                        <span className="text-[14.5px] font-black text-foreground leading-none">{projectsCount}</span>
+                        <span className="text-[7.5px] font-bold uppercase tracking-wider text-muted-foreground leading-none">Projects</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center gap-0.5">
+                        <span className="text-[14.5px] font-black text-foreground leading-none">{collabCount}</span>
+                        <span className="text-[7.5px] font-bold uppercase tracking-wider text-muted-foreground leading-none">Collabs</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center gap-0.5">
+                        <div className="flex items-center gap-0.5">
+                          {isRated && <Star size={9} className="fill-amber-500 text-amber-500 dark:fill-amber-400 dark:text-amber-400 shrink-0" />}
+                          <span className={cn(
+                            "text-[14.5px] font-black leading-none",
+                            isRated ? "text-amber-500 dark:text-amber-400" : "text-muted-foreground/45"
+                          )}>
+                            {isRated ? rep.stars.toFixed(1) : "—"}
+                          </span>
+                        </div>
+                        <span className="text-[7.5px] font-bold uppercase tracking-wider text-muted-foreground leading-none">Rating</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom: View Profile Button */}
+                  <div className="mt-2 pt-2 border-t border-border/30">
+                    <Link
+                      href={`/profile/${c.id}`}
+                      className="w-full py-2 px-3 bg-secondary/60 hover:bg-accent border border-border/60 hover:border-accent text-[11.5px] font-bold text-zinc-300 hover:text-white rounded-lg flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-xs"
+                    >
+                      View Profile <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
+                    </Link>
                   </div>
                 </div>
               );
             })}
-          </div>
-        ) : (
-          <div className="p-12 text-center rounded-xl border border-dashed border-[#2a2a2e] bg-[#151517]/30">
-            <UserCheck className="mx-auto mb-2 text-zinc-600" size={28} />
-            <h4 className="text-[13px] font-bold text-zinc-300">No collaborators found</h4>
-            <p className="text-[11px] text-zinc-500 mt-1">Try resetting filters or adjusting search queries.</p>
-          </div>
-        )}
+            </div>
 
-      </div>
-
-      {/* ── DETAIL DRAWER (SLIDE-OVER) ───────────────────────── */}
-      <div
-        className={`drawer-overlay ${isDrawerOpen ? "active" : ""}`}
-        onClick={closeUserDrawer}
-      >
-        <div
-          className={`drawer-content ${isDrawerOpen ? "active" : ""}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {activeSelectedUser && (
-            <>
-              {/* Top sticky actions */}
-              <div className="flex items-center justify-between p-4 border-b border-[#2a2a2e] shrink-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                  Collaborator Details
-                </span>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-3.5 border-t border-border/50 shrink-0">
                 <button
-                  onClick={closeUserDrawer}
-                  className="p-1 text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                  type="button"
+                  onClick={() => handlePageChange(collabPage - 1)}
+                  disabled={collabPage <= 1}
+                  className={cn(
+                    "px-3.5 py-1.5 text-[11px] font-bold rounded-lg border transition-all cursor-pointer",
+                    collabPage > 1
+                      ? "bg-secondary/70 border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      : "bg-transparent border-border/30 text-muted-foreground/40 cursor-not-allowed"
+                  )}
                 >
-                  <X size={18} />
+                  ← Prev
+                </button>
+                
+                <div className="flex items-center gap-1.5">
+                  {getPageNumbers().map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => handlePageChange(pageNum)}
+                      className={cn(
+                        "h-7 w-7 flex items-center justify-center rounded-lg text-[11px] font-bold border transition-all cursor-pointer",
+                        pageNum === collabPage
+                          ? "bg-accent text-white font-bold border-accent shadow-xs"
+                          : "bg-secondary/70 border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(collabPage + 1)}
+                  disabled={collabPage >= totalPages}
+                  className={cn(
+                    "px-3.5 py-1.5 text-[11px] font-bold rounded-lg border transition-all cursor-pointer",
+                    collabPage < totalPages
+                      ? "bg-secondary/70 border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      : "bg-transparent border-border/30 text-muted-foreground/40 cursor-not-allowed"
+                  )}
+                >
+                  Next →
                 </button>
               </div>
-
-              {/* Main content scroll block */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-6">
-                
-                {/* Header Profile Summary */}
-                <div className="flex flex-col items-center text-center space-y-3 pb-5 border-b border-[#2a2a2e]/60">
-                  <Avatar name={activeSelectedUser.c.name} size={48} imageUrl={activeSelectedUser.c.avatarUrl} />
-                  <div className="space-y-1">
-                    <h3 className="text-[15px] font-bold text-zinc-100">
-                      {activeSelectedUser.c.name}
-                    </h3>
-                    <p className="font-mono text-[10.5px] text-zinc-500">
-                      {activeSelectedUser.c.rollNumber || "No Roll Number"}
-                    </p>
-                    <p className="text-[11.5px] text-zinc-400">
-                      Year {activeSelectedUser.c.year} · {activeSelectedUser.c.department}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <span className={cn(
-                      "h-2 w-2 rounded-full",
-                      activeSelectedUser.c.status === 'available' ? 'bg-emerald-500' : activeSelectedUser.c.status === 'busy' ? 'bg-amber-500' : 'bg-zinc-500'
-                    )} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                      {activeSelectedUser.c.status === 'available' ? 'Available for projects' : activeSelectedUser.c.status === 'busy' ? 'Busy' : 'Unavailable'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Bio Block */}
-                {activeSelectedUser.u.bio && (
-                  <div className="space-y-1.5">
-                    <span className="block text-[9.5px] font-bold uppercase tracking-wider text-zinc-500">
-                      About
-                    </span>
-                    <p className="text-[12px] text-zinc-300 leading-relaxed italic">
-                      &ldquo;{activeSelectedUser.u.bio}&rdquo;
-                    </p>
-                  </div>
-                )}
-
-                {/* Reputation rating */}
-                <div className="space-y-1.5">
-                  <span className="block text-[9.5px] font-bold uppercase tracking-wider text-zinc-500">
-                    Developer Reputation
-                  </span>
-                  {activeSelectedUser.rep.githubConnected && activeSelectedUser.rep.score !== null ? (
-                    <div className="flex items-center gap-3">
-                      <span className="text-[15px] font-logo text-zinc-200 font-extrabold">
-                        {activeSelectedUser.rep.score} / 100
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-violet-500/20 bg-violet-500/10 text-violet-400">
-                        {activeSelectedUser.rep.tier} Developer (★ {activeSelectedUser.rep.stars.toFixed(1)})
-                      </span>
-                    </div>
-                  ) : (
-                    <p className="text-[11px] text-zinc-500 leading-relaxed">
-                      Reputation: Unrated (GitHub unlinked)
-                    </p>
-                  )}
-                </div>
-
-                {/* Skills Block */}
-                {activeSelectedUser.u.skills && activeSelectedUser.u.skills.length > 0 && (
-                  <div className="space-y-2">
-                    <span className="block text-[9.5px] font-bold uppercase tracking-wider text-zinc-500">
-                      Expertise Skills
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {activeSelectedUser.u.skills.map((s: any) => {
-                        const sName = typeof s === "string" ? s : s.name;
-                        return (
-                          <span key={sName} className={`skill-chip ${getSkillColorClass(sName)}`}>
-                            {sName}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Active Projects Block */}
-                <div className="space-y-2">
-                  <span className="block text-[9.5px] font-bold uppercase tracking-wider text-zinc-500">
-                    Active Projects
-                  </span>
-                  {activeSelectedUser.u.projects && activeSelectedUser.u.projects.length > 0 ? (
-                    <div className="space-y-2">
-                      {activeSelectedUser.u.projects.map((p: any) => (
-                        <div key={p.id} className="p-3 bg-[#0a0a0b]/40 border border-[#2a2a2e]/60 rounded-lg flex items-center justify-between">
-                          <span className="text-[11.5px] font-semibold text-zinc-300 truncate pr-2">
-                            {p.title}
-                          </span>
-                          <span className="text-[8px] font-bold px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-500 shrink-0">
-                            {p.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-5 border border-dashed border-[#2a2a2e] rounded-lg text-center">
-                      <p className="text-[11px] text-zinc-500">Not part of any project yet</p>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-
-              {/* Pinned Footer Actions */}
-              <div className="p-4 border-t border-[#2a2a2e] bg-[#151517] shrink-0 grid grid-cols-2 gap-2">
-                {activeSelectedUser.u.email ? (
-                  <a
-                    href={`mailto:${activeSelectedUser.u.email}`}
-                    className="py-2.5 rounded-lg border border-zinc-700/60 text-[11.5px] font-bold text-center text-zinc-200 hover:bg-zinc-800 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Mail size={12} />
-                    <span>Email</span>
-                  </a>
-                ) : (
-                  <button
-                    disabled
-                    className="py-2.5 rounded-lg border border-zinc-800 text-[11.5px] font-bold text-center text-zinc-600 cursor-not-allowed"
-                  >
-                    No Email
-                  </button>
-                )}
-
-                <Link
-                  href={`/profile/${activeSelectedUser.c.id}`}
-                  className="py-2.5 rounded-lg accent-btn-primary text-[11.5px] font-bold text-center flex items-center justify-center gap-1.5 shadow-sm"
-                >
-                  <span>Full Profile</span>
-                  <ArrowRight size={12} />
-                </Link>
-              </div>
-            </>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="p-12 text-center rounded-xl border border-dashed border-border bg-muted/20">
+            <UserCheck className="mx-auto mb-2 text-muted-foreground" size={28} />
+            <h4 className="text-[13px] font-bold text-foreground">No collaborators found</h4>
+            <p className="text-[11px] text-muted-foreground mt-1">Try resetting filters or adjusting search queries.</p>
+          </div>
+        )}
       </div>
     </>
   );
