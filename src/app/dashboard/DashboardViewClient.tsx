@@ -848,7 +848,7 @@ export default function DashboardViewClient({
 
       {/* ── PROFILE SETTINGS ──────────────────────────────── */}
       {currentTab === "profile" && (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-24 lg:pb-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Profile Settings</h2>
@@ -869,13 +869,13 @@ export default function DashboardViewClient({
           </div>
 
           <form id="profile-form" onSubmit={saveProfile} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="w-full flex flex-col lg:grid lg:grid-cols-3 gap-6 items-stretch lg:items-start">
               
               {/* Left Columns - Form Fields (Span 2) */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="contents lg:block lg:col-span-2 lg:space-y-6">
                 
                 {/* 1. Personal Information Card */}
-                <div className="card p-5 space-y-4">
+                <div className="card p-5 space-y-4 w-full order-3 lg:order-none">
                   <h3 className="text-[14px] font-bold text-foreground border-b border-border/60 pb-2 flex items-center gap-2">
                     Personal Information
                   </h3>
@@ -939,7 +939,7 @@ export default function DashboardViewClient({
                 </div>
 
                 {/* 2. Professional Details Card */}
-                <div className="card p-5 space-y-4">
+                <div className="card p-5 space-y-4 w-full order-4 lg:order-none">
                   <h3 className="text-[14px] font-bold text-foreground border-b border-border/60 pb-2">
                     Professional Details
                   </h3>
@@ -968,7 +968,7 @@ export default function DashboardViewClient({
                 </div>
 
                 {/* 3. Social & Project Links Card */}
-                <div className="card p-5 space-y-4">
+                <div className="card p-5 space-y-4 w-full order-5 lg:order-none">
                   <h3 className="text-[14px] font-bold text-foreground border-b border-border/60 pb-2">
                     Social Connections
                   </h3>
@@ -1004,12 +1004,12 @@ export default function DashboardViewClient({
                 </div>
 
                 {/* Mobile-only Save button */}
-                <div className="flex justify-center pt-2 lg:hidden">
+                <div className="w-full flex justify-center pt-2 order-6 lg:hidden">
                   <button
                     type="submit"
                     form="profile-form"
                     disabled={loadingId === "profile"}
-                    className="w-full sm:w-auto btn-primary text-[13px] py-2.5 px-8 font-bold cursor-pointer text-center"
+                    className="w-full btn-primary text-[13.5px] py-3 px-8 font-bold cursor-pointer text-center rounded-xl shadow-md"
                   >
                     {loadingId === "profile" ? "Saving…" : "Save Changes"}
                   </button>
@@ -1017,10 +1017,10 @@ export default function DashboardViewClient({
               </div>
 
               {/* Right Column - Avatar & Status Panel (Span 1) */}
-              <div className="space-y-6">
+              <div className="contents lg:block lg:space-y-6">
                 
                 {/* Profile Picture Card */}
-                <div className="card p-5 space-y-4 flex flex-col items-center text-center">
+                <div className="card p-5 space-y-4 w-full flex flex-col items-center text-center order-1 lg:order-none">
                   <h3 className="text-[13px] font-bold text-foreground border-b border-border/60 pb-2 w-full text-left">
                     Profile Picture
                   </h3>
@@ -1052,7 +1052,7 @@ export default function DashboardViewClient({
                 </div>
 
                 {/* Availability Card */}
-                <div className="card p-5 space-y-4">
+                <div className="card p-5 space-y-4 w-full order-2 lg:order-none">
                   <h3 className="text-[13px] font-bold text-foreground border-b border-border/60 pb-2 w-full">
                     Availability Status
                   </h3>
@@ -1089,7 +1089,7 @@ export default function DashboardViewClient({
                 </div>
 
                 {/* Danger Zone Card */}
-                <div className="card p-5 border-destructive/20 bg-destructive/5 space-y-3">
+                <div className="card p-5 border-destructive/20 bg-destructive/5 space-y-3 w-full order-7 lg:order-none">
                   <h4 className="text-[12px] font-bold text-destructive">Danger Zone</h4>
                   <p className="text-[10.5px] text-zinc-400 leading-relaxed">
                     Permanently delete your account and all associated projects, applications, and data.

@@ -529,7 +529,7 @@ export default function AppShell({
       {/* ── Mobile bottom nav ───────────────────────────── */}
       <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md z-50 md:hidden">
         <div
-          className="flex items-center justify-around h-16"
+          className="flex items-center justify-between px-2 h-16 max-w-md mx-auto"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
         {[
@@ -541,34 +541,34 @@ export default function AppShell({
           <Link
             key={label}
             href={href}
-            className={`flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-2 rounded-xl transition-colors ${
+            className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-0 py-1 rounded-xl transition-colors ${
               active ? "text-foreground" : "text-muted-foreground"
             }`}
           >
-            <Icon size={19} strokeWidth={active ? 2.25 : 1.75} />
-            <span className="text-[10px] font-medium">{label}</span>
+            <Icon size={18} strokeWidth={active ? 2.25 : 1.75} className="shrink-0" />
+            <span className="text-[10px] font-medium truncate max-w-full">{label}</span>
           </Link>
         ))}
 
         <button
           type="button"
           onClick={() => setMobileProfileOpen(true)}
-          className={`flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-2 rounded-xl transition-colors ${
+          className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-0 py-1 rounded-xl transition-colors ${
             isTabActive("profile") ? "text-foreground" : "text-muted-foreground"
           }`}
         >
-          <div className="relative">
-            <div className="h-[22px] w-[22px] rounded-full border-[1.5px] border-current flex items-center justify-center overflow-hidden">
+          <div className="relative shrink-0">
+            <div className="h-[20px] w-[20px] rounded-full border-[1.5px] border-current flex items-center justify-center overflow-hidden">
               {clientImage
-                ? <Image src={clientImage} alt={clientName || "Avatar"} width={22} height={22} className="object-cover h-full w-full" unoptimized />
-                : <span className="text-[9px] font-bold">{initials}</span>
+                ? <Image src={clientImage} alt={clientName || "Avatar"} width={20} height={20} className="object-cover h-full w-full" unoptimized />
+                : <span className="text-[8.5px] font-bold leading-none">{initials}</span>
               }
             </div>
             {user && (
               <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full bg-success border border-card" />
             )}
           </div>
-          <span className="text-[10px] font-medium">Profile</span>
+          <span className="text-[10px] font-medium truncate max-w-full">Profile</span>
         </button>
         </div>
       </nav>

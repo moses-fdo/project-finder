@@ -1,5 +1,5 @@
 import AppShell from "@/components/AppShell";
-import { prisma } from "@/lib/prisma";
+import { prisma, safeQuery } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { Mail, GitBranch, Link2, ChevronLeft, FolderCheck } from "lucide-react";
@@ -69,7 +69,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           },
         })
       : Promise.resolve(0),
-    prisma.userReputation.findUnique({ where: { userId } }),
+    safeQuery(() => prisma.userReputation.findUnique({ where: { userId } }), null),
   ]);
 
   if (!user) notFound();

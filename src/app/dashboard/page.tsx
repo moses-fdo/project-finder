@@ -299,7 +299,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const allUserIds = Array.from(new Set([...peopleIds, ...leaderboardRaw.map((u: any) => u.id)]));
   const persistedReps = allUserIds.length > 0
-    ? await prisma.userReputation.findMany({ where: { userId: { in: allUserIds } } })
+    ? (await safeQuery(() => prisma.userReputation.findMany({ where: { userId: { in: allUserIds } } }), [])) || []
     : [];
 
   const repMap = new Map<number, any>();

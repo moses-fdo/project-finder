@@ -25,15 +25,21 @@ export const prisma = globalForPrisma.prisma || createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-export async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+export async function safeQuery<T>(fn: () => Promise<T>, fallback: T = null as unknown as T): Promise<T> {
   try {
     return await fn();
-  } catch {
+  } catch (err: any) {
+    // If the table does not exist yet (Prisma error P2021), return fallback immediately without retrying
+    if (err?.code === "P2021" || err?.message?.includes("does not exist")) {
+      return fallback;
+    }
     try {
       await new Promise((r) => setTimeout(r, 600));
       return await fn();
-    } catch (err) {
-      console.warn("[prisma] Database query failed after retry:", err);
+    } catch (retryErr: any) {
+      if (retryErr?.code !== "P2021" && !retryErr?.message?.includes("does not exist")) {
+        console.warn("[prisma] Database query failed after retry:", retryErr);
+      }
       return fallback;
     }
   }
