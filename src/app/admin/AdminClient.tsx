@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import ColabroLogo from "@/components/ColabroLogo";
 import {
   Users,
   FolderOpen,
@@ -15,7 +14,6 @@ import {
   ShieldAlert,
   CheckCircle,
   XCircle,
-  ArrowLeft,
   TrendingUp,
   Trophy,
   Plus,
@@ -26,7 +24,10 @@ import {
   FileCheck,
   FileText,
   MessageSquareDiff,
+  GraduationCap,
+  BookOpen,
 } from "lucide-react";
+import { parseEventEndDate } from "@/lib/projects";
 
 interface Stats {
   totalUsers: number;
@@ -491,42 +492,20 @@ export default function AdminClient({
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
 
-      {/* ── Top bar ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 h-14 border-b border-border bg-card flex items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          {/* Colabro logo */}
-          <Link href="/dashboard" className="flex items-center gap-2 mr-2 sm:mr-4 shrink-0">
-            <ColabroLogo size={28} />
-            <span className="text-[15px] font-bold tracking-tight text-foreground">Colabro</span>
-          </Link>
-
-          <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-destructive/10 border border-destructive/20 shrink-0">
-            <ShieldAlert size={13} strokeWidth={1.75} className="text-destructive shrink-0" />
-            <span className="text-[10px] sm:text-[11px] font-semibold text-destructive uppercase tracking-wide">Admin</span>
-          </div>
+      {/* ── Page title ──────────────────────────────────────── */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 px-2.5 py-1 rounded-md bg-destructive/10 border border-destructive/20 shrink-0">
+          <ShieldAlert size={14} strokeWidth={1.75} className="text-destructive shrink-0" />
+          <span className="text-[10px] sm:text-[11px] font-semibold text-destructive uppercase tracking-wide">Admin</span>
         </div>
-
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-1.5 btn-ghost text-[12px] text-muted-foreground shrink-0 px-2.5 sm:px-3 py-1.5"
-        >
-          <ArrowLeft size={14} strokeWidth={1.75} />
-          <span className="hidden sm:inline">Back to dashboard</span>
-          <span className="sm:hidden">Back</span>
-        </Link>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
-
-        {/* ── Page title ──────────────────────────────────────── */}
-        <div>
-          <h1 className="text-[20px] sm:text-[22px] font-bold tracking-tight text-foreground">Admin Console</h1>
-          <p className="text-[12px] text-muted-foreground mt-0.5 sm:mt-1">
-            Manage users, projects, and platform health.
-          </p>
-        </div>
+        <h1 className="type-page-title text-[22px] sm:text-[28px]">Admin Console</h1>
+      </div>
+      <p className="type-meta mt-1">
+        Manage users, projects, and platform health.
+      </p>
 
         {/* ── Feedback banner ─────────────────────────────────── */}
         {feedback && (
@@ -838,8 +817,8 @@ export default function AdminClient({
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Campus Events &amp; Competitions</h2>
-                <p className="text-[12px] text-muted-foreground mt-0.5">Post and manage upcoming student hackathons, competitions, and events.</p>
+                <h2 className="type-section-title">Campus Events &amp; Competitions</h2>
+                <p className="type-meta mt-0.5">Post and manage upcoming student hackathons, competitions, and events.</p>
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                 <button
@@ -911,19 +890,6 @@ export default function AdminClient({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {eventsList.map((h: any) => {
                   const locationStr = [h.location, h.city, h.state, h.country].filter(Boolean).join(", ") || h.location || "Online";
-                  const parseEventEndDate = (item: any): number | null => {
-                    const dateStr = item.endDate || item.date || item.startDate;
-                    if (!dateStr) return null;
-                    let endPart = dateStr;
-                    if (dateStr.includes(" - ")) endPart = dateStr.split(" - ").pop()!.trim();
-                    else if (dateStr.includes(" to ")) endPart = dateStr.split(" to ").pop()!.trim();
-                    else if (dateStr.includes("→")) endPart = dateStr.split("→").pop()!.trim();
-                    let d = new Date(endPart);
-                    if (isNaN(d.getTime())) d = new Date(`${endPart} ${new Date().getFullYear()}`);
-                    if (isNaN(d.getTime())) return null;
-                    if (!endPart.includes("T") && !endPart.includes(":")) d.setHours(23, 59, 59, 999);
-                    return d.getTime();
-                  };
                   const endMs = parseEventEndDate(h);
                   const isEnded = endMs !== null && endMs < nowMs;
                   const isSelected = selectedEventIds.has(h.id);
@@ -996,24 +962,24 @@ export default function AdminClient({
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-muted-foreground font-medium pt-2 border-t border-border/50">
                           <div>
-                            <span className="text-foreground font-semibold">📅 Dates:</span> {h.startDate ? `${h.startDate}${h.endDate ? ` to ${h.endDate}` : ""}` : (h.date || "TBA")}
+                            <span className="text-foreground font-semibold">Dates:</span> {h.startDate ? `${h.startDate}${h.endDate ? ` to ${h.endDate}` : ""}` : (h.date || "TBA")}
                           </div>
                           <div>
-                            <span className="text-foreground font-semibold">📍 Location:</span> {locationStr}
+                            <span className="text-foreground font-semibold">Location:</span> {locationStr}
                           </div>
                           {h.mode && (
                             <div>
-                              <span className="text-foreground font-semibold">🌐 Mode:</span> {h.mode}
+                              <span className="text-foreground font-semibold">Mode:</span> {h.mode}
                             </div>
                           )}
                           {h.registrationFee && (
                             <div>
-                              <span className="text-foreground font-semibold">💳 Fee:</span> {h.registrationFee}
+                              <span className="text-foreground font-semibold">Fee:</span> {h.registrationFee}
                             </div>
                           )}
                           {h.prize && (
                             <div className="col-span-1 sm:col-span-2 text-amber-500 font-semibold line-clamp-1">
-                              🏆 Prize: {h.prize}
+                              Prize: {h.prize}
                             </div>
                           )}
                           {h.source && (
@@ -1056,8 +1022,8 @@ export default function AdminClient({
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Non-College Allowed Emails</h2>
-                <p className="text-[12px] text-muted-foreground mt-0.5">
+                <h2 className="type-section-title">Non-College Allowed Emails</h2>
+                <p className="type-meta mt-0.5">
                   Whitelist non-college email addresses (Gmail, Yahoo, external mentors) so they can register and log in.
                 </p>
               </div>
@@ -1127,8 +1093,8 @@ export default function AdminClient({
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Student ID Verification Requests</h2>
-                <p className="text-[12px] text-muted-foreground mt-0.5">
+                <h2 className="type-section-title">Student ID Verification Requests</h2>
+                <p className="type-meta mt-0.5">
                   Review student ID cards uploaded by students without institutional .edu emails.
                 </p>
               </div>
@@ -1195,8 +1161,12 @@ export default function AdminClient({
                       </div>
 
                       <div className="p-3 bg-secondary/50 rounded-lg text-[11px] space-y-1">
-                        <p className="text-foreground font-medium truncate">🏫 {req.collegeName}</p>
-                        {req.department && <p className="text-muted-foreground truncate">📚 {req.department}</p>}
+                        <p className="text-foreground font-medium truncate flex items-center gap-1.5">
+                          <GraduationCap size={13} className="shrink-0 text-muted-foreground" /> {req.collegeName}
+                        </p>
+                        {req.department && <p className="text-muted-foreground truncate flex items-center gap-1.5">
+                          <BookOpen size={13} className="shrink-0" /> {req.department}
+                        </p>}
                         {req.adminNote && <p className="text-destructive font-mono mt-1">Note: {req.adminNote}</p>}
                       </div>
                     </div>
@@ -1244,8 +1214,8 @@ export default function AdminClient({
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-[16px] sm:text-[17px] font-bold text-foreground">Content Moderation</h2>
-                <p className="text-[12px] text-muted-foreground mt-0.5">
+                <h2 className="type-section-title">Content Moderation</h2>
+                <p className="type-meta mt-0.5">
                   Review flagged and blocked project description attempts across the platform.
                 </p>
               </div>
@@ -1793,6 +1763,6 @@ export default function AdminClient({
         </div>
       )}
 
-    </div>
+    </>
   );
 }

@@ -24,16 +24,13 @@ import {
   Trash2,
   GitBranch,
   Link2,
-  Sprout,
-  Brain,
-  Dumbbell,
-  Folder,
   Mail,
   Send,
   UserPlus,
-  LucideIcon,
   Upload,
 } from "lucide-react";
+import { departments, getProjectIcon } from "@/lib/projects";
+import { parseNameAndRollNumber, cn } from "@/lib/utils";
 
 interface DashboardViewClientProps {
   activeTab: string;
@@ -43,50 +40,18 @@ interface DashboardViewClientProps {
   notifications: any[];
   profileData: any;
   collaborations?: any[];
-  collabNextCursor?: number;
-  collabHasMore?: boolean;
+  collabPage?: number;
+  collabLimit?: number;
+  totalCollabs?: number;
   events?: any[];
   hackathons?: any[];
   recommendedProjects?: any[];
   receivedInvitations?: any[];
   sentInvitations?: any[];
-  myProjectsSidebar?: any[];
-  myApplicationsSidebar?: any[];
   recentNotifications?: any[];
+  leaderboardUsers?: any[];
 }
 
-function getProjectIcon(title: string): { icon: LucideIcon; bg: string; text: string } {
-  const t = (title || "").toLowerCase();
-  if (
-    t.includes("eco") ||
-    t.includes("track") ||
-    t.includes("waste") ||
-    t.includes("green") ||
-    t.includes("environ")
-  ) {
-    return { icon: Sprout, bg: "bg-green-500/10", text: "text-green-600 dark:text-green-400" };
-  }
-  if (
-    t.includes("study") ||
-    t.includes("buddy") ||
-    t.includes("learn") ||
-    t.includes("book") ||
-    t.includes("ai") ||
-    t.includes("companion")
-  ) {
-    return { icon: Brain, bg: "bg-purple-500/10", text: "text-purple-600 dark:text-purple-400" };
-  }
-  if (
-    t.includes("fit") ||
-    t.includes("forge") ||
-    t.includes("gym") ||
-    t.includes("health") ||
-    t.includes("workout")
-  ) {
-    return { icon: Dumbbell, bg: "bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400" };
-  }
-  return { icon: Folder, bg: "bg-secondary", text: "text-textPrimary" };
-}
 
 export default function DashboardViewClient({
   activeTab,
@@ -96,16 +61,16 @@ export default function DashboardViewClient({
   notifications,
   profileData,
   collaborations = [],
-  collabNextCursor,
-  collabHasMore,
+  collabPage = 1,
+  collabLimit = 24,
+  totalCollabs = 0,
   events = [],
   hackathons = [],
   recommendedProjects = [],
   receivedInvitations = [],
   sentInvitations = [],
-   myProjectsSidebar = [],
-   myApplicationsSidebar = [],
-   recentNotifications = [],
+  recentNotifications = [],
+  leaderboardUsers = [],
 }: DashboardViewClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -114,10 +79,46 @@ export default function DashboardViewClient({
   const [projects, setProjects] = useState(initialProjects);
   const [editingProject, setEditingProject] = useState<any | null>(null);
 
+  const [activeUser, setActiveUser] = useState(() => ({
+    ...currentUser,
+    ...profileData,
+    name: profileData?.name || currentUser?.name || "",
+    image: profileData?.profileImage || currentUser?.image || "",
+  }));
+
+  const [prevActiveUserProps, setPrevActiveUserProps] = useState({ currentUser, profileData });
+  if (prevActiveUserProps.currentUser !== currentUser || prevActiveUserProps.profileData !== profileData) {
+    setPrevActiveUserProps({ currentUser, profileData });
+    setActiveUser((prev: any) => ({
+      ...prev,
+      ...currentUser,
+      ...profileData,
+      name: profileData?.name || currentUser?.name || prev?.name || "",
+      image: profileData?.profileImage || currentUser?.image || prev?.image || "",
+    }));
+  }
+
   // Derive currentTab directly from prop — no effect needed
   const currentTab = activeTab || "home";
 
-  const [profileName,     setProfileName]     = useState(profileData?.name         || "");
+  const [profileName,     setProfileName]     = useState(() => {
+    const rawName = profileData?.name || currentUser?.name || "";
+    return parseNameAndRollNumber(rawName).name;
+  });
+  const [profileRollNumber, setProfileRollNumber] = useState(() => {
+    const rawName = profileData?.name || currentUser?.name || "";
+    return parseNameAndRollNumber(rawName).rollNumber;
+  });
+
+  const [prevUserRef, setPrevUserRef] = useState({ profileData, currentUser });
+  if (prevUserRef.profileData !== profileData || prevUserRef.currentUser !== currentUser) {
+    setPrevUserRef({ profileData, currentUser });
+    const rawName = profileData?.name || currentUser?.name || "";
+    const parsed = parseNameAndRollNumber(rawName);
+    setProfileName(parsed.name);
+    setProfileRollNumber(parsed.rollNumber);
+  }
+
   const [profileDept,     setProfileDept]     = useState(profileData?.department   || "");
   const [profileYear,     setProfileYear]     = useState(profileData?.year?.toString() || "");
   const [profileBio,      setProfileBio]      = useState(profileData?.bio          || "");
@@ -317,7 +318,7 @@ export default function DashboardViewClient({
         body: JSON.stringify({ status: "DONE" }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      setActionSuccess("Project marked as done! 🎉 It will now appear on your completed projects.");
+      setActionSuccess("Project marked as done! It will now appear on your completed projects.");
       refresh();
     } catch (e: any) { setActionError(e.message); }
     finally { setLoadingId(null); }
@@ -374,11 +375,15 @@ export default function DashboardViewClient({
     e.preventDefault();
     setActionError(""); setActionSuccess(""); setLoadingId("profile");
     try {
+      const combinedName = profileRollNumber.trim()
+        ? `${profileName.trim()} ${profileRollNumber.trim().toUpperCase()}`
+        : profileName.trim();
+
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: profileName,
+          name: combinedName,
           department: profileDept,
           year: Number(profileYear),
           bio: profileBio,
@@ -389,8 +394,29 @@ export default function DashboardViewClient({
           skills: profileSkills.split(",").map((s: string) => s.trim()).filter(Boolean),
         }),
       });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      setActionSuccess("Profile saved.");
+      // Update activeUser state for immediate real-time rating updates across Leaderboard and Collaborators View
+      const updatedSkills = profileSkills.split(",").map((s: string, i: number) => ({ id: i, name: s.trim() })).filter((s: { name: string }) => s.name);
+      setActiveUser((prev: any) => ({
+        ...prev,
+        name: combinedName,
+        department: profileDept,
+        year: Number(profileYear),
+        bio: profileBio,
+        githubUrl: profileGithub,
+        linkedinUrl: profileLinkedin,
+        availability: profileAvailability,
+        profileImage: profileImage,
+        skills: updatedSkills,
+      }));
+
+      // Real-time Developer Reputation recalculation trigger
+      if (currentUser?.id) {
+        try {
+          await fetch(`/api/reputation/${currentUser.id}`, { method: "POST" });
+        } catch { /* fallback */ }
+      }
+
+      setActionSuccess("Profile & Developer Reputation updated in real time!");
       refresh();
     } catch (e: any) { setActionError(e.message); }
     finally { setLoadingId(null); }
@@ -402,12 +428,6 @@ export default function DashboardViewClient({
     if (s === "REJECTED") return "badge badge-red";
     return "badge badge-yellow";
   };
-
-  const departments = [
-    "Computer Science", "Information Technology", "Electronics & Communication",
-    "Electrical & Electronics", "Mechanical Engineering", "Civil Engineering",
-    "Biotechnology", "Food Processing Technology",
-  ];
 
   /* ══════════════════════════════════════════════════════════ */
   return (
@@ -425,13 +445,14 @@ export default function DashboardViewClient({
           projects={projects}
           applications={applications}
           notifications={notifications}
-          currentUser={currentUser}
+          currentUser={activeUser}
           events={events}
           hackathons={hackathons}
           recommendedProjects={recommendedProjects}
-          myProjectsSidebar={myProjectsSidebar}
-          myApplicationsSidebar={myApplicationsSidebar}
           recentNotifications={recentNotifications}
+          receivedInvitations={receivedNotifs}
+          collaborations={collaborations}
+          leaderboardUsers={leaderboardUsers}
           getProjectIcon={getProjectIcon}
           nowMs={nowMs}
           departments={departments}
@@ -442,7 +463,7 @@ export default function DashboardViewClient({
       {currentTab === "collaborations" && (
         <CollaborationsFinderTab
           people={collaborations}
-          currentUser={currentUser}
+          currentUser={activeUser}
           collabSearch={collabSearch}
           setCollabSearch={setCollabSearch}
           collabDept={collabDept}
@@ -452,8 +473,9 @@ export default function DashboardViewClient({
           collabStatus={collabStatus}
           setCollabStatus={setCollabStatus}
           hasProjects={projects.length > 0}
-          collabNextCursor={collabNextCursor}
-          collabHasMore={collabHasMore}
+          collabPage={collabPage}
+          collabLimit={collabLimit}
+          totalCollabs={totalCollabs}
           onInviteUser={(user: any) => {
             setInviteTargetUser(user);
             setInviteProjectId(projects[0]?.id?.toString() || "");
@@ -472,7 +494,7 @@ export default function DashboardViewClient({
       {/* ── MY PROJECTS ───────────────────────────────────── */}
       {currentTab === "projects" && (
         <ProjectsTab
-          projects={projects.filter((p: any) => p.ownerId === Number(currentUser?.id))}
+          projects={projects.filter((p: any) => Number(p.ownerId) === Number(activeUser?.id || currentUser?.id || profileData?.id))}
           loadingId={loadingId}
           setEditingProject={setEditingProject}
           statusToggle={statusToggle}
@@ -493,11 +515,11 @@ export default function DashboardViewClient({
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
             <div>
-              <h2 className="text-[17px] font-bold text-textPrimary tracking-tight flex items-center gap-2">
+              <h2 className="text-[17px] font-bold text-foreground tracking-tight flex items-center gap-2">
                 <Mail size={18} strokeWidth={2} />
                 Project Invitations
               </h2>
-              <p className="text-[12px] text-textMuted mt-0.5">
+              <p className="text-[12px] text-muted-foreground mt-0.5">
                 Manage collaboration invitations sent to you or sent by you.
               </p>
             </div>
@@ -523,8 +545,8 @@ export default function DashboardViewClient({
               onClick={() => setInvitationSubTab("received")}
               className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
                 invitationSubTab === "received"
-                  ? "bg-secondary text-textPrimary"
-                  : "text-textMuted hover:text-textPrimary"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Received
@@ -540,8 +562,8 @@ export default function DashboardViewClient({
               onClick={() => setInvitationSubTab("sent")}
               className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
                 invitationSubTab === "sent"
-                  ? "bg-secondary text-textPrimary"
-                  : "text-textMuted hover:text-textPrimary"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sent ({sentNotifs.length})
@@ -558,7 +580,7 @@ export default function DashboardViewClient({
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <h3 className="text-[14px] font-semibold text-textPrimary">
+                            <h3 className="text-[14px] font-semibold text-foreground">
                               <Link href={`/projects/${inv.project.id}`} className="hover:underline underline-offset-2">
                                 {inv.project.title}
                               </Link>
@@ -572,8 +594,8 @@ export default function DashboardViewClient({
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-textMuted">
-                            Invited by <strong className="text-textPrimary">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString()}
+                          <p className="text-[11px] text-muted-foreground">
+                            Invited by <strong className="text-foreground">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
                           </p>
                         </div>
 
@@ -606,7 +628,7 @@ export default function DashboardViewClient({
                       </div>
 
                       {inv.message && (
-                        <div className="text-[12px] text-textPrimary bg-secondary/60 rounded-lg p-3 border border-border italic leading-relaxed">
+                        <div className="text-[12px] text-foreground bg-secondary/60 rounded-lg p-3 border border-border italic leading-relaxed">
                           &ldquo;{inv.message}&rdquo;
                         </div>
                       )}
@@ -614,7 +636,7 @@ export default function DashboardViewClient({
                       {inv.project.skills && inv.project.skills.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
                           {inv.project.skills.map((s: any) => (
-                            <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-textMuted">
+                            <span key={s.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
                               {s.name}
                             </span>
                           ))}
@@ -625,9 +647,9 @@ export default function DashboardViewClient({
                 </div>
               ) : (
                 <div className="card p-12 text-center space-y-2">
-                  <Mail size={32} className="mx-auto text-textMuted/40" />
-                  <p className="text-[14px] font-medium text-textPrimary">No invitations received yet</p>
-                  <p className="text-[12px] text-textMuted max-w-sm mx-auto">
+                  <Mail size={32} className="mx-auto text-muted-foreground/40" />
+                  <p className="text-[14px] font-medium text-foreground">No invitations received yet</p>
+                  <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
                     When project owners invite you to join their projects, their invitations will appear here.
                   </p>
                 </div>
@@ -644,23 +666,23 @@ export default function DashboardViewClient({
                     <div key={inv.id} className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-[13px] font-semibold text-textPrimary">
+                          <span className="text-[13px] font-semibold text-foreground">
                             Invite to {inv.receiver?.name}
                           </span>
-                          <span className="text-[11px] text-textMuted">
+                          <span className="text-[11px] text-muted-foreground">
                             ({inv.receiver?.department})
                           </span>
                           {inv.role && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-secondary text-textPrimary border border-border">
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-secondary text-foreground border border-border">
                               {inv.role}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-textMuted">
-                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-textPrimary hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString()}
+                        <p className="text-[11px] text-muted-foreground">
+                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-foreground hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
                         </p>
                         {inv.message && (
-                          <p className="text-[11px] text-textMuted italic mt-1.5 line-clamp-1">
+                          <p className="text-[11px] text-muted-foreground italic mt-1.5 line-clamp-1">
                             &ldquo;{inv.message}&rdquo;
                           </p>
                         )}
@@ -687,9 +709,9 @@ export default function DashboardViewClient({
                 </div>
               ) : (
                 <div className="card p-12 text-center space-y-2">
-                  <Send size={32} className="mx-auto text-textMuted/40" />
-                  <p className="text-[14px] font-medium text-textPrimary">No invitations sent</p>
-                  <p className="text-[12px] text-textMuted max-w-sm mx-auto">
+                  <Send size={32} className="mx-auto text-muted-foreground/40" />
+                  <p className="text-[14px] font-medium text-foreground">No invitations sent</p>
+                  <p className="text-[12px] text-muted-foreground max-w-sm mx-auto">
                     You haven&apos;t sent any project invitations yet. Browse the Collaborators directory to find students and invite them!
                   </p>
                   <Link href="/dashboard?tab=collaborations" className="btn-secondary text-[12px] py-2 px-4 inline-flex mt-2">
@@ -708,15 +730,15 @@ export default function DashboardViewClient({
           <div className="card w-full max-w-md p-6 space-y-4 bg-card shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <UserPlus size={18} className="text-textPrimary" />
-                <h3 className="text-[15px] font-bold text-textPrimary">
+                <UserPlus size={18} className="text-foreground" />
+                <h3 className="text-[15px] font-bold text-foreground">
                   {inviteTargetUser ? `Invite ${inviteTargetUser.name}` : "Send Project Invitation"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setInviteModalOpen(false)}
-                className="btn-ghost p-1 text-textMuted hover:text-textPrimary cursor-pointer"
+                className="btn-ghost p-1 text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -749,8 +771,8 @@ export default function DashboardViewClient({
                     {inviteTargetUser.name[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[13px] font-semibold text-textPrimary">{inviteTargetUser.name}</p>
-                    <p className="text-[10px] text-textMuted">{inviteTargetUser.department}</p>
+                    <p className="text-[13px] font-semibold text-foreground">{inviteTargetUser.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{inviteTargetUser.department}</p>
                   </div>
                 </div>
               )}
@@ -826,32 +848,198 @@ export default function DashboardViewClient({
 
       {/* ── PROFILE SETTINGS ──────────────────────────────── */}
       {currentTab === "profile" && (
-        <div className="space-y-5">
-          <div>
-            <h2 className="text-[17px] font-semibold text-textPrimary tracking-tight">Profile settings</h2>
-            <p className="text-[12px] text-textMuted mt-0.5">Manage your account details and public profile.</p>
+        <div className="space-y-6 pb-24 lg:pb-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-[17px] font-semibold text-foreground tracking-tight">Profile Settings</h2>
+              <p className="text-[12px] text-muted-foreground mt-0.5">Manage your account details, roll number, and public profile.</p>
+            </div>
+            
+            {/* Desktop-only Save Button */}
+            <div className="hidden lg:block">
+              <button
+                type="submit"
+                form="profile-form"
+                disabled={loadingId === "profile"}
+                className="btn-primary text-[13px] py-2 px-6 font-bold cursor-pointer"
+              >
+                {loadingId === "profile" ? "Saving…" : "Save Changes"}
+              </button>
+            </div>
           </div>
 
-          <div className="card p-6">
-            <form onSubmit={saveProfile} className="space-y-5">
-              {/* Cloudinary Profile Picture Upload */}
-              <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-secondary/30">
-                <div className="relative h-16 w-16 rounded-full overflow-hidden border-2 border-primary/30 bg-secondary flex items-center justify-center shrink-0 shadow-sm">
-                  {profileImage ? (
-                    <Image src={profileImage} alt="Profile" width={64} height={64} className="h-full w-full object-cover" unoptimized />
-                  ) : (
-                    <span className="text-xl font-bold text-textPrimary">
-                      {(profileName[0] || "?").toUpperCase()}
-                    </span>
-                  )}
+          <form id="profile-form" onSubmit={saveProfile} className="space-y-6">
+            <div className="w-full flex flex-col lg:grid lg:grid-cols-3 gap-6 items-stretch lg:items-start">
+              
+              {/* Left Columns - Form Fields (Span 2) */}
+              <div className="contents lg:block lg:col-span-2 lg:space-y-6">
+                
+                {/* 1. Personal Information Card */}
+                <div className="card p-5 space-y-4 w-full order-3 lg:order-none">
+                  <h3 className="text-[14px] font-bold text-foreground border-b border-border/60 pb-2 flex items-center gap-2">
+                    Personal Information
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block section-label mb-1.5">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
+                        placeholder="e.g. Christopher Noble"
+                        className="forge-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block section-label mb-1.5">Roll Number</label>
+                      <input
+                        type="text"
+                        value={profileRollNumber}
+                        onChange={(e) => setProfileRollNumber(e.target.value)}
+                        placeholder="e.g. URK24CS7001"
+                        className="forge-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block section-label mb-1.5">Year of Study</label>
+                      <select
+                        required
+                        value={profileYear}
+                        onChange={(e) => setProfileYear(e.target.value)}
+                        className="forge-input cursor-pointer"
+                      >
+                        <option value="">Select…</option>
+                        {[1, 2, 3, 4].map((y) => (
+                          <option key={y} value={y}>{y}{["st","nd","rd","th"][y-1]} Year</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block section-label mb-1.5">Department</label>
+                      <select
+                        required
+                        value={profileDept}
+                        onChange={(e) => setProfileDept(e.target.value)}
+                        className="forge-input cursor-pointer"
+                      >
+                        <option value="">Select…</option>
+                        {departments.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[13px] font-semibold text-textPrimary">Profile Picture (Cloudinary)</label>
-                  <p className="text-[11px] text-textMuted">Upload your avatar to Cloudinary.</p>
-                  <div className="pt-1">
-                    <label className="btn-secondary text-[11px] py-1.5 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-medium hover:bg-secondary">
+
+                {/* 2. Professional Details Card */}
+                <div className="card p-5 space-y-4 w-full order-4 lg:order-none">
+                  <h3 className="text-[14px] font-bold text-foreground border-b border-border/60 pb-2">
+                    Professional Details
+                  </h3>
+                  
+                  <div>
+                    <label className="block section-label mb-1.5">Bio</label>
+                    <textarea
+                      rows={3}
+                      value={profileBio}
+                      onChange={(e) => setProfileBio(e.target.value)}
+                      placeholder="A short intro about yourself and your interests…"
+                      className="forge-input resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block section-label mb-1.5">Skills (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={profileSkills}
+                      onChange={(e) => setProfileSkills(e.target.value)}
+                      placeholder="React, Python, Arduino, Figma…"
+                      className="forge-input"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Social & Project Links Card */}
+                <div className="card p-5 space-y-4 w-full order-5 lg:order-none">
+                  <h3 className="text-[14px] font-bold text-foreground border-b border-border/60 pb-2">
+                    Social Connections
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block section-label mb-1.5 flex items-center gap-1.5">
+                        <GitBranch size={11} strokeWidth={1.75} />
+                        GitHub URL
+                      </label>
+                      <input
+                        type="url"
+                        value={profileGithub}
+                        onChange={(e) => setProfileGithub(e.target.value)}
+                        placeholder="https://github.com/username"
+                        className="forge-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="block section-label mb-1.5 flex items-center gap-1.5">
+                        <Link2 size={11} strokeWidth={1.75} />
+                        LinkedIn URL
+                      </label>
+                      <input
+                        type="url"
+                        value={profileLinkedin}
+                        onChange={(e) => setProfileLinkedin(e.target.value)}
+                        placeholder="https://linkedin.com/in/username"
+                        className="forge-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile-only Save button */}
+                <div className="w-full flex justify-center pt-2 order-6 lg:hidden">
+                  <button
+                    type="submit"
+                    form="profile-form"
+                    disabled={loadingId === "profile"}
+                    className="w-full btn-primary text-[13.5px] py-3 px-8 font-bold cursor-pointer text-center rounded-xl shadow-md"
+                  >
+                    {loadingId === "profile" ? "Saving…" : "Save Changes"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column - Avatar & Status Panel (Span 1) */}
+              <div className="contents lg:block lg:space-y-6">
+                
+                {/* Profile Picture Card */}
+                <div className="card p-5 space-y-4 w-full flex flex-col items-center text-center order-1 lg:order-none">
+                  <h3 className="text-[13px] font-bold text-foreground border-b border-border/60 pb-2 w-full text-left">
+                    Profile Picture
+                  </h3>
+
+                  <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-violet-500/30 bg-zinc-800 flex items-center justify-center shrink-0 shadow-md">
+                    {profileImage ? (
+                      <Image src={profileImage} alt="Profile" width={96} height={96} className="h-full w-full object-cover" unoptimized />
+                    ) : (
+                      <span className="text-3xl font-bold text-zinc-100">
+                        {(profileName[0] || "?").toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5 w-full">
+                    <p className="text-[11px] text-zinc-400">Upload your avatar to Cloudinary.</p>
+                    <label className="w-full btn-secondary text-[11px] py-2 px-3.5 inline-flex items-center justify-center gap-1.5 cursor-pointer font-medium rounded-lg hover:bg-zinc-800 border border-zinc-700/60 text-zinc-200">
                       <Upload size={12} />
-                      {uploadingImage ? "Uploading to Cloudinary…" : "Upload Picture"}
+                      {uploadingImage ? "Uploading…" : "Upload Avatar"}
                       <input
                         type="file"
                         accept="image/*"
@@ -862,171 +1050,65 @@ export default function DashboardViewClient({
                     </label>
                   </div>
                 </div>
-              </div>
 
-              {/* Name + Year */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block section-label mb-1.5">Full name</label>
-                  <input
-                    type="text"
-                    required
-                    value={profileName}
-                    onChange={(e) => setProfileName(e.target.value)}
-                    className="forge-input"
-                  />
+                {/* Availability Card */}
+                <div className="card p-5 space-y-4 w-full order-2 lg:order-none">
+                  <h3 className="text-[13px] font-bold text-foreground border-b border-border/60 pb-2 w-full">
+                    Availability Status
+                  </h3>
+
+                  <div className="flex flex-col gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setProfileAvailability("AVAILABLE")}
+                      className={cn(
+                        "w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border text-[12px] font-bold transition-all cursor-pointer",
+                        profileAvailability === "AVAILABLE"
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-xs"
+                          : "bg-zinc-900/40 text-zinc-400 border-zinc-800 hover:text-zinc-200"
+                      )}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      Available for Projects
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setProfileAvailability("BUSY")}
+                      className={cn(
+                        "w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border text-[12px] font-bold transition-all cursor-pointer",
+                        profileAvailability === "BUSY"
+                          ? "bg-rose-500/10 text-rose-400 border-rose-500/30 shadow-xs"
+                          : "bg-zinc-900/40 text-zinc-400 border-zinc-800 hover:text-zinc-200"
+                      )}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-rose-500" />
+                      Busy / Not Available
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="block section-label mb-1.5">Year of study</label>
-                  <select
-                    required
-                    value={profileYear}
-                    onChange={(e) => setProfileYear(e.target.value)}
-                    className="forge-input cursor-pointer"
-                  >
-                    <option value="">Select…</option>
-                    {[1, 2, 3, 4].map((y) => (
-                      <option key={y} value={y}>{y}{["st","nd","rd","th"][y-1]} Year</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              {/* Department */}
-              <div>
-                <label className="block section-label mb-1.5">Department</label>
-                <select
-                  required
-                  value={profileDept}
-                  onChange={(e) => setProfileDept(e.target.value)}
-                  className="forge-input cursor-pointer"
-                >
-                  <option value="">Select…</option>
-                  {departments.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Availability Status Toggle */}
-              <div>
-                <label className="block section-label mb-1.5">Availability Status</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setProfileAvailability("AVAILABLE")}
-                    className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border text-[12px] font-bold transition-all cursor-pointer ${
-                      profileAvailability === "AVAILABLE"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 shadow-xs"
-                        : "bg-card text-textMuted border-border hover:text-textPrimary"
-                    }`}
-                  >
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    Available for Projects
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setProfileAvailability("BUSY")}
-                    className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border text-[12px] font-bold transition-all cursor-pointer ${
-                      profileAvailability === "BUSY"
-                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 shadow-xs"
-                        : "bg-card text-textMuted border-border hover:text-textPrimary"
-                    }`}
-                  >
-                    <span className="h-2 w-2 rounded-full bg-rose-500" />
-                    Busy / Not Available
-                  </button>
-                </div>
-              </div>
-
-              {/* Bio */}
-              <div>
-                <label className="block section-label mb-1.5">Bio</label>
-                <textarea
-                  rows={3}
-                  value={profileBio}
-                  onChange={(e) => setProfileBio(e.target.value)}
-                  placeholder="A short intro about yourself and your interests…"
-                  className="forge-input resize-none"
-                />
-              </div>
-
-              {/* Links */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block section-label mb-1.5 flex items-center gap-1.5">
-                    <GitBranch size={11} strokeWidth={1.75} />
-                    GitHub URL
-                  </label>
-                  <input
-                    type="url"
-                    value={profileGithub}
-                    onChange={(e) => setProfileGithub(e.target.value)}
-                    placeholder="https://github.com/username"
-                    className="forge-input"
-                  />
-                </div>
-                <div>
-                  <label className="block section-label mb-1.5 flex items-center gap-1.5">
-                    <Link2 size={11} strokeWidth={1.75} />
-                    LinkedIn URL
-                  </label>
-                  <input
-                    type="url"
-                    value={profileLinkedin}
-                    onChange={(e) => setProfileLinkedin(e.target.value)}
-                    placeholder="https://linkedin.com/in/username"
-                    className="forge-input"
-                  />
-                </div>
-              </div>
-
-              {/* Skills */}
-              <div>
-                <label className="block section-label mb-1.5">Skills (comma-separated)</label>
-                <input
-                  type="text"
-                  value={profileSkills}
-                  onChange={(e) => setProfileSkills(e.target.value)}
-                  placeholder="React, Python, Arduino, Figma…"
-                  className="forge-input"
-                />
-              </div>
-
-              {/* Save */}
-              <div className="flex justify-end pt-2 border-t border-border">
-                <button
-                  type="submit"
-                  disabled={loadingId === "profile"}
-                  className="btn-primary text-[13px] py-2 px-5"
-                >
-                  {loadingId === "profile" ? "Saving…" : "Save changes"}
-                </button>
-              </div>
-            </form>
-
-            {/* Danger Zone */}
-            <div className="card p-5 border-destructive/30 bg-destructive/5 space-y-3 mt-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-[13px] font-bold text-destructive">Danger Zone</h4>
-                  <p className="text-[11px] text-textMuted mt-0.5">
+                {/* Danger Zone Card */}
+                <div className="card p-5 border-destructive/20 bg-destructive/5 space-y-3 w-full order-7 lg:order-none">
+                  <h4 className="text-[12px] font-bold text-destructive">Danger Zone</h4>
+                  <p className="text-[10.5px] text-zinc-400 leading-relaxed">
                     Permanently delete your account and all associated projects, applications, and data.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(true)}
+                    className="w-full btn-ghost text-[11.5px] px-3.5 py-2 text-destructive hover:bg-destructive/15 border border-destructive/30 font-semibold rounded-lg shrink-0 cursor-pointer transition-colors"
+                  >
+                    Delete Account
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteModal(true)}
-                  className="btn-ghost text-[12px] px-3.5 py-1.5 text-destructive hover:bg-destructive/15 border border-destructive/30 font-semibold shrink-0 cursor-pointer"
-                >
-                  Delete Account
-                </button>
               </div>
+
             </div>
-          </div>
+          </form>
         </div>
       )}
+
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteModal && (
@@ -1036,8 +1118,8 @@ export default function DashboardViewClient({
               <Trash2 size={22} />
               <h3 className="text-[16px] font-bold">Delete Account?</h3>
             </div>
-            <p className="text-[12px] text-textMuted leading-relaxed">
-              This action is <strong className="text-textPrimary">permanent and cannot be undone</strong>. All your projects, applications, bookmarks, and account data will be permanently deleted.
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              This action is <strong className="text-foreground">permanent and cannot be undone</strong>. All your projects, applications, bookmarks, and account data will be permanently deleted.
             </p>
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
               <button

@@ -32,6 +32,7 @@ model User {
   sentInvitations     Invitation[] @relation("SentInvitations")
   receivedInvitations Invitation[] @relation("ReceivedInvitations")
   abuseLog       AbusiveMessageLog[]
+  reputation     UserReputation?
 
   @@index([department])
   @@index([role])
@@ -46,6 +47,7 @@ model Project {
   projectType    String?         // "Hackathon", "Research", "Side Project", "Open Source", "Academic"
   experienceLevel String?        // "Beginner", "Intermediate", "Advanced", "Any"
   teamSize       Int?            // max team members
+  slotsFilled    Int             @default(0) // number of team members currently on the project
   duration       String?         // e.g. "1 week", "1 month", "Ongoing"
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -186,3 +188,26 @@ model AbusiveMessageLog {
   @@index([userId])
   @@index([timestamp])
 }
+
+model UserReputation {
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score              Float    @default(0)
+  stars              Float    @default(0)
+  tier               String   @default("Beginner") // "Beginner" | "Growing" | "Strong" | "Excellent" | "Elite"
+  githubConnected    Boolean  @default(false)
+  githubVerified     Boolean  @default(false)
+  linkedinVerified   Boolean  @default(false)
+  githubScore        Float    @default(0)
+  experienceScore    Float    @default(0)
+  certificationScore Float    @default(0)
+  communityScore     Float    @default(0)
+  breakdownJson      Json?
+  lastSyncedAt       DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([score])
+}
+

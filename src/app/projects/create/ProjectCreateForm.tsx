@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAbuseCheck } from "@/components/moderation/useAbuseCheck";
 import AbuseWarningPopup from "@/components/moderation/AbuseWarningPopup";
+import ProjectCard from "@/components/ProjectCard";
 
 const CATEGORIES = [
   "Web / Full-Stack",
@@ -45,7 +46,7 @@ const DURATIONS = [
   "Ongoing",
 ];
 
-export default function ProjectCreateForm({ userId }: { userId: number }) {
+export default function ProjectCreateForm({ userId, user }: { userId: number; user: any }) {
   const router = useRouter();
 
   const [title,           setTitle]           = useState("");
@@ -64,6 +65,29 @@ export default function ProjectCreateForm({ userId }: { userId: number }) {
   const [showAbusePopup, setShowAbusePopup] = useState(false);
   const [flaggedWords, setFlaggedWords]     = useState<string[]>([]);
   const descRef = useRef<HTMLTextAreaElement>(null);
+  // Stable preview timestamp — created once so the preview card doesn't flicker dates on re-render
+  const previewCreatedAt = useRef(new Date()).current;
+
+  // Live preview card built from current form state
+  const previewProject = useMemo(() => {
+    const skillNames = skills.split(",").map((s) => s.trim()).filter(Boolean);
+    return {
+      id: 0,
+      title: title || "Untitled project",
+      description: description || "Your project description will appear here as you type.",
+      status: "OPEN",
+      teamSize: teamSize ? Number(teamSize) : null,
+      slotsFilled: 0,
+      createdAt: previewCreatedAt,
+      owner: {
+        id: userId,
+        name: user?.name || "You",
+        department: user?.department || "",
+        year: user?.year || 0,
+      },
+      skills: skillNames.map((name, i) => ({ id: i + 1, name })),
+    };
+  }, [title, description, skills, teamSize, userId, user, previewCreatedAt]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,14 +134,16 @@ export default function ProjectCreateForm({ userId }: { userId: number }) {
   };
 
   return (
-    <div className="card p-7">
-      {error && (
-        <div className="p-3 mb-5 text-[12px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
-          {error}
-        </div>
-      )}
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="card p-6 sm:p-7">
+        {error && (
+          <div className="p-3 mb-5 text-[12px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* ── Core info ──────────────────────────────── */}
         <div>
@@ -301,6 +327,16 @@ export default function ProjectCreateForm({ userId }: { userId: number }) {
           descRef.current?.focus();
         }}
       />
+      </div>
+
+      {/* ── Live preview (lg only) ─────────────────────────── */}
+      <aside className="hidden lg:block sticky top-20">
+        <p className="section-label mb-2">Live preview</p>
+        <ProjectCard project={previewProject} preview={true} />
+        <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+          This is how your project will appear to collaborators. Keep the title short and the description specific.
+        </p>
+      </aside>
     </div>
   );
 }

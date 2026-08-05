@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import AppShell from "@/components/AppShell";
 import AdminClient from "./AdminClient";
 
 export default async function AdminPage() {
@@ -11,7 +12,12 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
+  const currentUserId = Number(session.user.id);
+  const hasValidUserId = Number.isInteger(currentUserId) && currentUserId > 0;
+
   const [
+    unreadNotifications,
+    inboxNotifications,
     totalUsers,
     totalProjects,
     totalApplications,
@@ -24,6 +30,16 @@ export default async function AdminPage() {
     idVerificationRequests,
     abuseLogs,
   ] = await Promise.all([
+    hasValidUserId
+      ? prisma.notification.count({ where: { userId: currentUserId, read: false } })
+      : Promise.resolve(0),
+    hasValidUserId
+      ? prisma.notification.findMany({
+          where: { userId: currentUserId },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        })
+      : Promise.resolve([]),
     prisma.user.count(),
     prisma.project.count(),
     prisma.application.count(),
@@ -86,15 +102,17 @@ export default async function AdminPage() {
   const stats = { totalUsers, totalProjects, totalApplications, totalNotifications };
 
   return (
-    <AdminClient
-      stats={stats}
-      users={users}
-      projects={projects}
-      events={events}
-      hackathons={events}
-      allowedEmails={allowedEmails}
-      idVerificationRequests={idVerificationRequests}
-      abuseLogs={abuseLogs}
-    />
+    <AppShell user={session.user} unreadNotifications={unreadNotifications} inboxNotifications={inboxNotifications}>
+      <AdminClient
+        stats={stats}
+        users={users}
+        projects={projects}
+        events={events}
+        hackathons={events}
+        allowedEmails={allowedEmails}
+        idVerificationRequests={idVerificationRequests}
+        abuseLogs={abuseLogs}
+      />
+    </AppShell>
   );
 }

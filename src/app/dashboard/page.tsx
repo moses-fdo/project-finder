@@ -11,14 +11,16 @@ const projectCardSelect = {
   title: true,
   description: true,
   status: true,
+  teamSize: true,
+  slotsFilled: true,
   createdAt: true,
   ownerId: true,
-  owner: { select: { id: true, name: true, department: true } },
+  owner: { select: { id: true, name: true, email: true, department: true, githubUrl: true } },
   skills: { select: { id: true, name: true } },
 } satisfies Prisma.ProjectSelect;
 
 interface DashboardPageProps {
-  searchParams: Promise<{ tab?: string; collabCursor?: string }>;
+  searchParams: Promise<{ tab?: string; collabCursor?: string; collabPage?: string; collabLimit?: string }>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -50,7 +52,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const needsInvitations = activeTab === "home" || activeTab === "invitations";
   const needsRecommended = activeTab === "home";
 
-  const collabCursor = params.collabCursor ? Number(params.collabCursor) : undefined;
+  let collabPage = params.collabPage ? Number(params.collabPage) : 1;
+  if (isNaN(collabPage) || !isFinite(collabPage) || !Number.isInteger(collabPage) || collabPage < 1) {
+    collabPage = 1;
+  }
+  let collabLimit = params.collabLimit ? Number(params.collabLimit) : 24;
+  if (isNaN(collabLimit) || !isFinite(collabLimit) || !Number.isInteger(collabLimit) || collabLimit < 1) {
+    collabLimit = 24;
+  } else if (collabLimit > 100) {
+    collabLimit = 100;
+  }
 
   const tabData = await safeQuery(
       () =>
@@ -117,11 +128,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 orderBy: { createdAt: "desc" },
               })
             : Promise.resolve([]),
-          // 5: Collaborations directory (cursor-based pagination)
+          // 5: Collaborations directory (offset-based pagination)
           needsCollaborations
             ? prisma.user.findMany({
-                take: 49,
-                ...(collabCursor ? { cursor: { id: collabCursor }, skip: 1 } : {}),
+                skip: (collabPage - 1) * collabLimit,
+                take: collabLimit,
                 select: {
                   id: true,
                   name: true,
@@ -193,61 +204,170 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 orderBy: { createdAt: "desc" },
               })
             : Promise.resolve([]),
+          // 11: Total collaborations count
+          needsCollaborations
+            ? prisma.user.count()
+            : Promise.resolve(0),
+          // 12: User's own projects (ALWAYS fetched so My Projects tab is never empty)
+          prisma.project.findMany({
+            where: { ownerId: currentUserId },
+            select: {
+              ...projectCardSelect,
+              applications: {
+                select: {
+                  id: true,
+                  status: true,
+                  message: true,
+                  createdAt: true,
+                  user: { select: { id: true, name: true, department: true, year: true, email: true } },
+                },
+                orderBy: { createdAt: "desc" },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+          }),
         ]),
-      [0, null, [], [], [], [], [], [], [], []]
+      [0, null, [], [], [], [], [], [], [], [], 0, []]
     );
 
   const [
     unreadNotificationsCount,
     profileData,
     notifications,
-    projects,
+    rawProjects,
     applications,
     collaborations,
     hackathons,
     recommendedProjects,
     receivedInvitations,
     sentInvitations,
+    totalCollabs = 0,
+    userOwnedProjects = [],
   ] = tabData;
+
+  // Deduplicate and merge user owned projects with campus projects
+  const projectsMap = new Map<number, any>();
+  (userOwnedProjects || []).forEach((p: any) => projectsMap.set(p.id, p));
+  (rawProjects || []).forEach((p: any) => {
+    if (!projectsMap.has(p.id)) {
+      projectsMap.set(p.id, p);
+    }
+  });
+  const projects = Array.from(projectsMap.values()).sort(
+    (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const sanitizedUser = {
+    ...user,
+    id: currentUserId,
+  };
 
   const events = hackathons; // destructuring alias
 
-  // Cursor-based pagination for collaborations
-  const collabHasMore = Array.isArray(collaborations) && collaborations.length > 48;
-  const collabNextCursor = Array.isArray(collaborations) && collaborations.length > 0
-    ? collaborations[Math.min(47, collaborations.length - 1)]?.id
-    : undefined;
-  const people = Array.isArray(collaborations) ? collaborations.slice(0, 48) : collaborations;
+  const people = Array.isArray(collaborations) ? collaborations : [];
 
   const inboxNotifications = (notifications || []).slice(0, 10); // Slice top 10 for dropdown navbar
 
-  // Derived fast sidebars
-  const userProjects = (projects || []).filter((p: any) => p.ownerId === currentUserId);
-  const myProjectsSidebar = userProjects.slice(0, 5).map((p: any) => ({ id: p.id, title: p.title, status: p.status }));
-  const myApplicationsSidebar = (applications || []).slice(0, 5).map((a: any) => ({ id: a.id, status: a.status, project: { id: a.project.id, title: a.project.title } }));
   const recentNotifications = (notifications || []).slice(0, 5);
 
+  // Collect all unique user IDs across people and leaderboard for reputation batch lookup
+  const peopleIds = (needsCollaborations && Array.isArray(people)) ? people.map((u: any) => u.id) : [];
+
+  let leaderboardUsers: any[] = [];
+  let leaderboardRaw: any[] = [];
+  if (activeTab === "home" || activeTab === "collaborations") {
+    leaderboardRaw = await prisma.user.findMany({
+      take: 100,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        department: true,
+        year: true,
+        bio: true,
+        githubUrl: true,
+        linkedinUrl: true,
+        profileImage: true,
+        availability: true,
+        skills: { select: { id: true, name: true } },
+        projects: { select: { id: true, status: true } },
+        applications: { select: { id: true, status: true } },
+      },
+      orderBy: { id: "asc" },
+    });
+  }
+
+  const allUserIds = Array.from(new Set([...peopleIds, ...leaderboardRaw.map((u: any) => u.id)]));
+  const persistedReps = allUserIds.length > 0
+    ? (await safeQuery(() => prisma.userReputation.findMany({ where: { userId: { in: allUserIds } } }), [])) || []
+    : [];
+
+  const repMap = new Map<number, any>();
+  persistedReps.forEach((r) => repMap.set(r.userId, r));
+
+  const peopleWithReputation: any[] = people.map((u: any) => {
+    const rep = repMap.get(u.id);
+    if (rep) {
+      return {
+        ...u,
+        reputation: {
+          score: rep.score,
+          stars: rep.stars,
+          tier: rep.githubConnected ? rep.tier : "Not Rated",
+          githubConnected: rep.githubConnected,
+        },
+      };
+    }
+    return u;
+  });
+
+  if (activeTab === "home" || activeTab === "collaborations") {
+    leaderboardUsers = leaderboardRaw
+      .map((u: any) => {
+        const rep = repMap.get(u.id);
+        if (rep) {
+          return {
+            ...u,
+            reputation: {
+              score: rep.score,
+              stars: rep.stars,
+              tier: rep.githubConnected ? rep.tier : "Not Rated",
+              githubConnected: rep.githubConnected,
+            },
+          };
+        }
+        return u;
+      })
+      .sort((a: any, b: any) => {
+        const aConnected = a.reputation?.githubConnected ?? false;
+        const bConnected = b.reputation?.githubConnected ?? false;
+        if (aConnected !== bConnected) return aConnected ? -1 : 1;
+        return (b.reputation?.score ?? 0) - (a.reputation?.score ?? 0);
+      })
+      .slice(0, 10);
+  }
+
   return (
-    <AppShell user={user} unreadNotifications={unreadNotificationsCount} inboxNotifications={inboxNotifications}>
-<DashboardViewClient
-         activeTab={activeTab}
-         currentUser={user}
-         projects={projects}
-         applications={applications}
-         notifications={notifications}
-         profileData={profileData}
-         collaborations={people}
-          collabNextCursor={collabNextCursor}
-          collabHasMore={collabHasMore}
-           events={events}
-          hackathons={events}
-          recommendedProjects={recommendedProjects}
-          receivedInvitations={receivedInvitations}
-          sentInvitations={sentInvitations}
-          myProjectsSidebar={myProjectsSidebar}
-          myApplicationsSidebar={myApplicationsSidebar}
-          recentNotifications={recentNotifications}
-       />
+    <AppShell user={sanitizedUser} unreadNotifications={unreadNotificationsCount} inboxNotifications={inboxNotifications}>
+      <DashboardViewClient
+        activeTab={activeTab}
+        currentUser={sanitizedUser}
+        projects={projects}
+        applications={applications}
+        notifications={notifications}
+        profileData={profileData}
+        collaborations={peopleWithReputation}
+        collabPage={collabPage}
+        collabLimit={collabLimit}
+        totalCollabs={totalCollabs}
+        events={events}
+        hackathons={events}
+        recommendedProjects={recommendedProjects}
+        receivedInvitations={receivedInvitations}
+        sentInvitations={sentInvitations}
+        recentNotifications={recentNotifications}
+        leaderboardUsers={leaderboardUsers}
+      />
     </AppShell>
   );
 }

@@ -1,180 +1,330 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Search, X, SlidersHorizontal, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef, useTransition } from "react";
+import { Search, X, SlidersHorizontal, Loader2, Check } from "lucide-react";
 
 interface ProjectFiltersProps {
   skills: string[];
   departments: string[];
 }
 
+const STATUS_OPTIONS = [
+  { value: "", label: "All statuses" },
+  { value: "OPEN", label: "Open" },
+  { value: "FULL", label: "Full" },
+  { value: "CLOSED", label: "Closed" },
+];
+
 export default function ProjectFilters({ skills, departments }: ProjectFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
-  const [search, setSearch]   = useState(searchParams.get("search")     || "");
-  const [dept,   setDept]     = useState(searchParams.get("department") || "");
-  const [status, setStatus]   = useState(searchParams.get("status")     || "");
-  const [skill,  setSkill]    = useState(searchParams.get("skill")      || "");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [dept, setDept] = useState(searchParams.get("department") || "");
+  const [status, setStatus] = useState(searchParams.get("status") || "");
+  const [skill, setSkill] = useState(searchParams.get("skill") || "");
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
 
-  const push = (updates: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const merged: Record<string, string> = {
+  // Keep local state in sync with URL (browser back/forward navigation)
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "");
+    setDept(searchParams.get("department") || "");
+    setStatus(searchParams.get("status") || "");
+    setSkill(searchParams.get("skill") || "");
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!sheetOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSheetOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Focus the sheet dialog on open
+    sheetRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [sheetOpen]);
+
+  const handleCloseSheet = () => {
+    setSheetOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const push = (nextParams: Record<string, string>) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+
+    const merged = {
       search,
       department: dept,
       status,
       skill,
-      ...updates,
+      ...nextParams,
     };
 
-    Object.keys(merged).forEach((key) => {
-      if (merged[key]) params.set(key, merged[key]);
-      else params.delete(key);
+    Object.entries(merged).forEach(([k, v]) => {
+      if (v) current.set(k, v);
+      else current.delete(k);
     });
 
-    startTransition(() => router.push(`/projects?${params.toString()}`));
+    const queryString = current.toString();
+    startTransition(() => {
+      router.push(queryString ? `/projects?${queryString}` : "/projects");
+    });
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    push({ search });
   };
 
   const clearAll = () => {
-    setSearch(""); setDept(""); setStatus(""); setSkill("");
+    setSearch("");
+    setDept("");
+    setStatus("");
+    setSkill("");
     startTransition(() => router.push("/projects"));
   };
 
   const hasFilters = search || dept || status || skill;
+  // Include search in active count so mobile trigger badge reflects it
+  const activeCount = [search, dept, status, skill].filter(Boolean).length;
 
-  return (
-    <div className="mb-8 space-y-3.5">
-      {/* Search row */}
-      <form
-        onSubmit={(e) => { e.preventDefault(); push({ search }); }}
-        className="flex gap-2 items-center"
-      >
-        <div className="relative flex-1">
-          <Search
-            size={15}
-            strokeWidth={1.75}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-          />
+  const applyAndClose = () => {
+    // Commit the current in-sheet filter state before closing
+    push({ search, department: dept, status, skill });
+    handleCloseSheet();
+  };
+
+  const selectControl = (
+    label: string,
+    value: string,
+    onChange: (v: string) => void,
+    options: { value: string; label: string }[]
+  ) => {
+    const controlId = `filter-${label.toLowerCase().replace(/\s+/g, "-")}`;
+    return (
+      <div>
+        <label
+          htmlFor={controlId}
+          className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5"
+        >
+          {label}
+        </label>
+        <select
+          id={controlId}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full min-h-[44px] text-[13px] py-2.5 pl-3.5 pr-10 bg-card border border-border rounded-xl text-foreground focus:outline-none focus:border-primary cursor-pointer hover:bg-secondary transition-all forge-select font-medium"
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
+  const activePills = (
+    <div className="flex flex-wrap gap-2">
+      {search && (
+        <button
+          onClick={() => { setSearch(""); push({ search: "" }); }}
+          aria-label={`Remove filter: search "${search}"`}
+          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all duration-200 cursor-pointer"
+        >
+          <span>Search: {search}</span>
+          <X size={13} strokeWidth={2.2} />
+        </button>
+      )}
+      {dept && (
+        <button
+          onClick={() => { setDept(""); push({ department: "" }); }}
+          aria-label={`Remove filter: ${dept}`}
+          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all duration-200 cursor-pointer"
+        >
+          <span>Department: {dept}</span>
+          <X size={13} strokeWidth={2.2} />
+        </button>
+      )}
+      {status && (
+        <button
+          onClick={() => { setStatus(""); push({ status: "" }); }}
+          aria-label={`Remove filter: ${status}`}
+          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all duration-200 cursor-pointer"
+        >
+          <span>Status: {STATUS_OPTIONS.find((s) => s.value === status)?.label || status}</span>
+          <X size={13} strokeWidth={2.2} />
+        </button>
+      )}
+      {skill && (
+        <button
+          onClick={() => { setSkill(""); push({ skill: "" }); }}
+          aria-label={`Remove filter: ${skill}`}
+          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all duration-200 cursor-pointer"
+        >
+          <span>Skill: {skill}</span>
+          <X size={13} strokeWidth={2.2} />
+        </button>
+      )}
+    </div>
+  );
+
+  const rail = (
+    <>
+      <form onSubmit={handleSearchSubmit}>
+        <div className="relative flex items-center">
+          <Search size={16} strokeWidth={1.75} className="absolute left-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="text"
-            inputMode="search"
-            enterKeyHint="search"
-            autoCapitalize="off"
-            autoCorrect="off"
-            placeholder="Search projects…"
+            placeholder="Search title, tech..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="forge-input pl-10 min-h-[44px] text-[14px] sm:text-[13px]"
+            className="forge-input pl-10 min-h-[46px] text-[13px] font-medium rounded-xl"
             aria-label="Search projects"
           />
         </div>
+      </form>
+
+      {/* Filters */}
+      <div className="space-y-4">
+        {selectControl(
+          "Department",
+          dept,
+          (v) => { setDept(v); push({ department: v }); },
+          [{ value: "", label: "All departments" }, ...departments.map((d) => ({ value: d, label: d }))]
+        )}
+        {selectControl("Status", status, (v) => { setStatus(v); push({ status: v }); }, STATUS_OPTIONS)}
+        {selectControl(
+          "Skill",
+          skill,
+          (v) => { setSkill(v); push({ skill: v }); },
+          [{ value: "", label: "All skills" }, ...skills.map((s) => ({ value: s, label: s }))]
+        )}
+      </div>
+
+      {/* Clear */}
+      {hasFilters && (
         <button
-          type="submit"
-          disabled={isPending}
-          className="btn-primary text-[13px] h-11 min-h-[44px] px-4 shrink-0 cursor-pointer flex items-center gap-2"
+          type="button"
+          onClick={clearAll}
+          className="btn-secondary w-full min-h-[42px] cursor-pointer flex items-center justify-center gap-2 text-[13px] font-medium rounded-xl"
         >
-          {isPending ? (
-            <>
-              <Loader2 size={14} className="animate-spin" />
-              <span>Filtering…</span>
-            </>
-          ) : (
-            "Search"
-          )}
+          Clear all filters
         </button>
-        {hasFilters && (
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {/* Active pills */}
+      {hasFilters && (
+        <div className="flex items-center justify-between gap-3 p-4 bg-card border border-border rounded-2xl shadow-xs flex-wrap mb-6">
+          {activePills}
           <button
             type="button"
             onClick={clearAll}
-            className="btn-ghost h-11 w-11 min-h-[44px] min-w-[44px] p-0 flex items-center justify-center shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
-            title="Clear all filters"
-            aria-label="Clear all filters"
+            className="text-[12px] font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer ml-auto"
           >
-            <X size={16} strokeWidth={1.75} />
+            Clear all
           </button>
-        )}
-      </form>
+        </div>
+      )}
 
-      {/* Filter chips row */}
-      <div className="flex flex-wrap gap-2.5 items-center">
-        <span className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground shrink-0 pr-1">
-          <SlidersHorizontal size={13} strokeWidth={1.75} />
-          Filter:
-        </span>
+      {/* Desktop sidebar rail */}
+      <aside className="hidden lg:block space-y-6">
+        {rail}
+      </aside>
 
-        {/* Department */}
-        <select
-          value={dept}
-          onChange={(e) => { setDept(e.target.value); push({ department: e.target.value }); }}
-          className="flex-1 sm:flex-none min-h-[44px] text-[13px] sm:text-[12px] py-2 pl-3 pr-8 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary transition-colors appearance-none"
-          aria-label="Filter by department"
-          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center" }}
+      {/* Mobile trigger + Bottom sheet */}
+      <div className="lg:hidden">
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="w-full min-h-[48px] btn-secondary cursor-pointer flex items-center justify-center gap-2 text-[13px] font-semibold rounded-xl"
+          aria-haspopup="dialog"
+          aria-expanded={sheetOpen}
         >
-          <option value="">All departments</option>
-          {departments.map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-        </select>
+          <SlidersHorizontal size={16} strokeWidth={1.75} />
+          {hasFilters ? `Filters · ${activeCount}` : "Filters"}
+          {isPending && <Loader2 size={15} className="animate-spin" />}
+        </button>
 
-        {/* Status */}
-        <select
-          value={status}
-          onChange={(e) => { setStatus(e.target.value); push({ status: e.target.value }); }}
-          className="flex-1 sm:flex-none min-h-[44px] text-[13px] sm:text-[12px] py-2 pl-3 pr-8 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary transition-colors appearance-none"
-          aria-label="Filter by status"
-          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center" }}
-        >
-          <option value="">All statuses</option>
-          <option value="OPEN">Open</option>
-          <option value="FULL">Full</option>
-          <option value="CLOSED">Closed</option>
-        </select>
+        {sheetOpen && (
+          <div
+            ref={sheetRef}
+            tabIndex={-1}
+            className="fixed inset-0 z-50 lg:hidden focus:outline-none"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filter projects"
+          >
+            {/* Backdrop — removed from tab order so keyboard users reach the real sheet controls */}
+            <div
+              aria-hidden="true"
+              onClick={handleCloseSheet}
+              className="absolute inset-0 bg-black/40 backdrop-blur-[2px] cursor-default"
+            />
 
-        {/* Skill */}
-        <select
-          value={skill}
-          onChange={(e) => { setSkill(e.target.value); push({ skill: e.target.value }); }}
-          className="flex-1 sm:flex-none min-h-[44px] text-[13px] sm:text-[12px] py-2 pl-3 pr-8 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer hover:bg-secondary transition-colors appearance-none"
-          aria-label="Filter by skill"
-          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center" }}
-        >
-          <option value="">All skills</option>
-          {skills.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+            {/* Bottom sheet */}
+            <div className="absolute bottom-0 inset-x-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card border-t border-border p-5 animate-slide-up">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2">
+                  <SlidersHorizontal size={16} strokeWidth={1.75} />
+                  Filters
+                </h3>
+                <div className="flex items-center gap-2">
+                  {hasFilters && (
+                    <button
+                      type="button"
+                      onClick={clearAll}
+                      className="text-[12px] font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleCloseSheet}
+                    aria-label="Close filters"
+                    className="h-9 w-9 flex items-center justify-center rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <X size={16} strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
 
-        {/* Active filter pills with comfortable touch targets */}
-        {dept && (
-          <button
-            onClick={() => { setDept(""); push({ department: "" }); }}
-            aria-label={`Remove filter: ${dept}`}
-            className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-medium px-3 py-1.5 rounded-lg bg-secondary text-foreground hover:bg-accent border border-border transition-colors cursor-pointer"
-          >
-            {dept} <X size={13} strokeWidth={2} />
-          </button>
-        )}
-        {status && (
-          <button
-            onClick={() => { setStatus(""); push({ status: "" }); }}
-            aria-label={`Remove filter: ${status}`}
-            className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-medium px-3 py-1.5 rounded-lg bg-secondary text-foreground hover:bg-accent border border-border transition-colors cursor-pointer"
-          >
-            {status} <X size={13} strokeWidth={2} />
-          </button>
-        )}
-        {skill && (
-          <button
-            onClick={() => { setSkill(""); push({ skill: "" }); }}
-            aria-label={`Remove filter: ${skill}`}
-            className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-medium px-3 py-1.5 rounded-lg bg-secondary text-foreground hover:bg-accent border border-border transition-colors cursor-pointer"
-          >
-            {skill} <X size={13} strokeWidth={2} />
-          </button>
+              <div className="space-y-5">{rail}</div>
+
+              <button
+                type="button"
+                onClick={applyAndClose}
+                className="mt-6 w-full min-h-[48px] btn-primary cursor-pointer flex items-center justify-center gap-2 text-[14px] font-bold rounded-xl"
+              >
+                <Check size={16} strokeWidth={2.5} />
+                Show results
+              </button>
+            </div>
+          </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
