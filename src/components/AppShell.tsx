@@ -527,11 +527,8 @@ export default function AppShell({
       </div>
 
       {/* ── Mobile bottom nav ───────────────────────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md z-50 md:hidden">
-        <div
-          className="flex items-center justify-between px-2 h-16 max-w-md mx-auto"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-        >
+            <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md z-50 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+              <div className="flex items-center justify-between px-2 h-16 max-w-md mx-auto">
         {[
           { href: "/dashboard?tab=events", icon: Calendar, label: "Events", active: isTabActive("events") || isTabActive("hackathons") },
           { href: "/dashboard?tab=collaborations", icon: Users, label: "Collaborators", active: isTabActive("collaborations") },
@@ -541,7 +538,7 @@ export default function AppShell({
           <Link
             key={label}
             href={href}
-            className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-0 py-1 rounded-xl transition-colors ${
+            className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-0 py-1 min-h-[44px] rounded-xl transition-colors ${
               active ? "text-foreground" : "text-muted-foreground"
             }`}
           >
@@ -553,7 +550,7 @@ export default function AppShell({
         <button
           type="button"
           onClick={() => setMobileProfileOpen(true)}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-0 py-1 rounded-xl transition-colors ${
+          className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-0 py-1 min-h-[44px] rounded-xl transition-colors ${
             isTabActive("profile") ? "text-foreground" : "text-muted-foreground"
           }`}
         >

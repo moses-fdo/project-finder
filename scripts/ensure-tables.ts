@@ -39,7 +39,7 @@ async function main() {
       DO $$
       BEGIN
           IF NOT EXISTS (
-              SELECT 1 FROM pg_constraint WHERE conname = 'UserReputation_userId_fkey'
+              SELECT 1 FROM pg_constraint WHERE conname = 'UserReputation_userId_fkey' AND conrelid = '"UserReputation"'::regclass
           ) THEN
               ALTER TABLE "UserReputation"
               ADD CONSTRAINT "UserReputation_userId_fkey"
@@ -51,6 +51,7 @@ async function main() {
     console.log("Successfully created UserReputation table and indexes on Neon DB!");
   } catch (err) {
     console.error("Error creating UserReputation table:", err);
+    process.exitCode = 1;
   } finally {
     await prisma.$disconnect();
   }
