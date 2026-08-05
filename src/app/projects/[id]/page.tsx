@@ -81,54 +81,7 @@ export default async function ProjectPage({ params }: PageProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          {/* ── Sidebar column — first on mobile (apply above fold), right rail on desktop ── */}
-          <div className="lg:col-span-4 space-y-4 order-1 lg:order-2">
-            <div className="flex flex-col gap-4">
-              {/* Owner card — top of sidebar on desktop, after apply widget on mobile */}
-              <div className="order-2 lg:order-1">
-                <div className="card p-5 space-y-4">
-                  <h3 className="section-label mb-0">Project Owner</h3>
-
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-[13px] text-foreground shrink-0 shadow-sm">
-                      {((project.owner?.name || "U").trim()[0] || "U").toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="text-[13px] font-semibold text-foreground">
-                        <Link href={`/profile/${project.owner.id}`} className="hover:underline">
-                          {project.owner.name}
-                        </Link>
-                      </h4>
-                      <p className="type-meta mt-0.5">
-                        {project.owner.department} · Year {project.owner.year}
-                      </p>
-                    </div>
-                  </div>
-
-                  {project.owner.bio && (
-                    <p className="text-[11px] text-muted-foreground leading-relaxed italic border-l-2 border-border pl-3">
-                      {project.owner.bio}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Apply / manage widget — rendered once */}
-              <div className="order-1 lg:order-2">
-                <ProjectDetailClient
-                  projectId={projectId}
-                  isOwner={isOwner}
-                  hasApplied={hasApplied}
-                  applicationStatus={applicationStatus}
-                  projectStatus={project.status}
-                  ownerEmail={project.owner.email}
-                  projectData={project}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Main column ──────────────────────────────────── */}
+          {/* ── Main column — first in DOM for tab order and reading, left side on desktop ── */}
           <div className="lg:col-span-8 space-y-5 order-2 lg:order-1">
 
             {/* Hero card */}
@@ -152,9 +105,6 @@ export default async function ProjectPage({ params }: PageProps) {
                 <h1 className="type-page-title text-[22px] sm:text-[28px] mb-2 leading-tight">
                   {project.title}
                 </h1>
-                <p className="text-[13px] sm:text-[14px] text-muted-foreground mt-1.5 leading-relaxed max-w-2xl">
-                  {project.description.split("\n")[0] || ""}
-                </p>
               </div>
             </div>
 
@@ -194,7 +144,13 @@ export default async function ProjectPage({ params }: PageProps) {
             {/* Metadata */}
             <div className="card p-5 sm:p-6 space-y-4">
               <h3 className="section-label mb-0">Project Information</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
+                <div className="space-y-1">
+                  <span className="type-meta block">Slots Filled</span>
+                  <p className="text-[12px] font-semibold text-foreground">
+                    {project.teamSize ? `${project.slotsFilled ?? 0} / ${project.teamSize}` : `${project.slotsFilled ?? 0} members`}
+                  </p>
+                </div>
                 <div className="space-y-1">
                   <span className="type-meta block">Category</span>
                   <p className="text-[12px] font-semibold text-foreground">{category}</p>
@@ -213,8 +169,51 @@ export default async function ProjectPage({ params }: PageProps) {
                 </div>
               </div>
             </div>
-
           </div>
+
+          {/* ── Sidebar column ── */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="flex flex-col gap-4">
+              {/* Owner card */}
+              <div className="card p-5 space-y-4">
+                <h3 className="section-label mb-0">Project Owner</h3>
+
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-[13px] text-foreground shrink-0 shadow-sm">
+                    {((project.owner?.name || "U").trim()[0] || "U").toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="text-[13px] font-semibold text-foreground">
+                      <Link href={`/profile/${project.owner.id}`} className="hover:underline">
+                        {project.owner.name}
+                      </Link>
+                    </h4>
+                    <p className="type-meta mt-0.5">
+                      {project.owner.department} · Year {project.owner.year}
+                    </p>
+                  </div>
+                </div>
+
+                {project.owner.bio && (
+                  <p className="text-[11px] text-muted-foreground leading-relaxed italic border-l-2 border-border pl-3">
+                    {project.owner.bio}
+                  </p>
+                )}
+              </div>
+
+              {/* Apply / manage widget */}
+              <ProjectDetailClient
+                projectId={projectId}
+                isOwner={isOwner}
+                hasApplied={hasApplied}
+                applicationStatus={applicationStatus}
+                projectStatus={project.status}
+                ownerEmail={project.owner.email}
+                projectData={project}
+              />
+            </div>
+          </div>
+
         </div>
       </main>
     </AppShell>

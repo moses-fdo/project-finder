@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { sendApplicationStatusEmail } from "@/lib/email";
+import { syncProjectCapacity } from "@/lib/projects/capacity";
 
 export async function PATCH(
   req: Request,
@@ -42,10 +44,31 @@ export async function PATCH(
       return NextResponse.json({ error: "You are not authorized to update this application." }, { status: 403 });
     }
 
-    const updatedApplication = await prisma.application.update({
-      where: { id: applicationId },
-      data: { status },
-    });
+    let updatedApplication;
+    try {
+      updatedApplication = await prisma.$transaction(
+        async (tx) => {
+          const updated = await tx.application.update({
+            where: { id: applicationId },
+            data: { status },
+          });
+
+          if (application.status !== "ACCEPTED" && status === "ACCEPTED") {
+            await syncProjectCapacity(tx, application.projectId, 1);
+          } else if (application.status === "ACCEPTED" && status !== "ACCEPTED") {
+            await syncProjectCapacity(tx, application.projectId, -1);
+          }
+
+          return updated;
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+      );
+    } catch (err: any) {
+      if (err?.message === "Project is already at full capacity.") {
+        return NextResponse.json({ error: "Project is already at full capacity." }, { status: 400 });
+      }
+      throw err;
+    }
 
     // Notify the applicant via in-app notification
     await prisma.notification.create({

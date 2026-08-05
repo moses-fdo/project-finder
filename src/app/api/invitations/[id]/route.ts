@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { syncProjectCapacity } from "@/lib/projects/capacity";
 
 export async function PATCH(
   req: Request,
@@ -25,7 +27,7 @@ export async function PATCH(
     const invitation = await prisma.invitation.findUnique({
       where: { id: invitationId },
       include: {
-        project: { select: { id: true, title: true } },
+        project: { select: { id: true, title: true, status: true, teamSize: true, slotsFilled: true } },
         receiver: { select: { id: true, name: true } },
       },
     });
@@ -41,10 +43,68 @@ export async function PATCH(
       return NextResponse.json({ error: "You are not authorized to respond to this invitation." }, { status: 403 });
     }
 
-    const updatedInvitation = await prisma.invitation.update({
-      where: { id: invitationId },
-      data: { status },
-    });
+    let updatedInvitation;
+    try {
+      updatedInvitation = await prisma.$transaction(
+        async (tx) => {
+          const updated = await tx.invitation.update({
+            where: { id: invitationId },
+            data: { status },
+          });
+
+          // Update project capacity (checking for prior accepted applications/invitations for this user)
+          if (invitation.status !== "ACCEPTED" && status === "ACCEPTED") {
+            const existingApplication = await tx.application.findFirst({
+              where: {
+                projectId: invitation.projectId,
+                userId: invitation.receiverId,
+                status: "ACCEPTED",
+              },
+            });
+            const existingInvitation = await tx.invitation.findFirst({
+              where: {
+                projectId: invitation.projectId,
+                receiverId: invitation.receiverId,
+                status: "ACCEPTED",
+                id: { not: invitationId },
+              },
+            });
+            const alreadyAccepted = Boolean(existingApplication || existingInvitation);
+            if (!alreadyAccepted) {
+              await syncProjectCapacity(tx, invitation.projectId, 1);
+            }
+          } else if (invitation.status === "ACCEPTED" && status !== "ACCEPTED") {
+            const remainingApplication = await tx.application.findFirst({
+              where: {
+                projectId: invitation.projectId,
+                userId: invitation.receiverId,
+                status: "ACCEPTED",
+              },
+            });
+            const remainingInvitation = await tx.invitation.findFirst({
+              where: {
+                projectId: invitation.projectId,
+                receiverId: invitation.receiverId,
+                status: "ACCEPTED",
+                id: { not: invitationId },
+              },
+            });
+            const stillAccepted = Boolean(remainingApplication || remainingInvitation);
+            if (!stillAccepted) {
+              await syncProjectCapacity(tx, invitation.projectId, -1);
+            }
+          }
+
+          return updated;
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+      );
+    } catch (err: any) {
+      if (err?.message === "Project is already at full capacity.") {
+        return NextResponse.json({ error: "Project is already at full capacity." }, { status: 400 });
+      }
+      throw err;
+    }
 
     // Notify the invitation sender
     const actionWord = status === "ACCEPTED" ? "accepted" : "declined";

@@ -8,6 +8,7 @@ export interface TechProficiency {
 
 export interface GitHubCollectorResult {
   connected: boolean;
+  transientFailure?: boolean;
   username: string | null;
   score: number; // 0 - 100
   details: {
@@ -87,28 +88,67 @@ export async function collectGitHubMetrics(githubUrl: string | null | undefined)
   }
 
   try {
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "ProjectFinder-ReputationEngine/1.0",
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
+    }
+
     // Attempt fetching public profile from GitHub REST API
     const userRes = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}`, {
-      headers: {
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "ProjectFinder-ReputationEngine/1.0",
-      },
+      headers,
+      signal: AbortSignal.timeout(5000),
       next: { revalidate: 3600 }, // Cache 1 hr
     });
 
+    if (userRes.status === 404) {
+      return {
+        connected: false,
+        transientFailure: false,
+        username,
+        score: 0,
+        details: {
+          publicRepos: 0,
+          totalStarsReceived: 0,
+          totalForks: 0,
+          mergedPullRequests: 0,
+          codeReviewsCount: 0,
+          qualityReposCount: 0,
+          recentActivityStreakDays: 0,
+          antiGamingFilteredCommitsCount: 0,
+          verifiedAccount: false,
+        },
+      };
+    }
+
     if (!userRes.ok) {
-      // Fallback deterministic evaluation based on handle structure
-      return calculateFallbackGitHubMetrics(username);
+      return {
+        connected: false,
+        transientFailure: true,
+        username,
+        score: 0,
+        details: {
+          publicRepos: 0,
+          totalStarsReceived: 0,
+          totalForks: 0,
+          mergedPullRequests: 0,
+          codeReviewsCount: 0,
+          qualityReposCount: 0,
+          recentActivityStreakDays: 0,
+          antiGamingFilteredCommitsCount: 0,
+          verifiedAccount: false,
+        },
+      };
     }
 
     const userData = await userRes.json();
 
     // Fetch user public repositories (up to 100)
     const reposRes = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`, {
-      headers: {
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "ProjectFinder-ReputationEngine/1.0",
-      },
+      headers,
+      signal: AbortSignal.timeout(5000),
       next: { revalidate: 3600 },
     });
 
@@ -141,13 +181,12 @@ export async function collectGitHubMetrics(githubUrl: string | null | undefined)
 
     // Estimate PRs and commits from user public activity
     const publicRepos = userData.public_repos || 0;
-    const followers = userData.followers || 0;
     const accountAgeYears = (Date.now() - new Date(userData.created_at || Date.now()).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
 
-    // Anti-Gaming Filter Calculation
-    const antiGamingFilteredCommitsCount = Math.floor(publicRepos * 3);
-    const mergedPullRequests = Math.min(Math.floor(publicRepos * 2.5 + totalStarsReceived), 120);
-    const codeReviewsCount = Math.min(Math.floor(mergedPullRequests * 0.4), 40);
+    // Anti-Gaming Filter Calculation (Estimates based on public repo activity)
+    const estimatedCommitsCount = Math.floor(publicRepos * 3);
+    const estimatedMergedPullRequests = Math.min(Math.floor(publicRepos * 2.5 + totalStarsReceived), 120);
+    const estimatedCodeReviewsCount = Math.min(Math.floor(estimatedMergedPullRequests * 0.4), 40);
     const streakDays = Math.min(Math.floor(accountAgeYears * 12 + publicRepos), 90);
 
     // Composite GitHub Score Calculation (0 - 100)
@@ -155,10 +194,10 @@ export async function collectGitHubMetrics(githubUrl: string | null | undefined)
     rawScore += Math.min(publicRepos * 3, 25);            // Max 25 pts for repos
     rawScore += Math.min(totalStarsReceived * 4, 30);      // Max 30 pts for stars
     rawScore += Math.min(qualityReposCount * 5, 20);      // Max 20 pts for quality repos
-    rawScore += Math.min(mergedPullRequests * 1.5, 15);    // Max 15 pts for PRs
+    rawScore += Math.min(estimatedMergedPullRequests * 1.5, 15);    // Max 15 pts for PRs
     rawScore += Math.min(streakDays * 0.2, 10);            // Max 10 pts for streak
 
-    const finalScore = Math.min(Math.max(Math.round(rawScore), 15), 100);
+    const finalScore = Math.min(Math.max(Math.round(rawScore), 0), 100);
 
     return {
       connected: true,
@@ -168,16 +207,32 @@ export async function collectGitHubMetrics(githubUrl: string | null | undefined)
         publicRepos,
         totalStarsReceived,
         totalForks,
-        mergedPullRequests,
-        codeReviewsCount,
+        mergedPullRequests: estimatedMergedPullRequests,
+        codeReviewsCount: estimatedCodeReviewsCount,
         qualityReposCount,
         recentActivityStreakDays: streakDays,
-        antiGamingFilteredCommitsCount,
+        antiGamingFilteredCommitsCount: estimatedCommitsCount,
         verifiedAccount: true,
       },
     };
   } catch (error) {
-    return calculateFallbackGitHubMetrics(username);
+    return {
+      connected: false,
+      transientFailure: true,
+      username,
+      score: 0,
+      details: {
+        publicRepos: 0,
+        totalStarsReceived: 0,
+        totalForks: 0,
+        mergedPullRequests: 0,
+        codeReviewsCount: 0,
+        qualityReposCount: 0,
+        recentActivityStreakDays: 0,
+        antiGamingFilteredCommitsCount: 0,
+        verifiedAccount: false,
+      },
+    };
   }
 }
 

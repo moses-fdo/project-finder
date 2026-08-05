@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { CheckCircle2, Sparkles, User, GraduationCap, Calendar } from "lucide-react";
 import { departments } from "@/lib/projects";
 
 interface OnboardingModalProps {
@@ -36,6 +36,16 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState(false);
+
+  const [prevUser, setPrevUser] = useState(user);
+  if (user !== prevUser) {
+    setPrevUser(user);
+    if (user) {
+      if (user.name && !name) setName(user.name);
+      if (user.department && !department) setDepartment(user.department);
+      if (user.year && !year) setYear(String(user.year));
+    }
+  }
 
   const needsOnboarding = !completed && (!user?.department || !user?.year || !user?.name);
 
@@ -121,6 +131,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Full Name
             </label>
             <div className="relative">
+              <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 id="onboard-name"
                 type="text"
@@ -139,6 +150,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Department / Course
             </label>
             <div className="relative">
+              <GraduationCap size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <select
                 id="onboard-dept"
                 required
@@ -162,6 +174,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Year of Study
             </label>
             <div className="relative">
+              <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <select
                 id="onboard-year"
                 required

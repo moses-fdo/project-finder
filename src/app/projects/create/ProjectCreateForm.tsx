@@ -74,6 +74,8 @@ export default function ProjectCreateForm({ userId, user }: { userId: number; us
       title: title || "Untitled project",
       description: description || "Your project description will appear here as you type.",
       status: "OPEN",
+      teamSize: teamSize ? Number(teamSize) : null,
+      slotsFilled: 0,
       createdAt: new Date(),
       owner: {
         id: userId,
@@ -83,7 +85,7 @@ export default function ProjectCreateForm({ userId, user }: { userId: number; us
       },
       skills: skillNames.slice(0, 4).map((name, i) => ({ id: i + 1, name })),
     };
-  }, [title, description, skills, userId, user]);
+  }, [title, description, skills, teamSize, userId, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,7 +330,7 @@ export default function ProjectCreateForm({ userId, user }: { userId: number; us
       {/* ── Live preview (lg only) ─────────────────────────── */}
       <aside className="hidden lg:block sticky top-20">
         <p className="section-label mb-2">Live preview</p>
-        <ProjectCard project={previewProject} />
+        <ProjectCard project={previewProject} preview={true} />
         <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
           This is how your project will appear to collaborators. Keep the title short and the description specific.
         </p>

@@ -79,10 +79,12 @@ export default function AppShell({
   const [clientName, setClientName] = useState(user?.name || "");
   const [clientImage, setClientImage] = useState(user?.image || "");
 
-  useEffect(() => {
+  const [prevUser, setPrevUser] = useState(user);
+  if (user !== prevUser) {
+    setPrevUser(user);
     setClientName(user?.name || "");
     setClientImage(user?.image || "");
-  }, [user]);
+  }
 
   useEffect(() => {
     async function syncProfile() {
@@ -230,7 +232,7 @@ export default function AppShell({
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] text-foreground leading-relaxed">{n.message}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
                   {!n.read && (
                     <span className="ml-2 text-[9px] font-semibold uppercase tracking-wide text-foreground/60">New</span>
                   )}

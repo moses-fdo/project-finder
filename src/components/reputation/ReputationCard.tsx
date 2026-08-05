@@ -17,6 +17,7 @@ import {
   Lock,
 } from "lucide-react";
 import Toast from "@/components/Toast";
+import { getTierColorClass } from "@/lib/reputation/config";
 
 interface ReputationCardProps {
   reputation: {
@@ -52,6 +53,7 @@ export default function ReputationCard({
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleSyncNow = async () => {
+    if (syncing) return;
     try {
       setSyncing(true);
       setErrorMessage("");
@@ -141,20 +143,10 @@ export default function ReputationCard({
   // 2. CONNECTED STATE (Verified Reputation Score)
   // ─────────────────────────────────────────────────────────────
   const scores = reputation.categoryScores || {
-    github: 70,
-    experience: 15,
-    certifications: 10,
-    community: 5,
-  };
-
-  const getTierColorClass = (t: string) => {
-    switch (t?.toLowerCase()) {
-      case "elite": return "bg-purple-500/10 text-purple-500 dark:text-purple-400 border-purple-500/30";
-      case "excellent": return "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/30";
-      case "strong": return "bg-blue-500/10 text-blue-500 dark:text-blue-400 border-blue-500/30";
-      case "growing": return "bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/30";
-      default: return "bg-secondary text-muted-foreground border-border";
-    }
+    github: 0,
+    experience: 0,
+    certifications: 0,
+    community: 0,
   };
 
   return (
@@ -265,7 +257,7 @@ export default function ReputationCard({
                 className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-secondary/80 border border-border text-foreground inline-flex items-center gap-1.5"
               >
                 <span>{tech.language}</span>
-                <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded ${
+                <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
                   tech.level === "Expert" ? "bg-purple-500/10 text-purple-500 border border-purple-500/20" :
                   tech.level === "Proficient" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
                   "bg-blue-500/10 text-blue-500 border border-blue-500/20"
@@ -282,11 +274,11 @@ export default function ReputationCard({
       <div className="pt-4 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] text-muted-foreground">
         <div className="flex items-center gap-2">
           <ShieldCheck size={14} className="text-emerald-500" />
-          <span>Anti-gaming spam filter active • Time-decay weighted</span>
+          <span>Time-decay weighted metrics</span>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <span>Synced: {new Date(reputation.lastSyncedAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+          <span>Synced: {reputation.lastSyncedAt ? new Date(reputation.lastSyncedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "Recently"}</span>
           {isCurrentUser && (
             <button
               type="button"

@@ -52,8 +52,8 @@ function mapToCollaborator(u: any): Collaborator {
     id: String(u.id),
     name,
     rollNumber,
-    year: u.year || 2,
-    department: u.department || "Computer Science",
+    year: u.year || undefined,
+    department: u.department || undefined,
     status,
     avatarUrl: u.profileImage || undefined,
   };
@@ -199,16 +199,7 @@ export default function CollaborationsFinderTab({
     });
   };
 
-  // Lock body scrolling when Collaborators tab is active
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    };
-  }, []);
+
 
   // Measure the grid's live dimensions so the card count always matches the
   // visible area (re-measured after any layout change, not just on mount).
@@ -241,7 +232,7 @@ export default function CollaborationsFinderTab({
   }, []);
 
   // Keep collabLimit in sync with the number of cards that fit on screen
-  // (full rows only) — no vertical scrolling, remaining profiles paginated.
+  // (full rows only) — remaining profiles paginated.
   useEffect(() => {
     if (!gridWidth || !gridHeight) return;
     const timer = setTimeout(() => {
@@ -249,13 +240,12 @@ export default function CollaborationsFinderTab({
       const GRID_GAP = 12;
       const rows = Math.max(1, Math.floor((gridHeight + GRID_GAP) / (PROFILE_CARD_HEIGHT + GRID_GAP)));
       const targetLimit = cols * rows;
-      if (collabLimit !== targetLimit) {
+      if (targetLimit > 0 && Math.abs((collabLimit || 24) - targetLimit) >= 1) {
         const params = new URLSearchParams(window.location.search);
         params.set("collabLimit", String(targetLimit));
         params.set("collabPage", "1"); // Reset to page 1
         startTransition(() => {
-          router.push(`/dashboard?${params.toString()}`);
-          router.refresh();
+          router.replace(`/dashboard?${params.toString()}`);
         });
       }
     }, 250);
@@ -354,7 +344,9 @@ export default function CollaborationsFinderTab({
   const displayPeople = useMemo(() => {
     if (sorted.length === 0) return [];
     const cap = Math.min(sorted.length, cardsPerPage);
-    return sorted.slice(0, Math.floor(cap / cols) * cols);
+    const fullRowsCount = Math.floor(cap / cols) * cols;
+    const countToDisplay = fullRowsCount > 0 ? fullRowsCount : cap;
+    return sorted.slice(0, countToDisplay);
   }, [sorted, cols, cardsPerPage]);
 
 

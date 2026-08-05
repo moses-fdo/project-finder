@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { Search, X, SlidersHorizontal, Loader2, Check } from "lucide-react";
 
 interface ProjectFiltersProps {
@@ -22,31 +22,74 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
   const [isPending, startTransition] = useTransition();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const [search, setSearch]   = useState(searchParams.get("search")     || "");
-  const [dept,   setDept]     = useState(searchParams.get("department") || "");
-  const [status, setStatus]   = useState(searchParams.get("status")     || "");
-  const [skill,  setSkill]    = useState(searchParams.get("skill")      || "");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [dept, setDept] = useState(searchParams.get("department") || "");
+  const [status, setStatus] = useState(searchParams.get("status") || "");
+  const [skill, setSkill] = useState(searchParams.get("skill") || "");
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
 
-  const push = (updates: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const merged: Record<string, string> = {
+  useEffect(() => {
+    if (!sheetOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSheetOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Focus the sheet dialog on open
+    sheetRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [sheetOpen]);
+
+  const handleCloseSheet = () => {
+    setSheetOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const push = (nextParams: Record<string, string>) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+
+    const merged = {
       search,
       department: dept,
       status,
       skill,
-      ...updates,
+      ...nextParams,
     };
 
-    Object.keys(merged).forEach((key) => {
-      if (merged[key]) params.set(key, merged[key]);
-      else params.delete(key);
+    Object.entries(merged).forEach(([k, v]) => {
+      if (v) current.set(k, v);
+      else current.delete(k);
     });
 
-    startTransition(() => router.push(`/projects?${params.toString()}`));
+    const queryString = current.toString();
+    startTransition(() => {
+      router.push(queryString ? `/projects?${queryString}` : "/projects");
+    });
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    push({ search });
   };
 
   const clearAll = () => {
-    setSearch(""); setDept(""); setStatus(""); setSkill("");
+    setSearch("");
+    setDept("");
+    setStatus("");
+    setSkill("");
     startTransition(() => router.push("/projects"));
   };
 
@@ -54,7 +97,7 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
   const activeCount = [dept, status, skill].filter(Boolean).length;
 
   const applyAndClose = () => {
-    setSheetOpen(false);
+    handleCloseSheet();
   };
 
   const selectControl = (
@@ -88,25 +131,28 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
           aria-label={`Remove filter: ${dept}`}
           className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all duration-200 cursor-pointer"
         >
-          {dept} <X size={13} strokeWidth={2} />
+          <span>Department: {dept}</span>
+          <X size={13} strokeWidth={2.2} />
         </button>
       )}
       {status && (
         <button
           onClick={() => { setStatus(""); push({ status: "" }); }}
           aria-label={`Remove filter: ${status}`}
-          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 border border-warning/20 transition-all duration-200 cursor-pointer"
+          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all duration-200 cursor-pointer"
         >
-          {status} <X size={13} strokeWidth={2} />
+          <span>Status: {STATUS_OPTIONS.find((s) => s.value === status)?.label || status}</span>
+          <X size={13} strokeWidth={2.2} />
         </button>
       )}
       {skill && (
         <button
           onClick={() => { setSkill(""); push({ skill: "" }); }}
           aria-label={`Remove filter: ${skill}`}
-          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-success/10 text-success hover:bg-success/20 border border-success/20 transition-all duration-200 cursor-pointer"
+          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all duration-200 cursor-pointer"
         >
-          {skill} <X size={13} strokeWidth={2} />
+          <span>Skill: {skill}</span>
+          <X size={13} strokeWidth={2.2} />
         </button>
       )}
     </div>
@@ -114,27 +160,12 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
 
   const rail = (
     <>
-      {/* Search */}
-      <form
-        onSubmit={(e) => { e.preventDefault(); push({ search }); }}
-        className="space-y-2"
-      >
-        <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Search
-        </label>
-        <div className="relative">
-          <Search
-            size={16}
-            strokeWidth={1.75}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-          />
+      <form onSubmit={handleSearchSubmit}>
+        <div className="relative flex items-center">
+          <Search size={16} strokeWidth={1.75} className="absolute left-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="text"
-            inputMode="search"
-            enterKeyHint="search"
-            autoCapitalize="off"
-            autoCorrect="off"
-            placeholder="Search projects…"
+            placeholder="Search title, tech..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="forge-input pl-10 min-h-[46px] text-[13px] font-medium rounded-xl"
@@ -149,14 +180,14 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
           "Department",
           dept,
           (v) => { setDept(v); push({ department: v }); },
-          departments.map((d) => ({ value: d, label: d }))
+          [{ value: "", label: "All departments" }, ...departments.map((d) => ({ value: d, label: d }))]
         )}
         {selectControl("Status", status, (v) => { setStatus(v); push({ status: v }); }, STATUS_OPTIONS)}
         {selectControl(
           "Skill",
           skill,
           (v) => { setSkill(v); push({ skill: v }); },
-          skills.map((s) => ({ value: s, label: s }))
+          [{ value: "", label: "All skills" }, ...skills.map((s) => ({ value: s, label: s }))]
         )}
       </div>
 
@@ -170,33 +201,34 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
           Clear all filters
         </button>
       )}
-
-      {/* Active pills */}
-      {hasFilters && activePills}
     </>
   );
 
   return (
     <>
-      {/* ── Desktop left rail (sticky) ───────────────────── */}
-      <aside className="hidden lg:block">
-        <div className="lg:sticky lg:top-20 card p-5 space-y-5">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal size={16} strokeWidth={1.75} className="text-foreground" />
-            <span className="text-[13px] font-bold text-foreground">Filters</span>
-            {activeCount > 0 && (
-              <span className="ml-auto text-[11px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5">
-                {activeCount}
-              </span>
-            )}
-          </div>
-          {rail}
+      {/* Active pills */}
+      {hasFilters && (
+        <div className="flex items-center justify-between gap-3 p-4 bg-card border border-border rounded-2xl shadow-xs flex-wrap mb-6">
+          {activePills}
+          <button
+            type="button"
+            onClick={clearAll}
+            className="text-[12px] font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer ml-auto"
+          >
+            Clear all
+          </button>
         </div>
+      )}
+
+      {/* Desktop sidebar rail */}
+      <aside className="hidden lg:block space-y-6">
+        {rail}
       </aside>
 
-      {/* ── Mobile trigger + sheet ───────────────────────── */}
-      <div className="lg:hidden mb-6">
+      {/* Mobile trigger + Bottom sheet */}
+      <div className="lg:hidden">
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setSheetOpen(true)}
           className="w-full min-h-[48px] btn-secondary cursor-pointer flex items-center justify-center gap-2 text-[13px] font-semibold rounded-xl"
@@ -210,7 +242,9 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
 
         {sheetOpen && (
           <div
-            className="fixed inset-0 z-50 lg:hidden"
+            ref={sheetRef}
+            tabIndex={-1}
+            className="fixed inset-0 z-50 lg:hidden focus:outline-none"
             role="dialog"
             aria-modal="true"
             aria-label="Filter projects"
@@ -219,7 +253,7 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
             <button
               type="button"
               aria-label="Close filters"
-              onClick={() => setSheetOpen(false)}
+              onClick={handleCloseSheet}
               className="absolute inset-0 w-full h-full bg-black/40 backdrop-blur-[2px] cursor-default"
             />
 
@@ -242,7 +276,7 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
                   )}
                   <button
                     type="button"
-                    onClick={() => setSheetOpen(false)}
+                    onClick={handleCloseSheet}
                     aria-label="Close filters"
                     className="h-9 w-9 flex items-center justify-center rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >

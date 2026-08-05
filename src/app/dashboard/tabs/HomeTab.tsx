@@ -60,7 +60,7 @@ export default function HomeTab({
   });
   const topEvents = (activeEventsList.length > 0 ? activeEventsList : eventsList).slice(0, 4);
 
-  const userProjects = projects.filter((p: any) => p.ownerId === Number(currentUser?.id));
+  const userProjects = projects.filter((p: any) => Number(p.ownerId) === Number(currentUser?.id));
   const userApplications = useMemo(() => applications || [], [applications]);
 
   const activityItems = useMemo(() => {
@@ -115,7 +115,7 @@ export default function HomeTab({
   // Fall back to paginated collaborations only when leaderboardUsers is empty.
   const topCollaborators = useMemo(() => {
     // Use the dedicated campus-wide leaderboard if available
-    const pool = leaderboardUsers.length > 0 ? leaderboardUsers : [
+    const pool = leaderboardUsers.length > 0 ? [...leaderboardUsers] : [
       ...((collaborations && collaborations.length > 0)
         ? collaborations
         : projects.map((p: any) => p.owner).filter(Boolean))
@@ -250,7 +250,7 @@ export default function HomeTab({
   const currentProjects = filteredProjects.slice((dashPage - 1) * itemsPerPage, dashPage * itemsPerPage);
 
   const pendingApplicationsCount = userApplications.filter((a: any) => a.status === "PENDING").length;
-  const unreadNotifsCount = recentNotifications.filter((n: any) => !n.read).length;
+  const unreadNotifsCount = notifications.filter((n: any) => !n.read).length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -539,6 +539,10 @@ export default function HomeTab({
                 const Icon = iconInfo.icon;
                 const match = getSkillMatchScore(currentUser?.skills, project.skills);
 
+                const pTeamSize = project.teamSize ?? null;
+                const pSlotsFilled = project.slotsFilled ?? 0;
+                const pIsFull = pTeamSize !== null && pTeamSize > 0 && pSlotsFilled >= pTeamSize;
+
                 return (
                   <article
                     key={project.id}
@@ -553,6 +557,21 @@ export default function HomeTab({
                           {project.status === "OPEN" && <span className="badge badge-green text-[9px] font-bold">OPEN</span>}
                           {project.status === "FULL" && <span className="badge badge-yellow text-[9px] font-bold">FULL</span>}
                           {project.status === "CLOSED" && <span className="badge badge-red text-[9px] font-bold">CLOSED</span>}
+                          {pTeamSize !== null && pTeamSize > 0 ? (
+                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 border ${
+                              pIsFull
+                                ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                                : "bg-secondary/80 text-foreground border-border"
+                            }`}>
+                              <Users size={10} className={pIsFull ? "text-amber-500" : "text-accent"} />
+                              {pSlotsFilled}/{pTeamSize} slots
+                            </span>
+                          ) : pSlotsFilled > 0 ? (
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-secondary/80 text-foreground border border-border">
+                              <Users size={10} className="text-accent" />
+                              {pSlotsFilled} filled
+                            </span>
+                          ) : null}
                           {match.matchingCount > 0 && (
                             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
                               {match.matchingCount} skill match
@@ -934,7 +953,7 @@ export default function HomeTab({
                         <span className="text-[9px] font-semibold text-muted-foreground uppercase">{item.typeLabel}</span>
                         <span className="text-[9px] text-muted-foreground">•</span>
                         <span className="text-[9px] text-muted-foreground">
-                          {item.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          {item.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
                         </span>
                       </div>
                     </div>

@@ -26,7 +26,6 @@ async function main() {
     select: {
       id: true,
       name: true,
-      email: true,
       githubUrl: true,
     }
   });

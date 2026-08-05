@@ -7,8 +7,10 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export default function LenisScroller({ children }: { children: React.ReactNode }) {
+export default function LenisScroller({ children, disabled = false }: { children: React.ReactNode; disabled?: boolean }) {
   useEffect(() => {
+    if (disabled) return;
+
     const lenis = new Lenis({
       lerp: 0.1,
       smoothWheel: true,
@@ -29,7 +31,7 @@ export default function LenisScroller({ children }: { children: React.ReactNode 
       gsap.ticker.remove(onTick);
       lenis.destroy();
     };
-  }, []);
+  }, [disabled]);
 
   return <>{children}</>;
 }

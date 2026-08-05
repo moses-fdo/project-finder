@@ -16,6 +16,7 @@ export default async function AdminPage() {
 
   const [
     unreadNotifications,
+    inboxNotifications,
     totalUsers,
     totalProjects,
     totalApplications,
@@ -29,6 +30,11 @@ export default async function AdminPage() {
     abuseLogs,
   ] = await Promise.all([
     prisma.notification.count({ where: { userId: currentUserId, read: false } }),
+    prisma.notification.findMany({
+      where: { userId: currentUserId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
     prisma.user.count(),
     prisma.project.count(),
     prisma.application.count(),
@@ -91,7 +97,7 @@ export default async function AdminPage() {
   const stats = { totalUsers, totalProjects, totalApplications, totalNotifications };
 
   return (
-    <AppShell user={session.user} unreadNotifications={unreadNotifications}>
+    <AppShell user={session.user} unreadNotifications={unreadNotifications} inboxNotifications={inboxNotifications}>
       <AdminClient
         stats={stats}
         users={users}

@@ -1,10 +1,34 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getErrorMessage } from "@/lib/error";
 import { checkAbuseServer } from "@/lib/moderation";
 
 export const dynamic = "force-dynamic";
+
+export async function resolveCurrentUserId(currentUser: any): Promise<number | null> {
+  if (!currentUser) return null;
+
+  const rawId = (currentUser as any).id;
+  const parsedId = Number(rawId);
+
+  if (!isNaN(parsedId) && parsedId > 0 && Number.isInteger(parsedId)) {
+    const userById = await prisma.user.findUnique({
+      where: { id: parsedId },
+      select: { id: true },
+    });
+    if (userById) return userById.id;
+  }
+
+  if (currentUser.email && typeof currentUser.email === "string") {
+    const userByEmail = await prisma.user.findUnique({
+      where: { email: currentUser.email },
+      select: { id: true },
+    });
+    if (userByEmail) return userByEmail.id;
+  }
+
+  return null;
+}
 
 export async function GET() {
   try {
@@ -18,8 +42,9 @@ export async function GET() {
       );
     }
 
-    const currentUserId = Number((currentUser as any).id);
-    if (isNaN(currentUserId)) {
+    const currentUserId = await resolveCurrentUserId(currentUser);
+
+    if (!currentUserId) {
       return NextResponse.json(
         { error: "Invalid user ID." },
         { status: 400 }
@@ -45,7 +70,7 @@ export async function GET() {
     if (!dbUser) {
       return NextResponse.json(
         { error: "User not found." },
-        { status: 444 }
+        { status: 404 }
       );
     }
 
@@ -53,7 +78,7 @@ export async function GET() {
   } catch (error) {
     console.error("Fetch profile error:", error);
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }
@@ -74,8 +99,9 @@ export async function PATCH(req: Request) {
     const { name, bio, githubUrl, linkedinUrl, department, year, skills, availability, profileImage } =
       await req.json();
 
-    const currentUserId = Number((currentUser as any).id);
-    if (isNaN(currentUserId)) {
+    const currentUserId = await resolveCurrentUserId(currentUser);
+
+    if (!currentUserId) {
       return NextResponse.json(
         { error: "Invalid user ID." },
         { status: 400 }
@@ -140,7 +166,7 @@ export async function PATCH(req: Request) {
   } catch (error) {
     console.error("Update profile error:", error);
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }
@@ -158,8 +184,9 @@ export async function DELETE() {
       );
     }
 
-    const currentUserId = Number((currentUser as any).id);
-    if (isNaN(currentUserId)) {
+    const currentUserId = await resolveCurrentUserId(currentUser);
+
+    if (!currentUserId) {
       return NextResponse.json(
         { error: "Invalid user ID." },
         { status: 400 }
@@ -179,7 +206,7 @@ export async function DELETE() {
   } catch (error) {
     console.error("Delete account error:", error);
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }

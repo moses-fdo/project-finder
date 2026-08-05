@@ -6,6 +6,7 @@
 import { collectExperienceMetrics } from "./collectors/experienceCollector";
 import { collectCertificationMetrics } from "./collectors/certificationCollector";
 import { collectCommunityMetrics } from "./collectors/communityCollector";
+import { REPUTATION_CONFIG } from "./config";
 
 export interface UserReputationSummary {
   githubConnected: boolean;
@@ -49,11 +50,8 @@ export function deriveStarsFromScore(score: number): number {
 }
 
 export function deriveTierFromScore(score: number): "Beginner" | "Growing" | "Strong" | "Excellent" | "Elite" {
-  if (score >= 88) return "Elite";
-  if (score >= 70) return "Excellent";
-  if (score >= 48) return "Strong";
-  if (score >= 25) return "Growing";
-  return "Beginner";
+  const matched = REPUTATION_CONFIG.tiers.find((t) => score >= t.min);
+  return matched ? matched.name : "Beginner";
 }
 
 /**
@@ -124,10 +122,10 @@ export function getDeveloperReputation(user: {
 
   // 4. Compute Weighted Score (GitHub 70%, Experience 15%, Certifications 10%, Community 5%)
   const weightedScore =
-    ghScore * 0.70 +
-    experience.score * 0.15 +
-    certs.score * 0.10 +
-    community.score * 0.05;
+    ghScore * REPUTATION_CONFIG.weights.github +
+    experience.score * REPUTATION_CONFIG.weights.experience +
+    certs.score * REPUTATION_CONFIG.weights.certifications +
+    community.score * REPUTATION_CONFIG.weights.community;
 
   const finalScore = Math.min(Math.max(Math.round(weightedScore), 0), 100);
   const stars = deriveStarsFromScore(finalScore);

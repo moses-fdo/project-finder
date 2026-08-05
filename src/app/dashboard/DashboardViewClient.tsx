@@ -30,6 +30,7 @@ import {
   Upload,
 } from "lucide-react";
 import { departments, getProjectIcon } from "@/lib/projects";
+import { parseNameAndRollNumber, cn } from "@/lib/utils";
 
 interface DashboardViewClientProps {
   activeTab: string;
@@ -51,20 +52,6 @@ interface DashboardViewClientProps {
   leaderboardUsers?: any[];
 }
 
-function parseNameAndRollNumber(fullName: string): { name: string; rollNumber: string } {
-  if (!fullName) return { name: "", rollNumber: "" };
-  const match = fullName.match(/\s+([A-Z]{3}\d{2}[A-Z]{2}\d{4}|\d{2}[A-Z]{3}\d{4}|\d{4,10})$/i);
-  if (match) {
-    const rollNumber = match[1];
-    const name = fullName.substring(0, fullName.lastIndexOf(rollNumber)).trim();
-    return { name, rollNumber };
-  }
-  return { name: fullName.trim(), rollNumber: "" };
-}
-
-function cn(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export default function DashboardViewClient({
   activeTab,
@@ -99,7 +86,9 @@ export default function DashboardViewClient({
     image: profileData?.profileImage || currentUser?.image || "",
   }));
 
-  useEffect(() => {
+  const [prevActiveUserProps, setPrevActiveUserProps] = useState({ currentUser, profileData });
+  if (prevActiveUserProps.currentUser !== currentUser || prevActiveUserProps.profileData !== profileData) {
+    setPrevActiveUserProps({ currentUser, profileData });
     setActiveUser((prev: any) => ({
       ...prev,
       ...currentUser,
@@ -107,7 +96,7 @@ export default function DashboardViewClient({
       name: profileData?.name || currentUser?.name || prev?.name || "",
       image: profileData?.profileImage || currentUser?.image || prev?.image || "",
     }));
-  }, [currentUser, profileData]);
+  }
 
   // Derive currentTab directly from prop — no effect needed
   const currentTab = activeTab || "home";
@@ -121,12 +110,14 @@ export default function DashboardViewClient({
     return parseNameAndRollNumber(rawName).rollNumber;
   });
 
-  useEffect(() => {
+  const [prevUserRef, setPrevUserRef] = useState({ profileData, currentUser });
+  if (prevUserRef.profileData !== profileData || prevUserRef.currentUser !== currentUser) {
+    setPrevUserRef({ profileData, currentUser });
     const rawName = profileData?.name || currentUser?.name || "";
     const parsed = parseNameAndRollNumber(rawName);
     setProfileName(parsed.name);
     setProfileRollNumber(parsed.rollNumber);
-  }, [profileData, currentUser]);
+  }
 
   const [profileDept,     setProfileDept]     = useState(profileData?.department   || "");
   const [profileYear,     setProfileYear]     = useState(profileData?.year?.toString() || "");
@@ -503,7 +494,7 @@ export default function DashboardViewClient({
       {/* ── MY PROJECTS ───────────────────────────────────── */}
       {currentTab === "projects" && (
         <ProjectsTab
-          projects={projects.filter((p: any) => p.ownerId === Number(currentUser?.id))}
+          projects={projects.filter((p: any) => Number(p.ownerId) === Number(activeUser?.id || currentUser?.id || profileData?.id))}
           loadingId={loadingId}
           setEditingProject={setEditingProject}
           statusToggle={statusToggle}
@@ -604,7 +595,7 @@ export default function DashboardViewClient({
                             )}
                           </div>
                           <p className="text-[11px] text-muted-foreground">
-                            Invited by <strong className="text-foreground">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            Invited by <strong className="text-foreground">{inv.sender?.name}</strong> ({inv.sender?.department}) · {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
                           </p>
                         </div>
 
@@ -688,7 +679,7 @@ export default function DashboardViewClient({
                           )}
                         </div>
                         <p className="text-[11px] text-muted-foreground">
-                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-foreground hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          Project: <Link href={`/projects/${inv.project?.id}`} className="font-medium text-foreground hover:underline">{inv.project?.title}</Link> · Sent {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
                         </p>
                         {inv.message && (
                           <p className="text-[11px] text-muted-foreground italic mt-1.5 line-clamp-1">

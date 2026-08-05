@@ -1,12 +1,47 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateUserReputation } from "@/lib/reputation/calculator";
+
+async function fetchAndCalculateUserReputation(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      bio: true,
+      githubUrl: true,
+      linkedinUrl: true,
+      year: true,
+      skills: { select: { name: true } },
+      projects: { select: { id: true } },
+      applications: { select: { id: true } },
+    },
+  });
+
+  if (!user) return null;
+
+  return calculateUserReputation({
+    userId: user.id,
+    githubUrl: user.githubUrl,
+    linkedinUrl: user.linkedinUrl,
+    bio: user.bio,
+    year: user.year,
+    skills: user.skills,
+    userProjectsCount: user.projects?.length || 0,
+    userApplicationsCount: user.applications?.length || 0,
+  });
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { userId: userIdStr } = await params;
     const userId = Number(userIdStr);
 
@@ -14,40 +49,15 @@ export async function GET(
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        bio: true,
-        githubUrl: true,
-        linkedinUrl: true,
-        year: true,
-        skills: { select: { name: true } },
-        projects: { select: { id: true } },
-        applications: { select: { id: true } },
-      },
-    });
-
-    if (!user) {
+    const reputation = await fetchAndCalculateUserReputation(userId);
+    if (!reputation) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const reputation = await calculateUserReputation({
-      userId: user.id,
-      githubUrl: user.githubUrl,
-      linkedinUrl: user.linkedinUrl,
-      bio: user.bio,
-      year: user.year,
-      skills: user.skills,
-      userProjectsCount: user.projects?.length || 0,
-      userApplicationsCount: user.applications?.length || 0,
-    });
-
     return NextResponse.json(reputation);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to calculate reputation" }, { status: 500 });
+    console.error("GET reputation error:", error);
+    return NextResponse.json({ error: "Failed to calculate reputation" }, { status: 500 });
   }
 }
 
@@ -56,6 +66,11 @@ export async function POST(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { userId: userIdStr } = await params;
     const userId = Number(userIdStr);
 
@@ -63,36 +78,17 @@ export async function POST(
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        bio: true,
-        githubUrl: true,
-        linkedinUrl: true,
-        year: true,
-        skills: { select: { name: true } },
-        projects: { select: { id: true } },
-        applications: { select: { id: true } },
-      },
-    });
+    const currentUserId = Number((session.user as any).id);
+    const isAdmin = (session.user as any).role === "ADMIN";
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (currentUserId !== userId && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const reputation = await calculateUserReputation({
-      userId: user.id,
-      githubUrl: user.githubUrl,
-      linkedinUrl: user.linkedinUrl,
-      bio: user.bio,
-      year: user.year,
-      skills: user.skills,
-      userProjectsCount: user.projects?.length || 0,
-      userApplicationsCount: user.applications?.length || 0,
-    });
+    const reputation = await fetchAndCalculateUserReputation(userId);
+    if (!reputation) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
     return NextResponse.json({
       success: true,
@@ -100,6 +96,7 @@ export async function POST(
       reputation,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to sync reputation" }, { status: 500 });
+    console.error("POST reputation error:", error);
+    return NextResponse.json({ error: "Failed to sync reputation" }, { status: 500 });
   }
 }

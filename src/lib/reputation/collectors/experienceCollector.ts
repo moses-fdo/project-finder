@@ -18,17 +18,28 @@ export interface ExperienceCollectorResult {
 
 export function extractLinkedInHandle(url?: string | null): string | null {
   if (!url) return null;
-  const clean = url.trim().replace(/\/+$/, "");
-  if (clean.includes("linkedin.com/in/")) {
-    return clean.split("linkedin.com/in/")[1]?.split("/")[0] || null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
+    const host = parsed.hostname.toLowerCase();
+    if (host !== "linkedin.com" && host !== "www.linkedin.com" && !host.endsWith(".linkedin.com")) {
+      return null;
+    }
+    const match = parsed.pathname.match(/^\/in\/([a-zA-Z0-9_-]{3,100})\/?$/i);
+    if (!match) return null;
+    const handle = match[1];
+    return handle.length >= 3 && handle.length <= 100 ? handle : null;
+  } catch {
+    return null;
   }
-  return clean.length > 3 ? clean : null;
 }
 
 export function collectExperienceMetrics(
   linkedinUrl: string | null | undefined,
   bio: string | null | undefined,
-  year: number | null | undefined
+  year: number | null | undefined,
+  isCompanyVerified: boolean = false
 ): ExperienceCollectorResult {
   const handle = extractLinkedInHandle(linkedinUrl);
   const hasLinkedIn = Boolean(handle);
@@ -57,28 +68,20 @@ export function collectExperienceMetrics(
     "cloud architect", "data scientist", "lead", "intern"
   ];
 
-  let softwareRolesCount = 0;
-  let internshipsCount = 0;
+  const softwareRolesCount = techRoleKeywords.filter((kw) => {
+    const regex = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    return regex.test(bioLower);
+  }).length;
 
-  techRoleKeywords.forEach((kw) => {
-    if (bioLower.includes(kw)) {
-      softwareRolesCount++;
-    }
-  });
-
-  if (bioLower.includes("intern") || bioLower.includes("internship")) {
-    internshipsCount++;
-  }
+  const internshipMatches = bioLower.match(/\b(intern|internship)\b/gi);
+  const internshipsCount = internshipMatches ? internshipMatches.length : 0;
 
   // Estimate experience level from academic year and profile history
   const currentYearNum = year || 2;
   const yearsOfExperience = Math.min(Math.max(currentYearNum - 1, 0.5), 6);
 
   // Compute Experience score (0 - 100) driven by LinkedIn profile verification
-  let rawScore = 35; // Base score for connecting verified LinkedIn profile
-  rawScore += Math.min(yearsOfExperience * 12, 36); // Up to 36 pts for experience duration
-  rawScore += Math.min(softwareRolesCount * 10, 30); // Up to 30 pts for verified tech roles
-
+  const rawScore = 35 + Math.min(yearsOfExperience * 12, 36) + Math.min(softwareRolesCount * 10, 30);
   const finalScore = Math.min(Math.max(Math.round(rawScore), 25), 100);
 
   return {
@@ -90,7 +93,7 @@ export function collectExperienceMetrics(
       yearsOfExperience,
       softwareRolesCount,
       internshipsCount,
-      verifiedCompany: true,
+      verifiedCompany: Boolean(isCompanyVerified),
     },
   };
 }
