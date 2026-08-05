@@ -13,9 +13,11 @@ const projectCardSelect = {
   status: true,
   createdAt: true,
   ownerId: true,
+  teamSize: true,
+  slotsFilled: true,
   owner: { select: { id: true, name: true, department: true } },
   skills: { select: { id: true, name: true } },
-} satisfies Prisma.ProjectSelect;
+} as const;
 
 interface DashboardPageProps {
   searchParams: Promise<{ tab?: string; collabCursor?: string }>;

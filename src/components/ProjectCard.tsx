@@ -10,6 +10,8 @@ interface ProjectCardProps {
     description: string;
     status: string;
     createdAt: Date;
+    slotsFilled?: number;
+    teamSize?: number | null;
     owner: {
       id: number;
       name: string;
@@ -95,17 +97,34 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-3.5 border-t border-border shrink-0 gap-2">
-        {/* Owner */}
+        {/* Owner + Team Slots */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="h-6 w-6 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] font-semibold text-foreground shrink-0 overflow-hidden">
             {ownerInitial}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-medium text-foreground leading-none truncate">
-              <Link href={`/profile/${project.owner.id}`} className="hover:underline underline-offset-2">
-                {project.owner.name}
-              </Link>
-            </p>
+            <div className="flex items-center gap-1.5">
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-medium text-foreground leading-none truncate">
+                  <Link href={`/profile/${project.owner.id}`} className="hover:underline underline-offset-2">
+                    {project.owner.name}
+                  </Link>
+                </p>
+              </div>
+              {/* Team Slots Indicator */}
+              {project.teamSize && project.teamSize > 1 && (
+                <div
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-semibold whitespace-nowrap shrink-0 ${
+                    (project.slotsFilled ?? 0) >= project.teamSize
+                      ? "bg-muted text-muted-foreground"
+                      : "bg-accent/15 text-accent"
+                  }`}
+                  title={`${project.slotsFilled ?? 0} of ${project.teamSize} slots filled`}
+                >
+                  {project.slotsFilled ?? 0}/{project.teamSize}
+                </div>
+              )}
+            </div>
             <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
               {project.owner?.department}
             </p>

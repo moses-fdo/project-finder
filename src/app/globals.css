@@ -190,6 +190,25 @@ body {
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
 }
 
+.dark .forge-input {
+  background: var(--bg-surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.dark .forge-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.dark .forge-input:focus {
+  border-color: var(--ring);
+}
+
+.dark .forge-input:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+}
+
 /* ─── Buttons ─────────────────────────────────────────────── */
 
 .btn-primary {

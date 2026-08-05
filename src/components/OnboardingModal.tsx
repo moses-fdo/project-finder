@@ -45,9 +45,8 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
   const [year, setYear] = useState(user?.year ? String(user.year) : "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [completed, setCompleted] = useState(false);
 
-  const needsOnboarding = !completed && (!user?.department || !user?.year || !user?.name);
+  const needsOnboarding = !user?.department || !user?.year || !user?.name;
 
   if (!needsOnboarding) return null;
 
@@ -95,7 +94,6 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
       }
 
       const data = await res.json();
-      setCompleted(true);
       if (onComplete && data.user) onComplete(data.user);
       router.refresh();
     } catch (err: unknown) {
