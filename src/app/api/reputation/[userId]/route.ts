@@ -70,7 +70,7 @@ export async function GET(
         linkedinVerified: false,
         categoryScores: { github: 0, experience: 0, certifications: 0, community: 0 },
         details: {},
-        lastSyncedAt: new Date(),
+        lastSyncedAt: null,
       });
     }
 
