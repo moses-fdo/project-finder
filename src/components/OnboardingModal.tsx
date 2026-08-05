@@ -131,7 +131,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Full Name
             </label>
             <div className="relative">
-              <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 id="onboard-name"
                 type="text"
@@ -150,7 +150,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Department / Course
             </label>
             <div className="relative">
-              <GraduationCap size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <GraduationCap size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <select
                 id="onboard-dept"
                 required
@@ -174,7 +174,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
               Year of Study
             </label>
             <div className="relative">
-              <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <select
                 id="onboard-year"
                 required

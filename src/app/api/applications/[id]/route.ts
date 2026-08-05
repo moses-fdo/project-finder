@@ -48,14 +48,21 @@ export async function PATCH(
     try {
       updatedApplication = await prisma.$transaction(
         async (tx) => {
+          // Re-read the application within the transaction to get the current status
+          const currentApplication = await tx.application.findUnique({
+            where: { id: applicationId },
+            select: { status: true, projectId: true },
+          });
+
           const updated = await tx.application.update({
             where: { id: applicationId },
             data: { status },
           });
 
-          if (application.status !== "ACCEPTED" && status === "ACCEPTED") {
+          const previousStatus = currentApplication?.status;
+          if (previousStatus !== "ACCEPTED" && status === "ACCEPTED") {
             await syncProjectCapacity(tx, application.projectId, 1);
-          } else if (application.status === "ACCEPTED" && status !== "ACCEPTED") {
+          } else if (previousStatus === "ACCEPTED" && status !== "ACCEPTED") {
             await syncProjectCapacity(tx, application.projectId, -1);
           }
 
@@ -66,6 +73,10 @@ export async function PATCH(
     } catch (err: any) {
       if (err?.message === "Project is already at full capacity.") {
         return NextResponse.json({ error: "Project is already at full capacity." }, { status: 400 });
+      }
+      // Serializable isolation conflict — instruct client to retry
+      if (err?.code === "P2034") {
+        return NextResponse.json({ error: "Conflict — please retry." }, { status: 409 });
       }
       throw err;
     }

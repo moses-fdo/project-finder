@@ -26,7 +26,12 @@ export async function syncProjectCapacity(
   let newStatus = project.status;
 
   if (delta > 0) {
-    if (project.teamSize !== null && project.teamSize > 0 && newSlotsFilled >= project.teamSize) {
+    if (
+      project.status === "OPEN" &&
+      project.teamSize !== null &&
+      project.teamSize > 0 &&
+      newSlotsFilled >= project.teamSize
+    ) {
       newStatus = "FULL";
     }
   } else if (delta < 0) {

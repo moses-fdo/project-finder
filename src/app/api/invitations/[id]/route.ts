@@ -47,13 +47,20 @@ export async function PATCH(
     try {
       updatedInvitation = await prisma.$transaction(
         async (tx) => {
+          // Re-read the invitation within the transaction for the authoritative status
+          const currentInvitation = await tx.invitation.findUnique({
+            where: { id: invitationId },
+            select: { status: true },
+          });
+          const previousStatus = currentInvitation?.status;
+
           const updated = await tx.invitation.update({
             where: { id: invitationId },
             data: { status },
           });
 
           // Update project capacity (checking for prior accepted applications/invitations for this user)
-          if (invitation.status !== "ACCEPTED" && status === "ACCEPTED") {
+          if (previousStatus !== "ACCEPTED" && status === "ACCEPTED") {
             const existingApplication = await tx.application.findFirst({
               where: {
                 projectId: invitation.projectId,
@@ -73,7 +80,7 @@ export async function PATCH(
             if (!alreadyAccepted) {
               await syncProjectCapacity(tx, invitation.projectId, 1);
             }
-          } else if (invitation.status === "ACCEPTED" && status !== "ACCEPTED") {
+          } else if (previousStatus === "ACCEPTED" && status !== "ACCEPTED") {
             const remainingApplication = await tx.application.findFirst({
               where: {
                 projectId: invitation.projectId,
@@ -102,6 +109,10 @@ export async function PATCH(
     } catch (err: any) {
       if (err?.message === "Project is already at full capacity.") {
         return NextResponse.json({ error: "Project is already at full capacity." }, { status: 400 });
+      }
+      // Serializable isolation conflict — instruct client to retry
+      if (err?.code === "P2034") {
+        return NextResponse.json({ error: "Conflict — please retry." }, { status: 409 });
       }
       throw err;
     }

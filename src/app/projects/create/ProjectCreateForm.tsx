@@ -65,6 +65,8 @@ export default function ProjectCreateForm({ userId, user }: { userId: number; us
   const [showAbusePopup, setShowAbusePopup] = useState(false);
   const [flaggedWords, setFlaggedWords]     = useState<string[]>([]);
   const descRef = useRef<HTMLTextAreaElement>(null);
+  // Stable preview timestamp — created once so the preview card doesn't flicker dates on re-render
+  const previewCreatedAt = useRef(new Date()).current;
 
   // Live preview card built from current form state
   const previewProject = useMemo(() => {
@@ -76,16 +78,16 @@ export default function ProjectCreateForm({ userId, user }: { userId: number; us
       status: "OPEN",
       teamSize: teamSize ? Number(teamSize) : null,
       slotsFilled: 0,
-      createdAt: new Date(),
+      createdAt: previewCreatedAt,
       owner: {
         id: userId,
         name: user?.name || "You",
         department: user?.department || "",
         year: user?.year || 0,
       },
-      skills: skillNames.slice(0, 4).map((name, i) => ({ id: i + 1, name })),
+      skills: skillNames.map((name, i) => ({ id: i + 1, name })),
     };
-  }, [title, description, skills, teamSize, userId, user]);
+  }, [title, description, skills, teamSize, userId, user, previewCreatedAt]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

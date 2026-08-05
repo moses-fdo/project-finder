@@ -29,6 +29,14 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
 
+  // Keep local state in sync with URL (browser back/forward navigation)
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "");
+    setDept(searchParams.get("department") || "");
+    setStatus(searchParams.get("status") || "");
+    setSkill(searchParams.get("skill") || "");
+  }, [searchParams]);
+
   useEffect(() => {
     if (!sheetOpen) return;
 
@@ -94,9 +102,12 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
   };
 
   const hasFilters = search || dept || status || skill;
-  const activeCount = [dept, status, skill].filter(Boolean).length;
+  // Include search in active count so mobile trigger badge reflects it
+  const activeCount = [search, dept, status, skill].filter(Boolean).length;
 
   const applyAndClose = () => {
+    // Commit the current in-sheet filter state before closing
+    push({ search, department: dept, status, skill });
     handleCloseSheet();
   };
 
@@ -105,26 +116,42 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
     value: string,
     onChange: (v: string) => void,
     options: { value: string; label: string }[]
-  ) => (
-    <div>
-      <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full min-h-[44px] text-[13px] py-2.5 pl-3.5 pr-10 bg-card border border-border rounded-xl text-foreground focus:outline-none focus:border-primary cursor-pointer hover:bg-secondary transition-all forge-select font-medium"
-        aria-label={`Filter by ${label.toLowerCase()}`}
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-    </div>
-  );
+  ) => {
+    const controlId = `filter-${label.toLowerCase().replace(/\s+/g, "-")}`;
+    return (
+      <div>
+        <label
+          htmlFor={controlId}
+          className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5"
+        >
+          {label}
+        </label>
+        <select
+          id={controlId}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full min-h-[44px] text-[13px] py-2.5 pl-3.5 pr-10 bg-card border border-border rounded-xl text-foreground focus:outline-none focus:border-primary cursor-pointer hover:bg-secondary transition-all forge-select font-medium"
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+    );
+  };
 
   const activePills = (
     <div className="flex flex-wrap gap-2">
+      {search && (
+        <button
+          onClick={() => { setSearch(""); push({ search: "" }); }}
+          aria-label={`Remove filter: search "${search}"`}
+          className="flex items-center gap-1.5 min-h-[36px] text-[12px] font-semibold px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all duration-200 cursor-pointer"
+        >
+          <span>Search: {search}</span>
+          <X size={13} strokeWidth={2.2} />
+        </button>
+      )}
       {dept && (
         <button
           onClick={() => { setDept(""); push({ department: "" }); }}
@@ -249,12 +276,11 @@ export default function ProjectFilters({ skills, departments }: ProjectFiltersPr
             aria-modal="true"
             aria-label="Filter projects"
           >
-            {/* Backdrop */}
-            <button
-              type="button"
-              aria-label="Close filters"
+            {/* Backdrop — removed from tab order so keyboard users reach the real sheet controls */}
+            <div
+              aria-hidden="true"
               onClick={handleCloseSheet}
-              className="absolute inset-0 w-full h-full bg-black/40 backdrop-blur-[2px] cursor-default"
+              className="absolute inset-0 bg-black/40 backdrop-blur-[2px] cursor-default"
             />
 
             {/* Bottom sheet */}

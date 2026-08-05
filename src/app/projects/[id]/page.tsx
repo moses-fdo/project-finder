@@ -116,15 +116,6 @@ export default async function ProjectPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* What you'll do */}
-            <div className="card p-5 sm:p-6 space-y-4">
-              <h3 className="section-label mb-0">What you&apos;ll do</h3>
-              <ul className="text-[13px] text-muted-foreground space-y-2.5 list-disc pl-5">
-                <li>Collaborate with the team to define scope and specifications.</li>
-                <li>Design, build, and test features according to the project goals.</li>
-                <li>Participate in code reviews and weekly syncs.</li>
-              </ul>
-            </div>
 
             {/* Skills */}
             <div className="card p-5 sm:p-6 space-y-4">

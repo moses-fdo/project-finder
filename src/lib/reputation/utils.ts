@@ -87,7 +87,11 @@ export function getDeveloperReputation(user: {
     }
     const rawScore = user.reputation.score;
     const rawStars = typeof user.reputation.stars === "number" ? user.reputation.stars : deriveStarsFromScore(rawScore);
-    const rawTier = (user.reputation.tier as any) || deriveTierFromScore(rawScore);
+    const VALID_TIERS = ["Beginner", "Growing", "Strong", "Excellent", "Elite"] as const;
+    const storedTier = user.reputation.tier as string;
+    const rawTier: typeof VALID_TIERS[number] = VALID_TIERS.includes(storedTier as any)
+      ? (storedTier as typeof VALID_TIERS[number])
+      : deriveTierFromScore(rawScore);
     return {
       githubConnected: true,
       score: Math.round(rawScore),

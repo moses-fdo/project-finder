@@ -239,8 +239,9 @@ export default function CollaborationsFinderTab({
       const cols = Math.max(1, Math.floor(gridWidth / 300));
       const GRID_GAP = 12;
       const rows = Math.max(1, Math.floor((gridHeight + GRID_GAP) / (PROFILE_CARD_HEIGHT + GRID_GAP)));
-      const targetLimit = cols * rows;
-      if (targetLimit > 0 && Math.abs((collabLimit || 24) - targetLimit) >= 1) {
+      const targetLimit = Math.min(cols * rows, 100); // cap to avoid runaway limits
+      // Tolerance ≥ 4 to suppress sub-pixel resize thrash
+      if (targetLimit > 0 && Math.abs((collabLimit || 24) - targetLimit) >= 4) {
         const params = new URLSearchParams(window.location.search);
         params.set("collabLimit", String(targetLimit));
         params.set("collabPage", "1"); // Reset to page 1

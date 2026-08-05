@@ -45,19 +45,57 @@ export async function GET(
     const { userId: userIdStr } = await params;
     const userId = Number(userIdStr);
 
-    if (isNaN(userId) || !userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    const reputation = await fetchAndCalculateUserReputation(userId);
-    if (!reputation) {
+    // Check user exists
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(reputation);
+    // Return the stored reputation row without triggering GitHub sync
+    const stored = await prisma.userReputation.findUnique({ where: { userId } });
+    if (!stored) {
+      return NextResponse.json({
+        userId,
+        githubConnected: false,
+        score: null,
+        stars: 0,
+        tier: "Not Rated",
+        tierDescription: "Connect your GitHub account to unlock your Developer Reputation score.",
+        badgeColor: "slate",
+        githubVerified: false,
+        linkedinVerified: false,
+        categoryScores: { github: 0, experience: 0, certifications: 0, community: 0 },
+        details: {},
+        lastSyncedAt: new Date(),
+      });
+    }
+
+    return NextResponse.json({
+      userId: stored.userId,
+      githubConnected: stored.githubConnected,
+      score: stored.githubConnected ? stored.score : null,
+      stars: stored.stars,
+      tier: stored.githubConnected ? stored.tier : "Not Rated",
+      tierDescription: "",
+      badgeColor: "",
+      githubVerified: stored.githubVerified,
+      linkedinVerified: stored.linkedinVerified,
+      categoryScores: {
+        github: stored.githubScore,
+        experience: stored.experienceScore,
+        certifications: stored.certificationScore,
+        community: stored.communityScore,
+      },
+      details: stored.breakdownJson ?? {},
+      lastSyncedAt: stored.lastSyncedAt,
+    });
   } catch (error: any) {
     console.error("GET reputation error:", error);
-    return NextResponse.json({ error: "Failed to calculate reputation" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to get reputation" }, { status: 500 });
   }
 }
 
@@ -74,7 +112,7 @@ export async function POST(
     const { userId: userIdStr } = await params;
     const userId = Number(userIdStr);
 
-    if (isNaN(userId) || !userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 

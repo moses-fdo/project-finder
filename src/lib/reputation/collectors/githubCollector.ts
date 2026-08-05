@@ -145,14 +145,34 @@ export async function collectGitHubMetrics(githubUrl: string | null | undefined)
 
     const userData = await userRes.json();
 
-    // Fetch user public repositories (up to 100)
     const reposRes = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`, {
       headers,
       signal: AbortSignal.timeout(5000),
       next: { revalidate: 3600 },
     });
 
-    const reposData = reposRes.ok ? await reposRes.json() : [];
+    // Non-ok repos response (rate-limited, error) — mark as transient and fall back to deterministic
+    if (!reposRes.ok) {
+      return {
+        connected: false,
+        transientFailure: true,
+        username,
+        score: 0,
+        details: {
+          publicRepos: 0,
+          totalStarsReceived: 0,
+          totalForks: 0,
+          mergedPullRequests: 0,
+          codeReviewsCount: 0,
+          qualityReposCount: 0,
+          recentActivityStreakDays: 0,
+          antiGamingFilteredCommitsCount: 0,
+          verifiedAccount: false,
+        },
+      };
+    }
+
+    const reposData = await reposRes.json();
 
     let totalStarsReceived = 0;
     let totalForks = 0;
@@ -190,12 +210,13 @@ export async function collectGitHubMetrics(githubUrl: string | null | undefined)
     const streakDays = Math.min(Math.floor(accountAgeYears * 12 + publicRepos), 90);
 
     // Composite GitHub Score Calculation (0 - 100)
+    // Uses time-weighted repo score in place of raw quality count to reward recency
     let rawScore = 0;
-    rawScore += Math.min(publicRepos * 3, 25);            // Max 25 pts for repos
-    rawScore += Math.min(totalStarsReceived * 4, 30);      // Max 30 pts for stars
-    rawScore += Math.min(qualityReposCount * 5, 20);      // Max 20 pts for quality repos
-    rawScore += Math.min(estimatedMergedPullRequests * 1.5, 15);    // Max 15 pts for PRs
-    rawScore += Math.min(streakDays * 0.2, 10);            // Max 10 pts for streak
+    rawScore += Math.min(publicRepos * 3, 25);                          // Max 25 pts for repos
+    rawScore += Math.min(totalStarsReceived * 4, 30);                    // Max 30 pts for stars
+    rawScore += Math.min(timeWeightedRepoScore * 0.1, 20);               // Max 20 pts, time-weighted quality
+    rawScore += Math.min(estimatedMergedPullRequests * 1.5, 15);         // Max 15 pts for PRs
+    rawScore += Math.min(streakDays * 0.2, 10);                          // Max 10 pts for streak
 
     const finalScore = Math.min(Math.max(Math.round(rawScore), 0), 100);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import {
   Star,
@@ -51,21 +51,24 @@ export default function ReputationCard({
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const inFlightRef = useRef(false);
 
   const handleSyncNow = async () => {
-    if (syncing) return;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    setSyncing(true);
+    setErrorMessage("");
+    setSyncMessage("");
     try {
-      setSyncing(true);
-      setErrorMessage("");
-      setSyncMessage("");
-
       const res = await fetch(`/api/reputation/${reputation.userId}`, {
         method: "POST",
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to sync reputation");
+        const text = await res.text();
+        let errorMsg = "Failed to sync reputation";
+        try { errorMsg = JSON.parse(text)?.error || errorMsg; } catch { /* non-JSON body */ }
+        throw new Error(errorMsg);
       }
 
       setSyncMessage("Reputation score successfully resynced!");
@@ -74,6 +77,7 @@ export default function ReputationCard({
       setErrorMessage(e.message || "Error syncing reputation");
     } finally {
       setSyncing(false);
+      inFlightRef.current = false;
     }
   };
 

@@ -479,7 +479,7 @@ export default function HomeTab({
               {dashSearch && (
                 <button
                   type="button"
-                  onClick={() => setDashSearch("")}
+                  onClick={() => { setDashSearch(""); setDashPage(1); }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   <X size={14} />
