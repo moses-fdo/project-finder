@@ -2,81 +2,99 @@
 
 > **Find collaborators. Build real projects. Together.**
 
-Colabro is a full-stack web platform where college students can post project ideas, discover teammates with the right skills, and collaborate — all within their campus community.
+Colabro is a full-stack campus platform where college students post project ideas, get matched with teammates who actually have the right skills, and collaborate — verified, credible, and spam-free.
 
 ---
 
 ## 💡 Why I Built This
 
-Finding the right teammates for projects and hackathons in college is broken. You post in WhatsApp groups, ask around in class, and hope someone with the right skills sees your message. Teams end up forming out of convenience rather than compatibility.
+Finding teammates for projects and hackathons in college is broken. You post in WhatsApp groups, ask around in class, and hope someone with the right skills sees your message. Teams form out of convenience, not compatibility — and anyone can claim any skill with zero way to verify it.
 
-I wanted to fix that. Colabro makes team formation **intentional** — you post your idea, tag the skills you need, and people who actually fit can find you and apply. No more spamming group chats.
+Colabro fixes both problems:
 
-The platform is restricted to verified educational email addresses (`.edu`, `.edu.in`, `.ac.in`, etc.), so only real students from real institutions can use it. This keeps the community genuine and spam-free.
+- **Intentional matching** — post your idea, tag the skills you need, and people who actually fit can find and apply to you.
+- **Verified credibility** — instead of a self-reported skills list, contributors get a live, GitHub-driven reputation score, so "knows React" actually means something.
+- **Genuine community** — access is gated to verified educational email addresses (`.edu`, `.edu.in`, `.ac.in`), with an ID-verification fallback for edge cases, keeping the platform real students only.
 
 ---
 
 ## ✨ Features
 
 ### 🏠 Dashboard
-A unified home screen that brings together everything — your projects, applications, notifications, bookmarks, recommended projects, and hackathon listings in one place. Personalized greeting, quick stats, and sidebar widgets give you a snapshot of your activity at a glance.
+A unified home screen — projects, applications, invitations, notifications, events, and a collaborator finder — in one tabbed interface, with a personalized greeting and activity snapshot.
 
 ### 📋 Projects
-- **Post your project** — Describe your idea, tag required skills (React, Python, Figma, etc.), and publish to the community
-- **Discover projects** — Browse and filter by department, skill, and status (Open / Closed / Full)
-- **Search** — Full-text search across project titles and descriptions
-- **Project detail pages** — View full descriptions, owner profiles, skill tags, and apply to join
+- Post a project, tag required skills, and publish to the community
+- Browse and filter by category, skill, experience level, and status (Open / Full / Closed / Done)
+- Team capacity auto-tracks: status flips between Open and Full as slots fill
+- Full-text search across titles and descriptions
 
-### 📩 Applications
-- **Apply to collaborate** — Send a message to project owners explaining why you'd be a good fit
-- **Accept / Reject** — Project owners can review applications and accept or reject them
-- **Status tracking** — Track all your outgoing applications (Pending / Accepted / Rejected)
+### 📩 Applications & Invitations
+- Apply to a project with a message explaining your fit
+- Project owners accept or reject applicants
+- Withdraw a pending application at any time
+- Owners can also directly **invite** users to a project, not just wait for applications
 
-### 👥 People Directory
-- Browse all registered users on the platform
-- Filter by department, skill, and availability
-- View profiles with bio, GitHub, LinkedIn, and skill tags
+### ⭐ Developer Reputation
+A live scoring system that replaces self-reported skills with something verifiable:
 
-### 🔖 Bookmarks
-Save interesting projects to revisit later.
+- **GitHub-driven score** — pulls real activity via the GitHub API
+- **Weighted signal blend** — GitHub activity, experience, certifications, and community engagement each contribute, GitHub weighted heaviest
+- **Anti-gaming safeguards** — decay on stale activity, caps on artificial commit bursts, filtering against spam patterns
+- **Graceful degradation** — falls back to a deterministic offline calculation if GitHub's API is unreachable
+- **Tiers & stars** — scores roll up into a tier and star rating shown on profiles and the campus leaderboard
+- LinkedIn adds an additional verification signal on top of the GitHub-based score
+
+### 🔍 Collaborator Finder
+Browse all registered users with pagination, filter by department, skill, and availability, and view reputation alongside profile details.
+
+### 🏆 Campus Leaderboard
+Surfaces top contributors by reputation score across the platform.
 
 ### 🔔 Notifications
-Real-time in-app notifications for application events — when someone applies to your project, when your application gets accepted or rejected, and system announcements. Mark as read individually or all at once.
+Real-time in-app notifications for application and invitation events, with mark-as-read support.
 
 ### 👤 Profiles
-- Public profiles with avatar, bio, department, year, and skill tags
-- GitHub and LinkedIn links
-- View a user's published projects directly from their profile
+Public profiles with bio, department, year, skill tags, GitHub/LinkedIn links, and reputation display.
 
-### 🏆 Hackathons
-Browse a curated list of upcoming hackathons with dates, locations, team sizes, prizes, and registration links.
+### 🎓 Student ID Verification
+A fallback verification path for users whose institution isn't in the standard `.edu`-style domain list — upload an ID card for manual admin review.
 
-### 🛡️ Admin Panel
-- **Overview dashboard** — Platform-wide stats (users, projects, applications, notifications)
-- **User management** — View, search, promote to admin, or delete users
-- **Project management** — Browse and manage all projects
-- **Hackathon management** — Add hackathons manually or bulk-import via Excel/CSV upload
+### 🛡️ Moderation
+A separate Python (FastAPI) microservice screens messages and content for abuse, backed by a large flagged-term list, with logging and an admin review tab for repeat offenders.
+
+### 🛠️ Admin Panel
+- Platform-wide stats: users, projects, applications, notifications
+- User management: search, promote, delete
+- Project and event management, including bulk import via Excel/CSV
+- Abuse log review and manually-allowed email overrides
 
 ### 🔐 Authentication
-- **Google OAuth** sign-in via Auth.js (NextAuth v5)
-- **Edu-only access** — Only `.edu`, `.edu.in`, and `.ac.in` email domains are allowed
-- **Onboarding flow** — New users complete their profile (name, department, year) before accessing the dashboard
+- Google OAuth via Auth.js (NextAuth v5, beta)
+- Edu-only access enforced at sign-in, with an admin-managed allowlist for exceptions
+- Onboarding flow collects department, year, and profile basics before dashboard access
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Framework** | [Next.js 16](https://nextjs.org/) (App Router, Server & Client Components) |
-| **Language** | TypeScript |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) |
-| **Database** | PostgreSQL via [Prisma ORM](https://www.prisma.io/) |
-| **Auth** | [Auth.js / NextAuth v5](https://authjs.dev/) (Google OAuth + JWT sessions) |
-| **Icons** | [Lucide React](https://lucide.dev/) |
-| **Validation** | [Zod](https://zod.dev/) |
-| **Spreadsheets** | [SheetJS (xlsx)](https://sheetjs.com/) — for hackathon bulk import |
-| **Font** | [Inter](https://fonts.google.com/specimen/Inter) via `next/font` |
+| Layer            | Technology |
+| ----------------- | ---------- |
+| **Framework**      | [Next.js 16](https://nextjs.org/) (App Router) |
+| **UI**             | React 19 |
+| **Language**       | TypeScript |
+| **Styling**        | Tailwind CSS 4 (CSS-first config) |
+| **Database**       | PostgreSQL (Neon serverless) |
+| **ORM**            | Prisma ORM 6, with Neon serverless driver adapter |
+| **Auth**           | Auth.js / NextAuth v5 (Google OAuth + JWT) |
+| **Validation**     | Zod |
+| **Email**          | Fallback chain: Brevo → Gmail SMTP → Resend → console |
+| **Image hosting**  | Cloudinary |
+| **Spreadsheets**   | `read-excel-file` — for admin bulk import |
+| **Animation/3D**   | GSAP, Framer Motion, Lenis, Three.js |
+| **Moderation**     | Python FastAPI microservice (separate from the main app) |
+| **Icons**          | Lucide React |
+| **Testing**        | Playwright |
 
 ---
 
@@ -85,38 +103,31 @@ Browse a curated list of upcoming hackathons with dates, locations, team sizes, 
 ```
 colabro/
 ├── prisma/
-│   ├── schema.prisma          # Database schema (7 models)
-│   └── seed.ts                # Database seed script
+│   └── schema.prisma           # 12 models — see below
+├── classifier/                 # Python FastAPI abuse-detection microservice
 ├── src/
 │   ├── app/
-│   │   ├── (auth)/            # Login, Signup, Onboarding
-│   │   ├── admin/             # Admin dashboard (stats, user/project/hackathon mgmt)
-│   │   ├── api/               # REST API routes
-│   │   │   ├── auth/          # NextAuth handlers
-│   │   │   ├── applications/  # Apply, Accept, Reject
-│   │   │   ├── notifications/ # Fetch, Mark read
-│   │   │   ├── projects/      # CRUD, Bookmarks
-│   │   │   ├── user/          # Profile updates
-│   │   │   └── admin/         # Hackathon import
-│   │   ├── dashboard/         # Main dashboard (tabbed: home, projects, applications,
-│   │   │                      #   notifications, people, bookmarks, hackathons, profile)
-│   │   ├── profile/[id]/      # Public user profiles
-│   │   ├── projects/          # Browse, Create, Detail
-│   │   ├── layout.tsx         # Root layout
-│   │   ├── globals.css        # Design system (light theme, custom tokens)
-│   │   └── page.tsx           # Public landing page
+│   │   ├── (auth)/             # Login, signup, onboarding
+│   │   ├── admin/              # Admin dashboard + management tabs
+│   │   ├── api/                 # REST routes: projects, applications, invitations,
+│   │   │                       #   notifications, reputation, moderation, admin, etc.
+│   │   ├── dashboard/           # Tabbed dashboard (home, projects, applications,
+│   │   │                       #   notifications, events, collaborator finder)
+│   │   ├── profile/[id]/        # Public profiles
+│   │   ├── projects/            # Browse, create, detail
+│   │   └── page.tsx              # Public landing page
 │   ├── components/
-│   │   ├── AppShell.tsx       # Authenticated layout with sidebar & navbar
-│   │   ├── Navbar.tsx         # Server-side navbar
-│   │   ├── NavbarClient.tsx   # Client-side navbar (notifications dropdown)
-│   │   ├── NavigationProgress.tsx  # Top loading bar
-│   │   ├── OnboardingModal.tsx
-│   │   ├── ProjectCard.tsx    # Reusable project card
-│   │   └── ProjectFilters.tsx # Search + filter controls
-│   └── lib/
-│       ├── auth.ts            # Auth.js config (Google provider, edu email check)
-│       ├── prisma.ts          # Prisma client singleton
-│       └── resend.ts          # Email client setup
+│   │   ├── reputation/          # ReputationCard, ReputationBadge
+│   │   ├── moderation/          # Admin moderation UI
+│   │   └── ...                  # Shared UI (cards, filters, modals, toasts)
+│   ├── lib/
+│   │   ├── auth.ts               # Auth.js config, edu-domain enforcement
+│   │   ├── prisma.ts             # Prisma client + Neon cold-start retry handling
+│   │   ├── moderation.ts         # Abuse-classifier integration
+│   │   ├── projects/capacity.ts  # Auto open/full status sync
+│   │   └── reputation/           # Score calculator, config, GitHub/experience/
+│   │                             #   certification/community collectors
+│   └── types/
 └── package.json
 ```
 
@@ -125,33 +136,40 @@ colabro/
 ## 🧩 Database Models
 
 | Model | Purpose |
-|-------|---------|
-| **User** | Accounts with name, email, department, year, bio, skills, GitHub/LinkedIn, and role (USER/ADMIN) |
-| **Project** | Project listings with title, description, status (OPEN/FULL/CLOSED), and owner |
-| **Skill** | Shared skill tags — many-to-many with both Users and Projects |
-| **Application** | Collaboration requests linking a User to a Project (PENDING/ACCEPTED/REJECTED) |
-| **Notification** | In-app notifications for application events and system messages |
-| **Bookmark** | Saved/bookmarked projects per user (composite primary key) |
-| **Hackathon** | Hackathon event listings with title, date, location, team size, prize, and link |
+| ----- | ------- |
+| **User** | Account, profile, GitHub/LinkedIn links, role (USER/ADMIN), verification state |
+| **Project** | Listings with status, category, team size, and capacity tracking |
+| **Skill** | Shared tags — many-to-many with Users and Projects |
+| **Application** | Collaboration requests (Pending/Accepted/Rejected) |
+| **Invitation** | Direct owner-to-user project invites |
+| **Notification** | In-app events for applications, invitations, and system messages |
+| **Event** | Hackathon/event listings (current model) |
+| **Hackathon** | Legacy event model, kept alongside `Event` |
+| **AllowedEmail** | Admin-managed allowlist bypassing the edu-domain check |
+| **IdVerificationRequest** | Manual student ID verification queue |
+| **AbusiveMessageLog** | Moderation flags and repeat-offense tracking |
+| **UserReputation** | Score, stars, tier, and per-signal breakdown for the reputation engine |
+
+All foreign keys cascade on delete. Indexes are set on high-traffic lookups (status, ownerId, userId, score).
 
 ---
 
 ## 🚧 Challenges I Faced
 
 ### Auth.js v5 Beta + Google OAuth
-Auth.js v5 was still in beta, and the docs were incomplete. Wiring up Google OAuth with a custom sign-in callback that checks for `.edu` email domains, auto-creates users in the database, and enriches JWT tokens with user data from Prisma took significant trial and error.
+Auth.js v5 was still in beta with incomplete docs. Wiring a custom sign-in callback that enforces `.edu`-style domains, auto-provisions users, and enriches JWTs with Prisma data took real trial and error.
 
-### Server Components vs Client Components
-This was built with Next.js 16's App Router, which heavily leans on Server Components. Understanding the boundary — what fetches data on the server, what needs `"use client"`, and how to pass serialized data between them without redundant network calls — was a steep learning curve.
+### Serverless Database Cold Starts
+Neon's serverless Postgres occasionally drops or delays connections. I added retry logic with backoff and fallback handling (`safeQuery`) across the Prisma client and auth flow so a cold start doesn't surface as a broken page.
 
-### The Dashboard Monster
-The dashboard is the heart of the app. It consolidates 8 different views (home, projects, applications, notifications, people, bookmarks, hackathons, profile) into a single tabbed interface. The server page fires 10 parallel Prisma queries via `Promise.all` and feeds everything into a massive client component. Keeping that data flow clean and fast was the hardest architectural challenge.
+### The Dashboard at Scale
+Consolidating 6+ tabs (home, projects, applications, notifications, events, collaborator finder) into one interface meant firing many parallel queries per load. Some of that data-fetching strategy needed rethinking as the dashboard grew — a core architectural lesson from this project.
 
-### Prisma Schema Design
-Getting the relationships right between Users, Projects, Skills, Applications, Notifications, and Bookmarks — with proper cascading deletes, unique constraints (`@@unique([projectId, userId])`), and composite primary keys (`@@id([userId, projectId])`) — required careful upfront planning.
+### Building a Score That Can't Be Gamed
+The reputation engine pulls real GitHub activity, but raw commit counts are trivially gamed. I built in activity decay, caps on artificial commit bursts, and spam-pattern filtering so the score reflects genuine, sustained contribution — not a burst of throwaway commits before a demo.
 
-### Making It Feel Fast Without WebSockets
-I wanted the UI to feel snappy without the complexity of real-time infrastructure. Using React `useTransition` for non-blocking updates, `router.refresh()` for server-side data revalidation, and optimistic UI patterns gave the dashboard a responsive feel without WebSockets or polling.
+### Content Moderation as a Separate Service
+Rather than bolting abuse detection into the main Next.js app, it runs as an independent Python FastAPI service, keeping moderation logic decoupled and swappable.
 
 ---
 
@@ -159,8 +177,9 @@ I wanted the UI to feel snappy without the complexity of real-time infrastructur
 
 ### Prerequisites
 - **Node.js** 18+
-- **PostgreSQL** database (local or hosted — e.g. [Neon](https://neon.tech/), [Supabase](https://supabase.com/))
+- **PostgreSQL** database (Neon recommended — the app has a Neon-specific serverless adapter path)
 - **Google OAuth** credentials from [Google Cloud Console](https://console.cloud.google.com/)
+- **Python 3** (for the moderation microservice, optional for local dev)
 
 ### Setup
 
@@ -172,16 +191,32 @@ cd project-finder
 # 2. Install dependencies
 npm install
 
-# 3. Set up environment variables
-# Create a .env file in the root with:
+# 3. Set up environment variables — create a .env file:
 ```
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/colabro"
+DATABASE_URL="postgresql://user:password@host/colabro"
 AUTH_SECRET="your-random-secret-string"
 AUTH_GOOGLE_ID="your-google-client-id"
 AUTH_GOOGLE_SECRET="your-google-client-secret"
 NEXTAUTH_URL="http://localhost:3000"
+
+# Email (at least one of the fallback chain)
+RESEND_API_KEY=""
+BREVO_API_KEY=""
+BREVO_SENDER_EMAIL=""
+GMAIL_USER=""
+GMAIL_PASS=""
+
+# Image uploads
+CLOUDINARY_CLOUD_NAME=""
+CLOUDINARY_UPLOAD_PRESET=""
+
+# Reputation engine
+GITHUB_TOKEN=""
+
+# Moderation microservice
+CLASSIFIER_URL="http://127.0.0.1:8000"
 ```
 
 ```bash
@@ -192,20 +227,21 @@ npx prisma db push
 # 5. (Optional) Seed sample data
 npx prisma db seed
 
-# 6. Start the dev server
+# 6. (Optional) Start the moderation microservice
+cd classifier && ./start.bat   # or the equivalent for your OS
+
+# 7. Start the dev server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and sign in with a Google account that has an `.edu` email address.
+Open `http://localhost:3000` and sign in with a Google account using an `.edu`-style email address.
 
 ---
 
 ## 📜 License
 
-This is a personal project built for learning and portfolio purposes.
+Personal project, built for learning and portfolio purposes.
 
 ---
 
-<p align="center">
-  <strong>Built with ☕ and late nights by Moses Fernando</strong>
-</p>
+**Built with ☕ and late nights by Moses Fernando**
