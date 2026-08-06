@@ -13,9 +13,11 @@ export default async function AdminPage() {
   }
 
   const currentUserId = Number(session.user.id);
+  const hasValidUserId = Number.isInteger(currentUserId) && currentUserId > 0;
 
   const [
     unreadNotifications,
+    inboxNotifications,
     totalUsers,
     totalProjects,
     totalApplications,
@@ -28,7 +30,16 @@ export default async function AdminPage() {
     idVerificationRequests,
     abuseLogs,
   ] = await Promise.all([
-    prisma.notification.count({ where: { userId: currentUserId, read: false } }),
+    hasValidUserId
+      ? prisma.notification.count({ where: { userId: currentUserId, read: false } })
+      : Promise.resolve(0),
+    hasValidUserId
+      ? prisma.notification.findMany({
+          where: { userId: currentUserId },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        })
+      : Promise.resolve([]),
     prisma.user.count(),
     prisma.project.count(),
     prisma.application.count(),
@@ -91,7 +102,7 @@ export default async function AdminPage() {
   const stats = { totalUsers, totalProjects, totalApplications, totalNotifications };
 
   return (
-    <AppShell user={session.user} unreadNotifications={unreadNotifications}>
+    <AppShell user={session.user} unreadNotifications={unreadNotifications} inboxNotifications={inboxNotifications}>
       <AdminClient
         stats={stats}
         users={users}

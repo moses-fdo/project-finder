@@ -65,6 +65,8 @@ export default function ProjectCreateForm({ userId, user }: { userId: number; us
   const [showAbusePopup, setShowAbusePopup] = useState(false);
   const [flaggedWords, setFlaggedWords]     = useState<string[]>([]);
   const descRef = useRef<HTMLTextAreaElement>(null);
+  // Stable preview timestamp — created once so the preview card doesn't flicker dates on re-render
+  const previewCreatedAt = useRef(new Date()).current;
 
   // Live preview card built from current form state
   const previewProject = useMemo(() => {
@@ -74,16 +76,18 @@ export default function ProjectCreateForm({ userId, user }: { userId: number; us
       title: title || "Untitled project",
       description: description || "Your project description will appear here as you type.",
       status: "OPEN",
-      createdAt: new Date(),
+      teamSize: teamSize ? Number(teamSize) : null,
+      slotsFilled: 0,
+      createdAt: previewCreatedAt,
       owner: {
         id: userId,
         name: user?.name || "You",
         department: user?.department || "",
         year: user?.year || 0,
       },
-      skills: skillNames.slice(0, 4).map((name, i) => ({ id: i + 1, name })),
+      skills: skillNames.map((name, i) => ({ id: i + 1, name })),
     };
-  }, [title, description, skills, userId, user]);
+  }, [title, description, skills, teamSize, userId, user, previewCreatedAt]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,7 +332,7 @@ export default function ProjectCreateForm({ userId, user }: { userId: number; us
       {/* ── Live preview (lg only) ─────────────────────────── */}
       <aside className="hidden lg:block sticky top-20">
         <p className="section-label mb-2">Live preview</p>
-        <ProjectCard project={previewProject} />
+        <ProjectCard project={previewProject} preview={true} />
         <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
           This is how your project will appear to collaborators. Keep the title short and the description specific.
         </p>

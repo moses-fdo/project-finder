@@ -9,11 +9,11 @@
 
 ## 2. Typography
 - Display headings (h1-h3): Outfit, weights 600-700, scale:
-  - h1: 28px (4.5rem), weight 700
-  - h2: 24px (3.8rem), weight 600
-  - h3: 20px (3.2rem), weight 600
-- Body text: Plus Jakarta Sans, weight 400, size 14px (2.25rem)
-- Caption/secondary: 12px (1.9rem), weight 400
+  - h1: 28px (1.75rem), weight 700
+  - h2: 24px (1.5rem), weight 600
+  - h3: 20px (1.25rem), weight 600
+- Body text: Plus Jakarta Sans, weight 400, size 14px (0.875rem)
+- Caption/secondary: 12px (0.75rem), weight 400
 - Line height: 1.5 for body, 1.3 for headings
 - Consistent typographic hierarchy with intentional weights
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { Star, AlertCircle, ShieldCheck } from "lucide-react";
+import { Star, AlertCircle } from "lucide-react";
+import { getTierColorClass } from "@/lib/reputation/config";
 
 interface ReputationBadgeProps {
   score?: number | null;
@@ -17,39 +18,35 @@ export default function ReputationBadge({
   githubConnected = false,
   size = "md",
 }: ReputationBadgeProps) {
+  const sizeClasses =
+    size === "sm"
+      ? "text-[10px] px-2 py-0.5 gap-1"
+      : size === "lg"
+      ? "text-[12.5px] px-3 py-1.5 gap-1.5"
+      : "text-[11px] px-2.5 py-1 gap-1";
+
+  const starSize = size === "sm" ? 10 : size === "lg" ? 14 : 12;
+
   // If GitHub is NOT connected -> Not Rated state
   if (!githubConnected || score === null || score === undefined) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/80 border border-border text-muted-foreground text-[10.5px] font-semibold">
-        <AlertCircle size={12} className="text-muted-foreground/70" />
+      <div className={`inline-flex items-center rounded-full bg-secondary/80 border border-border text-muted-foreground font-semibold ${sizeClasses}`}>
+        <AlertCircle size={starSize} className="text-muted-foreground/70" />
         <span>Not Rated</span>
       </div>
     );
   }
 
-  const getTierColorClass = (t: string) => {
-    switch (t.toLowerCase()) {
-      case "elite":
-        return "bg-purple-500/10 text-purple-500 dark:text-purple-400 border-purple-500/30";
-      case "excellent":
-        return "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/30";
-      case "strong":
-        return "bg-blue-500/10 text-blue-500 dark:text-blue-400 border-blue-500/30";
-      case "growing":
-        return "bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/30";
-      default:
-        return "bg-secondary text-muted-foreground border-border";
-    }
-  };
-
   return (
-    <div className="inline-flex items-center gap-2">
-      <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-bold shadow-xs ${getTierColorClass(tier)}`}>
-        <Star size={12} className="fill-current" />
-        <span>{stars.toFixed(1)}</span>
-        <span className="opacity-70 font-normal">({score})</span>
-        <span className="ml-1 uppercase text-[9px] tracking-wider font-extrabold">{tier}</span>
-      </div>
+    <div
+      className={`inline-flex items-center rounded-full border font-bold shadow-xs ${getTierColorClass(
+        tier
+      )} ${sizeClasses}`}
+    >
+      <Star size={starSize} className="fill-current" />
+      <span>{stars.toFixed(1)}</span>
+      <span className="opacity-70 font-normal">({score})</span>
+      <span className="ml-0.5 uppercase text-[9px] tracking-wider font-extrabold">{tier}</span>
     </div>
   );
 }

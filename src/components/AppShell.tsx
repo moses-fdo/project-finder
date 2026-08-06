@@ -76,6 +76,32 @@ export default function AppShell({
   const [searchQuery,       setSearchQuery]       = useState("");
   const [localNotifs, setLocalNotifs] = useState<NotificationItem[]>(stableNotifs);
 
+  const [clientName, setClientName] = useState(user?.name || "");
+  const [clientImage, setClientImage] = useState(user?.image || "");
+
+  const [prevUser, setPrevUser] = useState(user);
+  if (user !== prevUser) {
+    setPrevUser(user);
+    setClientName(user?.name || "");
+    setClientImage(user?.image || "");
+  }
+
+  useEffect(() => {
+    async function syncProfile() {
+      try {
+        const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.name) setClientName(data.name);
+          if (data.profileImage) setClientImage(data.profileImage);
+        }
+      } catch { /* silent */ }
+    }
+    syncProfile();
+  }, []);
+
   const profileRef   = useRef<HTMLDivElement>(null);
   const inboxDesktop = useRef<HTMLDivElement>(null);
   const inboxMobile  = useRef<HTMLDivElement>(null);
@@ -109,7 +135,7 @@ export default function AppShell({
     };
   }, []);
 
-  const initials = ((user?.name || "U").trim()[0] || "U").toUpperCase();
+  const initials = ((clientName || "U").trim()[0] || "U").toUpperCase();
   const unreadCount = inboxNotifications
     ? localNotifs.filter((n) => !n.read).length
     : unreadNotifications;
@@ -206,7 +232,7 @@ export default function AppShell({
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] text-foreground leading-relaxed">{n.message}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
                   {!n.read && (
                     <span className="ml-2 text-[9px] font-semibold uppercase tracking-wide text-foreground/60">New</span>
                   )}
@@ -365,8 +391,8 @@ export default function AppShell({
             <div className="flex items-center gap-2.5 overflow-hidden">
               <div className="relative shrink-0">
                 <div className="h-7 w-7 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden">
-                  {user?.image
-                    ? <Image src={user.image} alt={user.name || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
+                  {clientImage
+                    ? <Image src={clientImage} alt={clientName || "Avatar"} width={28} height={28} className="object-cover h-full w-full" unoptimized />
                     : <span className="text-[11px] font-bold text-foreground">{initials}</span>
                   }
                 </div>
@@ -375,7 +401,7 @@ export default function AppShell({
                 )}
               </div>
               <div className="text-left overflow-hidden">
-                <p className="text-[12px] font-semibold text-foreground leading-snug truncate">{user?.name || "User"}</p>
+                <p className="text-[12px] font-semibold text-foreground leading-snug truncate">{clientName || "User"}</p>
                 <p className="text-[10px] text-muted-foreground leading-none truncate mt-0.5">{user?.email || ""}</p>
               </div>
             </div>
@@ -420,21 +446,10 @@ export default function AppShell({
 
         {/* Desktop header */}
         <header
-          className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card/95 backdrop-blur-sm sticky top-0 z-40"
+          className="hidden md:flex h-14 border-b border-border items-center justify-between px-6 bg-card backdrop-blur-sm sticky top-0 z-50"
           style={{ boxShadow: "0 1px 0 0 color-mix(in oklab, var(--accent) 6%, transparent), 0 1px 3px rgba(16,24,40,0.03)" }}
         >
-          <div className="relative w-64">
-            <Search size={13} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <button
-              type="button"
-              onClick={() => setSearchModalOpen(true)}
-              className="w-full text-left pl-9 pr-2.5 py-1.5 bg-secondary/50 border border-border rounded-lg text-[12px] text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer flex items-center justify-between"
-              style={{ boxShadow: "inset 0 1px 2px rgba(16,24,40,0.04)" }}
-            >
-              <span className="truncate">Search projects, skills…</span>
-              <kbd className="text-[10px] font-mono text-muted-foreground bg-card border border-border px-1.5 py-0.5 rounded shadow-sm shrink-0 ml-1">⌘K</kbd>
-            </button>
-          </div>
+          <div />
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -470,7 +485,7 @@ export default function AppShell({
         </header>
 
         {/* Mobile header */}
-        <header className="flex md:hidden h-14 border-b border-border items-center justify-between px-4 bg-card sticky top-0 z-40">
+        <header className="flex md:hidden h-14 border-b border-border items-center justify-between px-4 bg-card sticky top-0 z-50">
           <Link href="/dashboard" className="flex items-center gap-2">
             <ColabroLogo size={28} />
             <span className="text-[16px] font-logo text-foreground">
@@ -479,16 +494,6 @@ export default function AppShell({
           </Link>
 
           <div className="flex items-center gap-1 relative" ref={inboxMobile}>
-            {/* Mobile Search trigger — 44×44 touch target */}
-            <button
-              onClick={() => setSearchModalOpen(true)}
-              className="flex items-center justify-center w-11 h-11 text-muted-foreground hover:text-foreground rounded-xl transition-colors cursor-pointer"
-              aria-label="Search projects"
-              title="Search projects"
-            >
-              <Search size={18} strokeWidth={1.75} />
-            </button>
-
             <ThemeToggle />
 
             {/* Inbox trigger — 44×44 touch target */}
@@ -522,11 +527,8 @@ export default function AppShell({
       </div>
 
       {/* ── Mobile bottom nav ───────────────────────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md z-50 md:hidden">
-        <div
-          className="flex items-center justify-around h-16"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-        >
+            <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md z-50 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+              <div className="flex items-center justify-between px-2 h-16 max-w-md mx-auto">
         {[
           { href: "/dashboard?tab=events", icon: Calendar, label: "Events", active: isTabActive("events") || isTabActive("hackathons") },
           { href: "/dashboard?tab=collaborations", icon: Users, label: "Collaborators", active: isTabActive("collaborations") },
@@ -536,34 +538,34 @@ export default function AppShell({
           <Link
             key={label}
             href={href}
-            className={`flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-2 rounded-xl transition-colors ${
+            className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-0 py-1 min-h-[44px] rounded-xl transition-colors ${
               active ? "text-foreground" : "text-muted-foreground"
             }`}
           >
-            <Icon size={19} strokeWidth={active ? 2.25 : 1.75} />
-            <span className="text-[10px] font-medium">{label}</span>
+            <Icon size={18} strokeWidth={active ? 2.25 : 1.75} className="shrink-0" />
+            <span className="text-[10px] font-medium truncate max-w-full">{label}</span>
           </Link>
         ))}
 
         <button
           type="button"
           onClick={() => setMobileProfileOpen(true)}
-          className={`flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-2 rounded-xl transition-colors ${
+          className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-0 py-1 min-h-[44px] rounded-xl transition-colors ${
             isTabActive("profile") ? "text-foreground" : "text-muted-foreground"
           }`}
         >
-          <div className="relative">
-            <div className="h-[22px] w-[22px] rounded-full border-[1.5px] border-current flex items-center justify-center overflow-hidden">
-              {user?.image
-                ? <Image src={user.image} alt={user.name || "Avatar"} width={22} height={22} className="object-cover h-full w-full" unoptimized />
-                : <span className="text-[9px] font-bold">{initials}</span>
+          <div className="relative shrink-0">
+            <div className="h-[20px] w-[20px] rounded-full border-[1.5px] border-current flex items-center justify-center overflow-hidden">
+              {clientImage
+                ? <Image src={clientImage} alt={clientName || "Avatar"} width={20} height={20} className="object-cover h-full w-full" unoptimized />
+                : <span className="text-[8.5px] font-bold leading-none">{initials}</span>
               }
             </div>
             {user && (
               <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full bg-success border border-card" />
             )}
           </div>
-          <span className="text-[10px] font-medium">Profile</span>
+          <span className="text-[10px] font-medium truncate max-w-full">Profile</span>
         </button>
         </div>
       </nav>
@@ -589,8 +591,8 @@ export default function AppShell({
               <div className="flex items-center gap-3 overflow-hidden">
                 <div className="relative shrink-0">
                   <div className="h-11 w-11 rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden">
-                    {user?.image
-                      ? <Image src={user.image} alt={user.name || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
+                    {clientImage
+                      ? <Image src={clientImage} alt={clientName || "Avatar"} width={44} height={44} className="object-cover h-full w-full" unoptimized />
                       : <span className="text-[15px] font-bold text-foreground">{initials}</span>
                     }
                   </div>
@@ -599,7 +601,7 @@ export default function AppShell({
                   )}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-[14px] font-semibold text-foreground truncate">{user?.name || "User"}</p>
+                  <p className="text-[14px] font-semibold text-foreground truncate">{clientName || "User"}</p>
                   <p className="text-[11px] text-muted-foreground truncate">{user?.email || ""}</p>
                 </div>
               </div>

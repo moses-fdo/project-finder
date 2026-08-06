@@ -243,9 +243,17 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 @media (prefers-reduced-motion: reduce) {
   .how-row,
   .sc,
-  .cc {
+  .cc,
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-slide-in,
+  .animate-slide-up,
+  .skeleton,
+  .click-ripple {
     opacity: 1 !important;
     transform: none !important;
+    animation: none !important;
+    transition: none !important;
   }
 }
 
@@ -448,7 +456,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
   .badge-green {
     background: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
+    color: #15803d;
   }
 
   .dark .badge-green {
@@ -468,7 +476,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
   .badge-yellow {
     background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
+    color: #b45309;
   }
 
   .dark .badge-yellow {

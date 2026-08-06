@@ -1,8 +1,88 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getErrorMessage } from "@/lib/error";
 import { checkAbuseServer } from "@/lib/moderation";
+
+export const dynamic = "force-dynamic";
+
+export async function resolveCurrentUserId(currentUser: any): Promise<number | null> {
+  if (!currentUser) return null;
+
+  const rawId = (currentUser as any).id;
+  const parsedId = Number(rawId);
+
+  if (!isNaN(parsedId) && parsedId > 0 && Number.isInteger(parsedId)) {
+    const userById = await prisma.user.findUnique({
+      where: { id: parsedId },
+      select: { id: true },
+    });
+    if (userById) return userById.id;
+  }
+
+  if (currentUser.email && typeof currentUser.email === "string") {
+    const userByEmail = await prisma.user.findUnique({
+      where: { email: currentUser.email },
+      select: { id: true },
+    });
+    if (userByEmail) return userByEmail.id;
+  }
+
+  return null;
+}
+
+export async function GET() {
+  try {
+    const session = await auth();
+    const currentUser = session?.user;
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: "You must be logged in to view your profile." },
+        { status: 401 }
+      );
+    }
+
+    const currentUserId = await resolveCurrentUserId(currentUser);
+
+    if (!currentUserId) {
+      return NextResponse.json(
+        { error: "Invalid user ID." },
+        { status: 400 }
+      );
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        department: true,
+        year: true,
+        bio: true,
+        githubUrl: true,
+        linkedinUrl: true,
+        profileImage: true,
+        availability: true,
+      },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "User not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(dbUser);
+  } catch (error) {
+    console.error("Fetch profile error:", error);
+    return NextResponse.json(
+      { error: "Internal server error." },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PATCH(req: Request) {
   try {
@@ -19,8 +99,9 @@ export async function PATCH(req: Request) {
     const { name, bio, githubUrl, linkedinUrl, department, year, skills, availability, profileImage } =
       await req.json();
 
-    const currentUserId = Number((currentUser as any).id);
-    if (isNaN(currentUserId)) {
+    const currentUserId = await resolveCurrentUserId(currentUser);
+
+    if (!currentUserId) {
       return NextResponse.json(
         { error: "Invalid user ID." },
         { status: 400 }
@@ -85,7 +166,7 @@ export async function PATCH(req: Request) {
   } catch (error) {
     console.error("Update profile error:", error);
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }
@@ -103,8 +184,9 @@ export async function DELETE() {
       );
     }
 
-    const currentUserId = Number((currentUser as any).id);
-    if (isNaN(currentUserId)) {
+    const currentUserId = await resolveCurrentUserId(currentUser);
+
+    if (!currentUserId) {
       return NextResponse.json(
         { error: "Invalid user ID." },
         { status: 400 }
@@ -124,7 +206,7 @@ export async function DELETE() {
   } catch (error) {
     console.error("Delete account error:", error);
     return NextResponse.json(
-      { error: getErrorMessage(error) },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }

@@ -55,7 +55,7 @@ export default function NotificationsTab({
                   <p className="text-[13px] text-foreground leading-relaxed">{notif.message}</p>
                 </div>
                 <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0 pt-0.5">
-                  {new Date(notif.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  {new Date(notif.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
                 </span>
               </div>
             </div>

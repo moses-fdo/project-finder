@@ -27,10 +27,10 @@ export function collectCommunityMetrics(
 
   const bioLower = (bio || "").toLowerCase();
 
-  const hackathonsParticipated = userProjectsCount + (bioLower.includes("hackathon") ? 1 : 0);
+  const hackathonsParticipated = userProjectsCount + (/\bhackathon\b/i.test(bioLower) ? 1 : 0);
   const openSourceProjectsContributed = userApplicationsCount;
-  const technicalArticlesCount = (bioLower.includes("article") || bioLower.includes("medium") || bioLower.includes("blog")) ? 1 : 0;
-  const mentoringActivity = bioLower.includes("mentor") || bioLower.includes("lead") || bioLower.includes("ta") || bioLower.includes("president");
+  const technicalArticlesCount = (/\b(article|medium|blog)\b/i.test(bioLower)) ? 1 : 0;
+  const mentoringActivity = /\b(mentor|president|ta|lead)\b/i.test(bioLower);
 
   if (!hasLinkedIn) {
     // Basic campus score without LinkedIn
@@ -54,7 +54,7 @@ export function collectCommunityMetrics(
   if (technicalArticlesCount > 0) rawScore += 10;
   if (mentoringActivity) rawScore += 15;
 
-  const finalScore = Math.min(Math.max(Math.round(rawScore), 25), 100);
+  const finalScore = Math.min(Math.round(rawScore), 100);
 
   return {
     score: finalScore,

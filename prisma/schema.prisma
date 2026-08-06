@@ -47,6 +47,7 @@ model Project {
   projectType    String?         // "Hackathon", "Research", "Side Project", "Open Source", "Academic"
   experienceLevel String?        // "Beginner", "Intermediate", "Advanced", "Any"
   teamSize       Int?            // max team members
+  slotsFilled    Int             @default(0) // number of team members currently on the project
   duration       String?         // e.g. "1 week", "1 month", "Ongoing"
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -207,7 +208,6 @@ model UserReputation {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  @@index([userId])
   @@index([score])
 }
 

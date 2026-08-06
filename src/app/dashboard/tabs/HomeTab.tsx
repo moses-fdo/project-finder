@@ -23,6 +23,7 @@ interface HomeTabProps {
   recentNotifications: any[];
   receivedInvitations?: any[];
   collaborations?: any[];
+  leaderboardUsers?: any[];
   getProjectIcon: (title: string) => { icon: LucideIcon; bg: string; text: string };
   nowMs: number;
   departments: string[];
@@ -39,6 +40,7 @@ export default function HomeTab({
   recentNotifications,
   receivedInvitations = [],
   collaborations = [],
+  leaderboardUsers = [],
   getProjectIcon,
   nowMs,
   departments,
@@ -48,6 +50,7 @@ export default function HomeTab({
   const [dashDept, setDashDept] = useState("");
   const [dashStatus, setDashStatus] = useState("ALL");
   const [dashPage, setDashPage] = useState(1);
+  const [mobileHomeSegment, setMobileHomeSegment] = useState<"projects" | "insights">("projects");
 
   const eventsList = (events && events.length > 0) ? events : hackathons;
 
@@ -57,7 +60,7 @@ export default function HomeTab({
   });
   const topEvents = (activeEventsList.length > 0 ? activeEventsList : eventsList).slice(0, 4);
 
-  const userProjects = projects.filter((p: any) => p.ownerId === Number(currentUser?.id));
+  const userProjects = projects.filter((p: any) => Number(p.ownerId) === Number(currentUser?.id));
   const userApplications = useMemo(() => applications || [], [applications]);
 
   const activityItems = useMemo(() => {
@@ -107,20 +110,38 @@ export default function HomeTab({
     return items.slice(0, 8);
   }, [userProjects, userApplications, notifications]);
 
-  // Derive top campus collaborators / leaderboard based on profile Developer Reputation Score
+  // Derive top campus collaborators / leaderboard based on Developer Reputation Score.
+  // Prefer the dedicated leaderboardUsers prop (campus-wide, pre-sorted server-side).
+  // Fall back to paginated collaborations only when leaderboardUsers is empty.
   const topCollaborators = useMemo(() => {
-    const rawList = (collaborations && collaborations.length > 0)
-      ? collaborations
-      : projects.map((p: any) => p.owner).filter(Boolean);
+    // Use the dedicated campus-wide leaderboard if available
+    const pool = leaderboardUsers.length > 0 ? [...leaderboardUsers] : [
+      ...((collaborations && collaborations.length > 0)
+        ? collaborations
+        : projects.map((p: any) => p.owner).filter(Boolean))
+    ];
 
-    // Ensure currentUser is included in candidate pool for live leaderboard updates
-    const list = currentUser ? [currentUser, ...rawList] : rawList;
+    // Always include the current user so they can see themselves on the board
+    if (currentUser) {
+      const curEmail = currentUser.email?.toLowerCase().trim() || '';
+      const curIdStr = currentUser.id ? String(currentUser.id) : '';
+      const idx = pool.findIndex((u: any) =>
+        (u.email && curEmail && u.email.toLowerCase().trim() === curEmail) ||
+        (u.id && curIdStr && String(u.id) === curIdStr)
+      );
+      if (idx !== -1) {
+        pool[idx] = { ...pool[idx], ...currentUser };
+      } else {
+        pool.unshift(currentUser);
+      }
+    }
 
     const uniqueMap = new Map<string, any>();
     const seenEmails = new Set<string>();
     const seenIds = new Set<string>();
+    let fallbackIdx = 0;
 
-    for (const c of list) {
+    for (const c of pool) {
       if (!c) continue;
       const idKey = c.id ? String(c.id) : '';
       const emailKey = c.email ? c.email.toLowerCase().trim() : '';
@@ -133,12 +154,12 @@ export default function HomeTab({
 
       const rep = getDeveloperReputation(c);
 
-      // Use idKey as map key so we keep a clean map
-      uniqueMap.set(idKey || emailKey || Math.random().toString(), {
+      // Use a stable key — never Math.random()
+      const mapKey = idKey || emailKey || `fallback-${fallbackIdx++}`;
+      uniqueMap.set(mapKey, {
         id: c.id,
         name: c.name || "Student",
         department: c.department || "Computer Science",
-        // Preserve null for not-rated users so they sort below all rated users
         reputationScore: rep.score,
         stars: rep.stars,
         tier: rep.tier,
@@ -146,17 +167,17 @@ export default function HomeTab({
       });
     }
 
+    // When using the dedicated leaderboard pool, the array is already sorted
+    // server-side; re-sort here for safety and to handle the current-user merge.
     return Array.from(uniqueMap.values())
       .sort((a, b) => {
-        // GitHub-connected users always rank above non-connected
         if (a.githubConnected !== b.githubConnected) {
           return a.githubConnected ? -1 : 1;
         }
-        // Among connected users, sort by score descending (null treated as 0)
         return (b.reputationScore ?? 0) - (a.reputationScore ?? 0);
       })
       .slice(0, 4);
-  }, [collaborations, projects, currentUser]);
+  }, [leaderboardUsers, collaborations, projects, currentUser]);
 
   // Derive trending tech stacks on campus
   const trendingSkills = useMemo(() => {
@@ -229,7 +250,7 @@ export default function HomeTab({
   const currentProjects = filteredProjects.slice((dashPage - 1) * itemsPerPage, dashPage * itemsPerPage);
 
   const pendingApplicationsCount = userApplications.filter((a: any) => a.status === "PENDING").length;
-  const unreadNotifsCount = recentNotifications.filter((n: any) => !n.read).length;
+  const unreadNotifsCount = notifications.filter((n: any) => !n.read).length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -328,11 +349,60 @@ export default function HomeTab({
         </Link>
       </div>
 
+      {/* Mobile Segment Tabs */}
+      <style>{`
+        .home-segment-tabs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          background: var(--bg-surface-2);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 3.5px;
+        }
+        .home-tab-btn {
+          padding: 10px 16px;
+          font-size: 12.5px;
+          font-weight: 700;
+          text-align: center;
+          border-radius: 9px;
+          border: none;
+          background: none;
+          color: var(--text-tertiary);
+          cursor: pointer;
+          transition: all 180ms ease;
+        }
+        .home-tab-btn.active {
+          background: var(--bg-surface);
+          color: var(--text-primary);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+        @media (min-width: 1024px) {
+          .home-segment-tabs {
+            display: none !important;
+          }
+        }
+      `}</style>
+      
+      <div className="lg:hidden home-segment-tabs">
+        <button
+          onClick={() => setMobileHomeSegment("projects")}
+          className={`home-tab-btn ${mobileHomeSegment === "projects" ? "active" : ""}`}
+        >
+          Explore Projects
+        </button>
+        <button
+          onClick={() => setMobileHomeSegment("insights")}
+          className={`home-tab-btn ${mobileHomeSegment === "insights" ? "active" : ""}`}
+        >
+          Leaderboard &amp; Insights
+        </button>
+      </div>
+
       {/* ── 3. ASYMMETRIC 2-COLUMN WORKSPACE MATRIX ────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
         {/* ── LEFT / MAIN STAGE (8 COLS) ─────────────────────────────── */}
-        <div className="lg:col-span-8 space-y-7 min-w-0">
+        <div className={`lg:col-span-8 space-y-7 min-w-0 ${mobileHomeSegment === "projects" ? "block" : "hidden lg:block"}`}>
 
           {/* SPOTLIGHT MATCH BLOCK (Hero Recommendation) */}
           {topRecommendedSpotlight && (
@@ -409,7 +479,7 @@ export default function HomeTab({
               {dashSearch && (
                 <button
                   type="button"
-                  onClick={() => setDashSearch("")}
+                  onClick={() => { setDashSearch(""); setDashPage(1); }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   <X size={14} />
@@ -469,6 +539,10 @@ export default function HomeTab({
                 const Icon = iconInfo.icon;
                 const match = getSkillMatchScore(currentUser?.skills, project.skills);
 
+                const pTeamSize = project.teamSize ?? null;
+                const pSlotsFilled = project.slotsFilled ?? 0;
+                const pIsFull = pTeamSize !== null && pTeamSize > 0 && pSlotsFilled >= pTeamSize;
+
                 return (
                   <article
                     key={project.id}
@@ -483,6 +557,21 @@ export default function HomeTab({
                           {project.status === "OPEN" && <span className="badge badge-green text-[9px] font-bold">OPEN</span>}
                           {project.status === "FULL" && <span className="badge badge-yellow text-[9px] font-bold">FULL</span>}
                           {project.status === "CLOSED" && <span className="badge badge-red text-[9px] font-bold">CLOSED</span>}
+                          {pTeamSize !== null && pTeamSize > 0 ? (
+                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 border ${
+                              pIsFull
+                                ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                                : "bg-secondary/80 text-foreground border-border"
+                            }`}>
+                              <Users size={10} className={pIsFull ? "text-amber-500" : "text-accent"} />
+                              {pSlotsFilled}/{pTeamSize} slots
+                            </span>
+                          ) : pSlotsFilled > 0 ? (
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-secondary/80 text-foreground border border-border">
+                              <Users size={10} className="text-accent" />
+                              {pSlotsFilled} filled
+                            </span>
+                          ) : null}
                           {match.matchingCount > 0 && (
                             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
                               {match.matchingCount} skill match
@@ -649,7 +738,7 @@ export default function HomeTab({
         </div>{/* END LEFT STAGE */}
 
         {/* ── RIGHT CONTROL SIDEBAR (4 COLS) ─────────────────────────── */}
-        <div className="lg:col-span-4 space-y-6 min-w-0">
+        <div className={`lg:col-span-4 space-y-6 min-w-0 ${mobileHomeSegment === "insights" ? "block" : "hidden lg:block"}`}>
 
           {/* INVITATIONS ACTION WIDGET */}
           {receivedInvitations && receivedInvitations.length > 0 && (
@@ -864,7 +953,7 @@ export default function HomeTab({
                         <span className="text-[9px] font-semibold text-muted-foreground uppercase">{item.typeLabel}</span>
                         <span className="text-[9px] text-muted-foreground">•</span>
                         <span className="text-[9px] text-muted-foreground">
-                          {item.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          {item.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
                         </span>
                       </div>
                     </div>

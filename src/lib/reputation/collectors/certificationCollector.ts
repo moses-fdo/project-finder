@@ -25,13 +25,17 @@ export function collectCertificationMetrics(
   const hasLinkedIn = Boolean(handle);
 
   const bioText = (bio || "").toLowerCase();
-  const skillNames = (skills || []).map((s) => (typeof s === "string" ? s : s.name).toLowerCase());
+  const skillNames = (skills || [])
+    .map((s) => (typeof s === "string" ? s : s?.name))
+    .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+    .map((s) => s.toLowerCase());
   const combinedText = `${bioText} ${skillNames.join(" ")}`;
 
   const matchedProviders: string[] = [];
 
   for (const provider of REPUTATION_CONFIG.recognizedCertProviders) {
-    if (combinedText.includes(provider.toLowerCase())) {
+    const regex = new RegExp(`\\b${provider.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    if (regex.test(combinedText)) {
       matchedProviders.push(provider);
     }
   }
@@ -53,7 +57,7 @@ export function collectCertificationMetrics(
   }
 
   // With LinkedIn connected: Base 20 pts + 25 pts per recognized certification
-  let rawScore = 20 + totalRecognizedCerts * 25;
+  const rawScore = 20 + totalRecognizedCerts * 25;
   const score = Math.min(rawScore, REPUTATION_CONFIG.antiGaming.maxCertScore);
 
   return {
@@ -62,7 +66,7 @@ export function collectCertificationMetrics(
       hasLinkedIn: true,
       totalRecognizedCerts,
       matchedProviders,
-      capped: rawScore > 100,
+      capped: rawScore > REPUTATION_CONFIG.antiGaming.maxCertScore,
     },
   };
 }

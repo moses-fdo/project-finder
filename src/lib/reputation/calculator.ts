@@ -4,6 +4,7 @@ import { collectExperienceMetrics, ExperienceCollectorResult } from "./collector
 import { collectCertificationMetrics, CertificationCollectorResult } from "./collectors/certificationCollector";
 import { collectCommunityMetrics, CommunityCollectorResult } from "./collectors/communityCollector";
 import { deriveStarsFromScore, deriveTierFromScore } from "./utils";
+import { prisma } from "@/lib/prisma";
 
 export interface CalculateReputationInput {
   userId: number;
@@ -55,9 +56,11 @@ export async function calculateUserReputation(
     input.bio
   );
 
+  let result: CalculatedReputationResult;
+
   // RULE: If GitHub is NOT connected, developer is NOT RATED.
   if (!githubMetrics.connected) {
-    return {
+    result = {
       userId: input.userId,
       githubConnected: false,
       score: null,
@@ -81,45 +84,86 @@ export async function calculateUserReputation(
       },
       lastSyncedAt: new Date(),
     };
+  } else {
+    // Calculate Weighted Overall Reputation Score (0 - 100)
+    const weightedScore =
+      githubMetrics.score * REPUTATION_CONFIG.weights.github +
+      experienceMetrics.score * REPUTATION_CONFIG.weights.experience +
+      certMetrics.score * REPUTATION_CONFIG.weights.certifications +
+      communityMetrics.score * REPUTATION_CONFIG.weights.community;
+
+    const finalScore = Math.min(Math.max(Math.round(weightedScore), 0), 100);
+
+    const stars = deriveStarsFromScore(finalScore);
+    const tier = deriveTierFromScore(finalScore);
+    const tierObj =
+      REPUTATION_CONFIG.tiers.find((t) => t.name === tier) ||
+      REPUTATION_CONFIG.tiers[REPUTATION_CONFIG.tiers.length - 1];
+
+    result = {
+      userId: input.userId,
+      githubConnected: true,
+      score: finalScore,
+      stars,
+      tier,
+      tierDescription: tierObj.description,
+      badgeColor: tierObj.badgeColor,
+      githubVerified: true,
+      linkedinVerified: experienceMetrics.details.verifiedCompany,
+      categoryScores: {
+        github: githubMetrics.score,
+        experience: experienceMetrics.score,
+        certifications: certMetrics.score,
+        community: communityMetrics.score,
+      },
+      details: {
+        github: githubMetrics.details,
+        experience: experienceMetrics.details,
+        certifications: certMetrics.details,
+        community: communityMetrics.details,
+      },
+      lastSyncedAt: new Date(),
+    };
   }
 
-  // Calculate Weighted Overall Reputation Score (0 - 100)
-  const weightedScore =
-    githubMetrics.score * REPUTATION_CONFIG.weights.github +
-    experienceMetrics.score * REPUTATION_CONFIG.weights.experience +
-    certMetrics.score * REPUTATION_CONFIG.weights.certifications +
-    communityMetrics.score * REPUTATION_CONFIG.weights.community;
+  if (input.userId && !isNaN(input.userId) && !githubMetrics.transientFailure) {
+    try {
+      await prisma.userReputation.upsert({
+        where: { userId: input.userId },
+        update: {
+          score: result.score ?? 0,
+          stars: result.stars,
+          tier: result.tier,
+          githubConnected: result.githubConnected,
+          githubVerified: result.githubVerified,
+          linkedinVerified: result.linkedinVerified,
+          githubScore: result.categoryScores.github,
+          experienceScore: result.categoryScores.experience,
+          certificationScore: result.categoryScores.certifications,
+          communityScore: result.categoryScores.community,
+          breakdownJson: result.details as any,
+          lastSyncedAt: result.lastSyncedAt,
+        },
+        create: {
+          userId: input.userId,
+          score: result.score ?? 0,
+          stars: result.stars,
+          tier: result.tier,
+          githubConnected: result.githubConnected,
+          githubVerified: result.githubVerified,
+          linkedinVerified: result.linkedinVerified,
+          githubScore: result.categoryScores.github,
+          experienceScore: result.categoryScores.experience,
+          certificationScore: result.categoryScores.certifications,
+          communityScore: result.categoryScores.community,
+          breakdownJson: result.details as any,
+          lastSyncedAt: result.lastSyncedAt,
+        },
+      });
+    } catch (e) {
+      console.error("Failed to persist UserReputation:", e);
+    }
+  }
 
-  const finalScore = Math.min(Math.max(Math.round(weightedScore), 0), 100);
-
-  const stars = deriveStarsFromScore(finalScore);
-  const tier = deriveTierFromScore(finalScore);
-  const tierObj =
-    REPUTATION_CONFIG.tiers.find((t) => t.name === tier) ||
-    REPUTATION_CONFIG.tiers[REPUTATION_CONFIG.tiers.length - 1];
-
-  return {
-    userId: input.userId,
-    githubConnected: true,
-    score: finalScore,
-    stars,
-    tier,
-    tierDescription: tierObj.description,
-    badgeColor: tierObj.badgeColor,
-    githubVerified: true,
-    linkedinVerified: experienceMetrics.details.verifiedCompany,
-    categoryScores: {
-      github: githubMetrics.score,
-      experience: experienceMetrics.score,
-      certifications: certMetrics.score,
-      community: communityMetrics.score,
-    },
-    details: {
-      github: githubMetrics.details,
-      experience: experienceMetrics.details,
-      certifications: certMetrics.details,
-      community: communityMetrics.details,
-    },
-    lastSyncedAt: new Date(),
-  };
+  return result;
 }

@@ -201,7 +201,7 @@ export default function LandingPage({ stats = { users: 0, projects: 0, openProje
   }, [reduceMotion]);
 
   return (
-    <LenisScroller>
+    <LenisScroller disabled={reduceMotion}>
       {/* Theme-aware surface — follows light/dark via design tokens, accent stays #6C5CE7 */}
       <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
 

@@ -1,11 +1,12 @@
 import AppShell from "@/components/AppShell";
-import { prisma } from "@/lib/prisma";
+import { prisma, safeQuery } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { Mail, GitBranch, Link2, ChevronLeft, FolderCheck } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
 import ReputationCard from "@/components/reputation/ReputationCard";
 import { calculateUserReputation } from "@/lib/reputation/calculator";
+import { REPUTATION_CONFIG } from "@/lib/reputation/config";
 import Link from "next/link";
 
 interface ProfilePageProps {
@@ -32,11 +33,22 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     if (dbUser) currentUserId = dbUser.id;
   }
 
-  const [user, collabCount, unreadNotificationsCount] = await Promise.all([
+  const [user, collabCount, unreadNotificationsCount, userReputationRow] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        skills: true,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        department: true,
+        year: true,
+        bio: true,
+        githubUrl: true,
+        linkedinUrl: true,
+        profileImage: true,
+        availability: true,
+        createdAt: true,
+        skills: { select: { id: true, name: true } },
         projects: {
           include: { owner: true, skills: true },
         },
@@ -57,6 +69,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           },
         })
       : Promise.resolve(0),
+    safeQuery(() => prisma.userReputation.findUnique({ where: { userId } }), null),
   ]);
 
   if (!user) notFound();
@@ -65,16 +78,69 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const doneProjects = user.projects.filter((p) => p.status === "DONE").length;
   const activeProjects = user.projects.filter((p) => p.status === "OPEN").length;
 
-  const reputation = await calculateUserReputation({
-    userId: user.id,
-    githubUrl: user.githubUrl,
-    linkedinUrl: user.linkedinUrl,
-    bio: user.bio,
-    year: user.year,
-    skills: user.skills,
-    userProjectsCount: user.projects.length,
-    userApplicationsCount: user.applications.length,
-  });
+  const STALE_TTL_MS = REPUTATION_CONFIG.antiGaming.staleDataThresholdHours * 3600 * 1000;
+  const isStale = userReputationRow
+    ? new Date().getTime() - new Date(userReputationRow.lastSyncedAt).getTime() > STALE_TTL_MS
+    : true;
+
+  let reputation: any;
+  if (userReputationRow && !isStale) {
+    const effectiveTier = userReputationRow.githubConnected ? userReputationRow.tier : "Not Rated";
+    const tierConfig = REPUTATION_CONFIG.tiers.find(
+      (t) => t.name.toLowerCase() === effectiveTier.toLowerCase()
+    ) || {
+      description: "Connect your GitHub account to unlock your Developer Reputation score.",
+      badgeColor: "slate",
+    };
+
+    reputation = {
+      userId: user.id,
+      githubConnected: userReputationRow.githubConnected,
+      score: userReputationRow.githubConnected ? userReputationRow.score : null,
+      stars: userReputationRow.stars,
+      tier: effectiveTier,
+      tierDescription: tierConfig.description,
+      badgeColor: tierConfig.badgeColor,
+      githubVerified: userReputationRow.githubVerified,
+      linkedinVerified: userReputationRow.linkedinVerified,
+      categoryScores: {
+        github: userReputationRow.githubScore,
+        experience: userReputationRow.experienceScore,
+        certifications: userReputationRow.certificationScore,
+        community: userReputationRow.communityScore,
+      },
+      details: userReputationRow.breakdownJson as any,
+      lastSyncedAt: userReputationRow.lastSyncedAt,
+    };
+  } else {
+    try {
+      reputation = await calculateUserReputation({
+        userId: user.id,
+        githubUrl: user.githubUrl,
+        linkedinUrl: user.linkedinUrl,
+        bio: user.bio,
+        year: user.year,
+        skills: user.skills,
+        userProjectsCount: user.projects.length,
+        userApplicationsCount: user.applications.length,
+      });
+    } catch (e) {
+      reputation = {
+        userId: user.id,
+        githubConnected: false,
+        score: null,
+        stars: 0,
+        tier: "Not Rated",
+        tierDescription: "Connect your GitHub account to unlock your Developer Reputation score.",
+        badgeColor: "slate",
+        githubVerified: false,
+        linkedinVerified: false,
+        categoryScores: { github: 0, experience: 0, certifications: 0, community: 0 },
+        details: {},
+        lastSyncedAt: new Date(),
+      };
+    }
+  }
 
   const isCurrentUser = currentUserId === user.id;
 

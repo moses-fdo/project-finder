@@ -32,7 +32,7 @@ export default function ApplicationsTab({ applications, appStatusStyle }: Applic
                     {app.project.owner?.name}
                   </Link>
                   {" · "}
-                  {new Date(app.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  {new Date(app.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
                 </p>
                 {app.message && (
                   <p className="text-[12px] text-muted-foreground mt-2 italic line-clamp-2">
