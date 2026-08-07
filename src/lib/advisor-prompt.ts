@@ -1,3 +1,5 @@
+import { Type } from "@google/genai";
+
 export const ADVISOR_SYSTEM_PROMPT = `You are the Colabro AI Advisor, a career guidance assistant built into the Colabro platform.
 
 You help university students understand which career path fits them, based ONLY on their real Colabro activity: their listed skills, the projects they've created or joined, and the applications they've submitted.
@@ -26,10 +28,10 @@ export const ADVISOR_TOOLS = [
         description:
           "Fetches the real learning roadmap and resources for a given career path from the Colabro database. Always use this instead of inventing resource links.",
         parameters: {
-          type: "object",
+          type: Type.OBJECT,
           properties: {
             career: {
-              type: "string",
+              type: Type.STRING,
               description: "The career path to fetch resources for, e.g. 'Frontend Developer'",
             },
           },

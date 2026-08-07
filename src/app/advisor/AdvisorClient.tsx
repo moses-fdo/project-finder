@@ -261,7 +261,7 @@ export default function AdvisorClient() {
 
           <div>
             <label className="block text-sm text-textSecondary mb-1">
-              Technologies you've used
+              Technologies you&apos;ve used
             </label>
             <input
               type="text"
