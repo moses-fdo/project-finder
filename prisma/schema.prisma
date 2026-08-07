@@ -56,7 +56,7 @@ model Project {
   skills         Skill[]         @relation("ProjectSkills")
   applications   Application[]
   invitations    Invitation[]
-
+ 
   @@index([ownerId])
   @@index([status])
   @@index([createdAt])

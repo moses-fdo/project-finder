@@ -17,3 +17,25 @@ Rules you must follow:
 - If the student's profile is empty or has very little data, base your answer on their onboarding quiz answers instead, and mention this in "why".
 - Keep a consistent, encouraging but honest tone — you're a mentor, not a hype machine.
 - For follow-up chat (not the initial dashboard), respond in plain conversational text, concise, staying in the same advisor personality.`;
+
+export const ADVISOR_TOOLS = [
+  {
+    functionDeclarations: [
+      {
+        name: "getResources",
+        description:
+          "Fetches the real learning roadmap and resources for a given career path from the Colabro database. Always use this instead of inventing resource links.",
+        parameters: {
+          type: "object",
+          properties: {
+            career: {
+              type: "string",
+              description: "The career path to fetch resources for, e.g. 'Frontend Developer'",
+            },
+          },
+          required: ["career"],
+        },
+      },
+    ],
+  },
+];
