@@ -90,15 +90,23 @@ Applications sent: ${profile.applications.map((a) => a.project.title).join(", ")
       );
     }
 
-    return NextResponse.json({ isColdStart: false, recommendation: parsed });
-  } catch (error) {
-    console.error("Advisor error:", error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
-  }
-}
+        return NextResponse.json({ isColdStart: false, recommendation: parsed });
+      } catch (error) {
+        console.error("Advisor error:", error);
+        const message = getErrorMessage(error);
+        const isOverloaded = message.includes("UNAVAILABLE") || message.includes("503");
+        return NextResponse.json(
+          {
+            error: isOverloaded
+              ? "Our AI advisor is experiencing high demand right now. Please try again in a moment."
+              : "Something went wrong generating your recommendation. Please try again.",
+          },
+          { status: isOverloaded ? 503 : 500 }
+        );
+      }
+    }
 
-export async function POST(req: Request) {
-  try {
+    export async function POST(req: Request) {  try {
     const session = await auth();
     const currentUser = session?.user;
 
@@ -148,7 +156,16 @@ Technologies used: ${technologies}
 
     return NextResponse.json({ isColdStart: true, recommendation: parsed });
   } catch (error) {
-    console.error("Advisor quiz error:", error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    console.error("Advisor error:", error);
+    const message = getErrorMessage(error);
+    const isOverloaded = message.includes("UNAVAILABLE") || message.includes("503");
+    return NextResponse.json(
+      {
+        error: isOverloaded
+          ? "Our AI advisor is experiencing high demand right now. Please try again in a moment."
+          : "Something went wrong generating your recommendation. Please try again.",
+      },
+      { status: isOverloaded ? 503 : 500 }
+    );
   }
 }

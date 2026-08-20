@@ -95,6 +95,15 @@ Respond in plain conversational text (not JSON) to their follow-up question belo
     return NextResponse.json({ reply: finalText });
   } catch (error) {
     console.error("Advisor chat error:", error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    const message = getErrorMessage(error);
+    const isOverloaded = message.includes("UNAVAILABLE") || message.includes("503");
+    return NextResponse.json(
+      {
+        error: isOverloaded
+          ? "Our AI advisor is experiencing high demand right now. Please try again in a moment."
+          : "Something went wrong. Please try again.",
+      },
+      { status: isOverloaded ? 503 : 500 }
+    );
   }
 }
