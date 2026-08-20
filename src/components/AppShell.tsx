@@ -16,6 +16,7 @@ import {
   Search,
   Users,
   Trophy,
+  Sparkles,
   Send,
   Mail,
   Inbox,
@@ -165,6 +166,7 @@ export default function AppShell({
 
   const navItems = [
     { label: "Dashboard",      icon: LayoutGrid, href: "/dashboard?tab=home",           active: isTabActive("home") || (pathname === "/dashboard" && !tab) },
+    { label: "AI Advisor",     icon: Sparkles,   href: "/advisor",                      active: pathname === "/advisor" },
     { label: "Collaborators",  icon: Users,      href: "/dashboard?tab=collaborations", active: isTabActive("collaborations") },
     { label: "Events",         icon: Trophy,     href: "/dashboard?tab=events",         active: isTabActive("events") || isTabActive("hackathons") },
   ];
