@@ -635,6 +635,7 @@ export default function AppShell({
                 My Space
               </p>
               {[
+                { label: "AI Advisor", icon: Sparkles, href: "/advisor", active: pathname === "/advisor" },
                 ...spaceItems,
               ].map((item) => (
                 <Link
