@@ -109,77 +109,74 @@ export default function AdvisorClient() {
   }
 
   if (loading) {
-    return <div className="p-8 text-textSecondary">Loading your advisor...</div>;
+    return <div className="p-6 type-body">Loading your advisor...</div>;
   }
 
   if (error) {
-    return <div className="p-8 text-red-400">{error}</div>;
+    return <div className="p-6 text-destructive type-body">{error}</div>;
   }
 
   if (recommendation) {
     return (
-      <div className="p-8 max-w-3xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-textPrimary">Your AI Advisor</h1>
+      <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+        <h1 className="type-page-title">Your AI Advisor</h1>
 
-        <div className="bg-card border border-borderSubtle rounded-[10px] p-6">
-          <p className="text-sm text-textMuted mb-1">Recommended Career</p>
-          <h2 className="text-xl font-semibold text-accent">{recommendation.career}</h2>
+        <div className="card">
+          <p className="type-meta mb-1">Recommended Career</p>
+          <h2 className="type-section-title text-primary">{recommendation.career}</h2>
         </div>
 
-        <div className="bg-card border border-borderSubtle rounded-[10px] p-6">
-          <p className="text-sm text-textMuted mb-2">Why this career</p>
-          <p className="text-textPrimary leading-relaxed">{recommendation.why}</p>
+        <div className="card">
+          <p className="type-meta mb-2">Why this career</p>
+          <p className="type-body">{recommendation.why}</p>
         </div>
 
-        <div className="bg-card border border-borderSubtle rounded-[10px] p-6">
-          <p className="text-sm text-textMuted mb-2">Skill Gaps</p>
+        <div className="card">
+          <p className="type-meta mb-2">Skill Gaps</p>
           <ul className="flex flex-wrap gap-2">
             {recommendation.skillGaps.map((skill, i) => (
-              <li
-                key={i}
-                className="bg-surface border border-borderSubtle text-textSecondary text-sm px-3 py-1 rounded-full"
-              >
+              <li key={i} className="badge badge-neutral normal-case font-medium">
                 {skill}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="bg-card border border-borderSubtle rounded-[10px] p-6">
-          <p className="text-sm text-textMuted mb-2">Suggested Learning Order</p>
+        <div className="card">
+          <p className="type-meta mb-2">Suggested Learning Order</p>
           <ol className="space-y-2">
             {recommendation.learningOrder.map((step, i) => (
-              <li key={i} className="flex gap-3 text-textPrimary">
-                <span className="text-accent font-semibold">{i + 1}.</span>
+              <li key={i} className="flex gap-3 type-body">
+                <span className="text-primary font-semibold shrink-0">{i + 1}.</span>
                 <span>{step}</span>
               </li>
             ))}
           </ol>
         </div>
 
-        <div className="bg-card border border-borderSubtle rounded-[10px] p-6">
-          <p className="text-sm text-textMuted mb-3">Ask a follow-up question</p>
+        <div className="card">
+          <p className="type-meta mb-3">Ask a follow-up question</p>
 
           <div className="space-y-3 mb-4 max-h-80 overflow-y-auto">
             {chatHistory.length === 0 && (
-              <p className="text-textMuted text-sm">
+              <p className="type-meta">
                 Ask me anything about this recommendation — e.g. &quot;what resources should I use?&quot;
               </p>
             )}
             {chatHistory.map((msg, i) => (
               <div
                 key={i}
-                className={`text-sm rounded-[10px] px-3 py-2 max-w-[85%] prose prose-invert prose-sm ${
+                className={`text-[13px] rounded-[10px] px-3 py-2 max-w-[85%] prose prose-invert prose-sm ${
                   msg.role === "user"
-                    ? "bg-accent text-white ml-auto"
-                    : "bg-surface text-textPrimary"
+                    ? "bg-primary text-primary-foreground ml-auto"
+                    : "bg-secondary text-foreground"
                 }`}
               >
                 <ReactMarkdown>{msg.text}</ReactMarkdown>
               </div>
             ))}
             {chatLoading && (
-              <div className="bg-surface text-textMuted text-sm rounded-[10px] px-3 py-2 max-w-[85%]">
+              <div className="bg-secondary text-muted-foreground text-[13px] rounded-[10px] px-3 py-2 max-w-[85%]">
                 Thinking...
               </div>
             )}
@@ -191,14 +188,10 @@ export default function AdvisorClient() {
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Ask a question..."
-              className="flex-1 bg-surface border border-borderSubtle rounded-[10px] px-3 py-2 text-textPrimary focus:outline-none focus:border-borderFocus"
+              className="forge-input flex-1"
             />
-            <button
-              type="submit"
-              disabled={chatLoading}
-              className="bg-accent hover:bg-accentHover text-white font-medium rounded-[10px] px-4 py-2 transition-colors disabled:opacity-50"
-            >
-              Send
+            <button type="submit" disabled={chatLoading} className="btn-primary shrink-0">
+              {chatLoading ? "..." : "Send"}
             </button>
           </form>
         </div>
@@ -208,77 +201,63 @@ export default function AdvisorClient() {
 
   if (isColdStart) {
     return (
-      <div className="p-8 max-w-xl mx-auto">
-        <h1 className="text-2xl font-bold text-textPrimary mb-2">
-          Let&apos;s get to know you
-        </h1>
-        <p className="text-textSecondary mb-6">
+      <div className="p-4 md:p-6 max-w-xl mx-auto">
+        <h1 className="type-page-title mb-2">Let&apos;s get to know you</h1>
+        <p className="type-body mb-6">
           Your profile doesn&apos;t have any skills or projects yet, so answer
           a few quick questions to get a personalized recommendation.
         </p>
 
         <form onSubmit={handleQuizSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-textSecondary mb-1">
-              What are you interested in?
-            </label>
+            <label className="type-meta block mb-1.5">What are you interested in?</label>
             <input
               type="text"
               required
               value={quiz.interests}
               onChange={(e) => setQuiz({ ...quiz, interests: e.target.value })}
-              className="w-full bg-surface border border-borderSubtle rounded-[10px] px-3 py-2 text-textPrimary focus:outline-none focus:border-borderFocus"
+              className="forge-input"
               placeholder="e.g. building apps, AI, design"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-textSecondary mb-1">
-              Preferred domain
-            </label>
+            <label className="type-meta block mb-1.5">Preferred domain</label>
             <input
               type="text"
               required
               value={quiz.preferredDomain}
               onChange={(e) => setQuiz({ ...quiz, preferredDomain: e.target.value })}
-              className="w-full bg-surface border border-borderSubtle rounded-[10px] px-3 py-2 text-textPrimary focus:outline-none focus:border-borderFocus"
+              className="forge-input"
               placeholder="e.g. Web Development, Data Science"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-textSecondary mb-1">
-              Experience level
-            </label>
+            <label className="type-meta block mb-1.5">Experience level</label>
             <input
               type="text"
               required
               value={quiz.experienceLevel}
               onChange={(e) => setQuiz({ ...quiz, experienceLevel: e.target.value })}
-              className="w-full bg-surface border border-borderSubtle rounded-[10px] px-3 py-2 text-textPrimary focus:outline-none focus:border-borderFocus"
+              className="forge-input"
               placeholder="Beginner / Intermediate / Advanced"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-textSecondary mb-1">
-              Technologies you&apos;ve used
-            </label>
+            <label className="type-meta block mb-1.5">Technologies you&apos;ve used</label>
             <input
               type="text"
               required
               value={quiz.technologies}
               onChange={(e) => setQuiz({ ...quiz, technologies: e.target.value })}
-              className="w-full bg-surface border border-borderSubtle rounded-[10px] px-3 py-2 text-textPrimary focus:outline-none focus:border-borderFocus"
+              className="forge-input"
               placeholder="e.g. HTML, CSS, Python"
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-accent hover:bg-accentHover text-white font-medium rounded-[10px] px-5 py-2.5 transition-colors disabled:opacity-50"
-          >
+          <button type="submit" disabled={submitting} className="btn-primary">
             {submitting ? "Generating..." : "Get My Recommendation"}
           </button>
         </form>
