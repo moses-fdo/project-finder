@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 type Recommendation = {
   career: string;
@@ -168,13 +169,13 @@ export default function AdvisorClient() {
             {chatHistory.map((msg, i) => (
               <div
                 key={i}
-                className={`text-sm rounded-[10px] px-3 py-2 max-w-[85%] whitespace-pre-wrap ${
+                className={`text-sm rounded-[10px] px-3 py-2 max-w-[85%] prose prose-invert prose-sm ${
                   msg.role === "user"
                     ? "bg-accent text-white ml-auto"
                     : "bg-surface text-textPrimary"
                 }`}
               >
-                {msg.text}
+                <ReactMarkdown>{msg.text}</ReactMarkdown>
               </div>
             ))}
             {chatLoading && (

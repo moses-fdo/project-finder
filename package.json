@@ -28,6 +28,7 @@
     "nodemailer": "^8.0.11",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
     "read-excel-file": "^9.3.4",
     "resend": "^6.17.2",
     "three": "^0.169.0",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",

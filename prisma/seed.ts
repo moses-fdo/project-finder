@@ -123,6 +123,190 @@ async function main() {
         },
       ],
     },
+        {
+          career: "Backend Developer",
+          title: "Backend Developer Roadmap",
+          description: "A path to building robust, scalable server-side systems.",
+          steps: [
+            {
+              title: "Learn a Backend Language",
+              description: "Get comfortable with Node.js or Python for server-side logic.",
+              order: 1,
+              resources: [
+                {
+                  title: "Node.js Official Docs",
+                  type: "docs",
+                  url: "https://nodejs.org/en/docs",
+                  difficulty: "Beginner",
+                },
+              ],
+            },
+            {
+              title: "Databases & ORMs",
+              description: "Understand SQL, Postgres, and ORMs like Prisma.",
+              order: 2,
+              resources: [
+                {
+                  title: "Prisma Documentation",
+                  type: "docs",
+                  url: "https://www.prisma.io/docs",
+                  difficulty: "Intermediate",
+                },
+              ],
+            },
+            {
+              title: "APIs & Authentication",
+              description: "Build REST APIs and implement secure authentication.",
+              order: 3,
+              resources: [
+                {
+                  title: "JWT.io Introduction",
+                  type: "docs",
+                  url: "https://jwt.io/introduction",
+                  difficulty: "Intermediate",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          career: "Data Scientist",
+          title: "Data Scientist Roadmap",
+          description: "A path to analyzing data and building predictive models.",
+          steps: [
+            {
+              title: "Python for Data Analysis",
+              description: "Master Pandas, NumPy, and data manipulation.",
+              order: 1,
+              resources: [
+                {
+                  title: "Pandas Documentation",
+                  type: "docs",
+                  url: "https://pandas.pydata.org/docs/",
+                  difficulty: "Beginner",
+                },
+              ],
+            },
+            {
+              title: "Statistics & Visualization",
+              description: "Learn statistical analysis and tools like Matplotlib.",
+              order: 2,
+              resources: [
+                {
+                  title: "Matplotlib Tutorials",
+                  type: "docs",
+                  url: "https://matplotlib.org/stable/tutorials/index.html",
+                  difficulty: "Beginner",
+                },
+              ],
+            },
+            {
+              title: "Machine Learning Basics",
+              description: "Get started with scikit-learn and core ML concepts.",
+              order: 3,
+              resources: [
+                {
+                  title: "Scikit-learn Getting Started",
+                  type: "docs",
+                  url: "https://scikit-learn.org/stable/getting_started.html",
+                  difficulty: "Intermediate",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          career: "Mobile Developer",
+          title: "Mobile Developer Roadmap",
+          description: "A path to building cross-platform mobile applications.",
+          steps: [
+            {
+              title: "Learn React Native or Flutter",
+              description: "Pick a cross-platform framework and build your first app.",
+              order: 1,
+              resources: [
+                {
+                  title: "React Native Documentation",
+                  type: "docs",
+                  url: "https://reactnative.dev/docs/getting-started",
+                  difficulty: "Beginner",
+                },
+              ],
+            },
+            {
+              title: "Mobile UI Patterns",
+              description: "Understand navigation, gestures, and platform conventions.",
+              order: 2,
+              resources: [
+                {
+                  title: "Material Design Guidelines",
+                  type: "docs",
+                  url: "https://m3.material.io/",
+                  difficulty: "Beginner",
+                },
+              ],
+            },
+            {
+              title: "Publishing & Native Features",
+              description: "Learn app store deployment and native device APIs.",
+              order: 3,
+              resources: [
+                {
+                  title: "Expo Documentation",
+                  type: "docs",
+                  url: "https://docs.expo.dev/",
+                  difficulty: "Intermediate",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          career: "UI/UX Designer",
+          title: "UI/UX Designer Roadmap",
+          description: "A path to designing intuitive, user-centered digital products.",
+          steps: [
+            {
+              title: "Design Fundamentals",
+              description: "Learn color theory, typography, and layout principles.",
+              order: 1,
+              resources: [
+                {
+                  title: "Laws of UX",
+                  type: "docs",
+                  url: "https://lawsofux.com/",
+                  difficulty: "Beginner",
+                },
+              ],
+            },
+            {
+              title: "Design Tools",
+              description: "Get hands-on with Figma for prototyping and design systems.",
+              order: 2,
+              resources: [
+                {
+                  title: "Figma Learn Hub",
+                  type: "course",
+                  url: "https://www.figma.com/resource-library/",
+                  difficulty: "Beginner",
+                },
+              ],
+            },
+            {
+              title: "User Research & Testing",
+              description: "Learn to validate designs through user feedback.",
+              order: 3,
+              resources: [
+                {
+                  title: "Nielsen Norman Group Articles",
+                  type: "docs",
+                  url: "https://www.nngroup.com/articles/",
+                  difficulty: "Intermediate",
+                },
+              ],
+            },
+          ],
+        },
   ];
 
   for (const roadmap of roadmaps) {
