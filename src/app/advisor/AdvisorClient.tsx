@@ -29,6 +29,7 @@ export default function AdvisorClient() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
 
   useEffect(() => {
     fetch("/api/advisor")
@@ -71,7 +72,7 @@ export default function AdvisorClient() {
 
   async function handleChatSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || cooldown) return;
 
     const userMessage: ChatMessage = { role: "user", text: chatInput };
     const newHistory = [...chatHistory, userMessage];
@@ -105,6 +106,8 @@ export default function AdvisorClient() {
       ]);
     } finally {
       setChatLoading(false);
+      setCooldown(true);
+      setTimeout(() => setCooldown(false), 2000);
     }
   }
 
@@ -190,7 +193,7 @@ export default function AdvisorClient() {
               placeholder="Ask a question..."
               className="forge-input flex-1"
             />
-            <button type="submit" disabled={chatLoading} className="btn-primary shrink-0">
+            <button type="submit" disabled={chatLoading || cooldown} className="btn-primary shrink-0">
               {chatLoading ? "..." : "Send"}
             </button>
           </form>
